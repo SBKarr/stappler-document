@@ -95,25 +95,4 @@ bool Reader::isNamespaceImplemented(const String &) const {
 	return false;
 }
 
-bool Reader::isStyleAttribute(const String &tagName, const String &name) const {
-	if (name == "epub:type") {
-		return true;
-	} else {
-		return layout::Reader::isStyleAttribute(tagName, name);
-	}
-}
-
-void Reader::addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) {
-	using namespace layout::style;
-
-	if (name == "epub:type") {
-		if (value == "footnote" || value == "endnote" || value == "footnotes" || value == "endnotes") {
-			tag.compiledStyle.set(Parameter::create<ParameterName::Display>(Display::None, MediaQuery::NoTooltipOption));
-			tag.compiledStyle.set(Parameter::create<ParameterName::Display>(Display::Default, MediaQuery::IsTooltipOption));
-		}
-	} else {
-		layout::Reader::addStyleAttribute(tag, name, value);
-	}
-}
-
 NS_EPUB_END

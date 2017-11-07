@@ -56,9 +56,11 @@ static inline StringView printToken(const StringView & source, token * t) {
 }
 
 void HtmlProcessor::pad(std::ostream &out, uint16_t num) {
-	while (num > padded) {
-		out << '\n';
-		padded++;
+	if (!spExt) {
+		while (num > padded) {
+			out << '\n';
+			padded++;
+		}
 	}
 }
 
@@ -865,7 +867,10 @@ void HtmlProcessor::exportFootnoteList(std::ostream &out) {
 
 		pad(out, 2);
 		pushNode("div", { pair("class", "footnotes") });
-		out << "\n"; pushInlineNode("hr"); out << "\n"; pushNode("ol");
+		if (!spExt) { out << "\n"; }
+		pushInlineNode("hr");
+		if (!spExt) { out << "\n"; }
+		pushNode("ol");
 
 		padded = 0;
 
@@ -875,7 +880,8 @@ void HtmlProcessor::exportFootnoteList(std::ostream &out) {
 			pad(out, 2);
 
 			String id = Traits::toString("fn:", (i + 1));
-			pushNode("li", { pair("id", id) }); out << "\n";
+			pushNode("li", { pair("id", id) });
+			if (!spExt) { out << "\n"; }
 			padded = 6;
 
 			content = note->content;
@@ -902,7 +908,9 @@ void HtmlProcessor::exportFootnoteList(std::ostream &out) {
 		}
 
 		pad(out, 2);
-		popNode(); out << "\n"; popNode();
+		popNode();
+		if (!spExt) { out << "\n"; }
+		popNode();
 		padded = 0;
 		footnote_being_printed = 0;
 	}
@@ -914,7 +922,10 @@ void HtmlProcessor::exportGlossaryList(std::ostream &out) {
 
 		pad(out, 2);
 		pushNode("div", { pair("class", "glossary") });
-		out << "\n"; pushInlineNode("hr"); out << "\n"; pushNode("ol");
+		if (!spExt) { out << "\n"; }
+		pushInlineNode("hr");
+		if (!spExt) { out << "\n"; }
+		pushNode("ol");
 		padded = 0;
 
 		auto i = 0;
@@ -924,7 +935,8 @@ void HtmlProcessor::exportGlossaryList(std::ostream &out) {
 			pad(out, 2);
 
 			String id = Traits::toString("gn:", (i + 1));
-			pushNode("li", { pair("id", id) }); out << "\n";
+			pushNode("li", { pair("id", id) });
+			if (!spExt) { out << "\n"; }
 			padded = 6;
 
 			content = note->content;
@@ -955,7 +967,9 @@ void HtmlProcessor::exportGlossaryList(std::ostream &out) {
 		}
 
 		pad(out, 2);
-		popNode(); out << "\n"; popNode();
+		popNode();
+		if (!spExt) { out << "\n"; }
+		popNode();
 		padded = 0;
 		glossary_being_printed = 0;
 	}
@@ -967,7 +981,10 @@ void HtmlProcessor::exportCitationList(std::ostream &out) {
 
 		pad(out, 2);
 		pushNode("div", { pair("class", "citations") });
-		out << "\n"; pushInlineNode("hr"); out << "\n"; pushNode("ol");
+		if (!spExt) { out << "\n"; }
+		pushInlineNode("hr");
+		if (!spExt) { out << "\n"; }
+		pushNode("ol");
 		padded = 0;
 
 		auto i = 0;
@@ -977,7 +994,8 @@ void HtmlProcessor::exportCitationList(std::ostream &out) {
 			pad(out, 2);
 
 			String id = Traits::toString("cn:", (i + 1));
-			pushNode("li", { pair("id", id) }); out << "\n";
+			pushNode("li", { pair("id", id) });
+			if (!spExt) { out << "\n"; }
 			padded = 6;
 
 			content = note->content;
@@ -1004,7 +1022,9 @@ void HtmlProcessor::exportCitationList(std::ostream &out) {
 		}
 
 		pad(out, 2);
-		popNode(); out << "\n"; popNode();
+		popNode();
+		if (!spExt) { out << "\n"; }
+		popNode();
 		padded = 0;
 		citation_being_printed = 0;
 	}

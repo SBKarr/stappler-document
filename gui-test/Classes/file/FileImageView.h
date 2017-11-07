@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef CLASSES_LAYOUTS_FILES_FILEIMAGEVIEW_H_
+#define CLASSES_LAYOUTS_FILES_FILEIMAGEVIEW_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "MaterialLayout.h"
+#include "SPDataSource.h"
+#include "SPFont.h"
 
-NS_EPUB_BEGIN
+NS_SP_EXT_BEGIN(app)
 
-class Reader : public layout::Reader {
+class FileImageView : public material::Layout {
 public:
-	using StringReader = StringViewUtf8;
+	virtual bool init(const String &src);
 
-	virtual ~Reader() { }
+	virtual void onContentSizeDirty() override;
+
+	virtual void refresh();
+	virtual void close();
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	virtual void onImage(cocos2d::Texture2D *);
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
+	virtual void onFadeOut();
+	virtual void onFadeIn();
 
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	String _filePath;
+	material::Toolbar *_toolbar = nullptr;
+	material::ImageLayer *_sprite = nullptr;
+	draw::PathNode *_vectorImage = nullptr;
 };
 
-NS_EPUB_END
+NS_SP_EXT_END(app)
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* CLASSES_LAYOUTS_FILES_FILEIMAGEVIEW_H_ */

@@ -1,0 +1,632 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
+/**
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+**/
+
+#include "Material.h"
+#include "MaterialResourceManager.h"
+
+#include "RTListenerView.h"
+
+#include "SPEventListener.h"
+#include "SPRichTextRenderer.h"
+#include "SPLayer.h"
+
+NS_MD_BEGIN
+
+SP_DECLARE_EVENT_CLASS(RichTextListenerView, onSelection);
+
+bool RichTextListenerView::Selection::init(RichTextListenerView *view) {
+	if (!DynamicBatchNode::init()) {
+		return false;
+	}
+
+	_markerStart = construct<draw::PathNode>(48, 48);
+	_markerStart->addPath(draw::Path()
+		.moveTo(48, 0)
+		.lineTo(24, 0)
+		.arcTo(24, 24, 0, true, false, 48, 24)
+		.closePath());
+	_markerStart->setContentSize(Size(24.0f, 24.0f));
+	_markerStart->setAnchorPoint(Vec2(1.0f, 1.0f));
+	_markerStart->setColor(Color::Blue_500);
+	_markerStart->setOpacity(192);
+	_markerStart->setVisible(false);
+	addChild(_markerStart, 1);
+
+	_markerEnd = construct<draw::PathNode>(48, 48);
+	_markerEnd->addPath(draw::Path()
+		.moveTo(0, 0)
+		.lineTo(0, 24)
+		.arcTo(24, 24, 0, true, false, 24, 0)
+		.closePath());
+	_markerEnd->setContentSize(Size(24.0f, 24.0f));
+	_markerEnd->setAnchorPoint(Vec2(0.0f, 1.0f));
+	_markerEnd->setColor(Color::Blue_500);
+	_markerEnd->setOpacity(192);
+	_markerEnd->setVisible(false);
+	addChild(_markerEnd, 2);
+
+	_view = view;
+
+	setColor(Color::Blue_400);
+	setOpacity(48);
+
+	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
+	setOpacityModifyRGB(false);
+	setCascadeOpacityEnabled(false);
+
+	_selectionBounds.first = SelectionPosition{maxOf<size_t>(), 0};
+	_selectionBounds.second = SelectionPosition{maxOf<size_t>(), 0};
+
+	return true;
+}
+
+void RichTextListenerView::Selection::clearSelection() {
+	_index = 0;
+	_object = nullptr;
+	_quads->clear();
+
+	_markerStart->setVisible(false);
+	_markerEnd->setVisible(false);
+
+	_selectionBounds.first = SelectionPosition{maxOf<size_t>(), 0};
+	_selectionBounds.second = SelectionPosition{maxOf<size_t>(), 0};
+
+	setEnabled(false);
+}
+void RichTextListenerView::Selection::selectLabel(const rich_text::Object *obj, const Vec2 &loc) {
+	if (obj->type == layout::Object::Type::Label) {
+		_index = obj->index;
+		_object = obj;
+
+		const auto &label = _object->value.label;
+
+		const float d = screen::density();
+		Vec2 locInLabel((loc - obj->bbox.origin));
+
+		uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
+		if (charNumber == maxOf<uint32_t>()) {
+			clearSelection();
+			return;
+		}
+
+		auto b = label.format.selectWord(charNumber);
+		_selectionBounds = pair(SelectionPosition{obj->index, b.first}, SelectionPosition{obj->index, b.second});
+
+		updateRects();
+		setEnabled(true);
+	}
+}
+
+void RichTextListenerView::Selection::selectWholeLabel() {
+	if (_object) {
+		const auto &label = _object->value.label;
+
+		_selectionBounds.first = SelectionPosition{_object->index, 0};
+		_selectionBounds.second = SelectionPosition{_object->index, uint32_t(label.format.chars.size() - 1)};
+
+		updateRects();
+	}
+}
+
+void RichTextListenerView::Selection::updateBlendFunc(cocos2d::Texture2D *) {
+	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
+	setOpacityModifyRGB(true);
+}
+
+void RichTextListenerView::Selection::emplaceRect(const Rect &rect, size_t idx, size_t count) {
+	Vec2 origin;
+	if (_view->isVertical()) {
+		origin = Vec2(rect.origin.x, - rect.origin.y - _view->getObjectsOffset() - rect.size.height);
+	} else {
+		auto res = _view->getResult();
+		if (res) {
+			size_t page = size_t(floorf((rect.origin.y + rect.size.height) / res->getMedia().surfaceSize.height));
+			auto pageData = res->getPageData(page, 0);
+
+			origin = Vec2(rect.origin.x + pageData.viewRect.origin.x + pageData.margin.left,
+					pageData.margin.bottom + (pageData.texRect.size.height - rect.origin.y - rect.size.height + pageData.texRect.origin.y));
+		} else {
+			return;
+		}
+	}
+
+	auto id = _quads->emplace();
+	_quads->setGeometry(id, origin, rect.size, 0.0f);
+
+	if (idx == 0) {
+		_markerStart->setPosition(origin);
+		_markerStart->setVisible(true);
+	}
+	if (idx + 1 == count) {
+		_markerEnd->setPosition(origin + Vec2(rect.size.width, 0));
+		_markerEnd->setVisible(true);
+	}
+}
+
+void RichTextListenerView::Selection::updateRects() {
+	auto res = _view->getResult();
+	if (res) {
+		_quads->clear();
+		Vector<Rect> rects;
+		if (_selectionBounds.first.object == _selectionBounds.second.object) {
+			auto obj = res->getObject(_selectionBounds.first.object);
+			if (obj && obj->isLabel()) {
+				obj->value.label.getLabelRects(rects, _selectionBounds.first.position, _selectionBounds.second.position, screen::density(), obj->bbox.origin, Padding());
+			}
+		} else {
+			auto firstObj = res->getObject(_selectionBounds.first.object);
+			auto secondObj = res->getObject(_selectionBounds.second.object);
+
+			if (firstObj && firstObj->isLabel()) {
+				const rich_text::Label &label = firstObj->value.label;
+				label.getLabelRects(rects, _selectionBounds.first.position, uint32_t(label.format.chars.size() - 1), screen::density(), firstObj->bbox.origin, Padding());
+			}
+			for (size_t i = _selectionBounds.first.object + 1; i < _selectionBounds.second.object; ++i) {
+				auto obj = res->getObject(i);
+				if (obj && obj->isLabel()) {
+					const rich_text::Label &label = obj->value.label;
+					label.getLabelRects(rects, 0, uint32_t(label.format.chars.size() - 1), screen::density(), obj->bbox.origin, Padding());
+				}
+			}
+			if (secondObj && secondObj->isLabel()) {
+				const rich_text::Label &label = secondObj->value.label;
+				label.getLabelRects(rects, 0, _selectionBounds.second.position, screen::density(), secondObj->bbox.origin, Padding());
+			}
+		}
+
+		_quads->setCapacity(rects.size());
+		size_t rectIdx = 0;
+		for (auto &it : rects) {
+			emplaceRect(it, rectIdx, rects.size());
+			++ rectIdx;
+		}
+		updateColor();
+	}
+}
+
+bool RichTextListenerView::Selection::onTap(int, const Vec2 &) {
+	return true;
+}
+
+bool RichTextListenerView::Selection::onPressBegin(const Vec2 &) {
+	return true;
+}
+bool RichTextListenerView::Selection::onLongPress(const Vec2 &vec, const TimeInterval &, int count) {
+	if (!_markerTarget) {
+		auto res = _view->getResult();
+		if (res && count == 1) {
+			auto loc = _view->convertToObjectSpace(vec);
+			if (auto obj = getSelectedObject(res, loc)) {
+				selectLabel(obj, loc);
+			} else {
+				clearSelection();
+			}
+		}
+		if (count > 2) {
+			selectWholeLabel();
+			return false;
+		}
+	}
+	return true;
+}
+bool RichTextListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInterval &time) {
+	if (isEnabled() && time < TimeInterval::milliseconds(425)) {
+		auto loc = _view->convertToObjectSpace(vec);
+		auto obj = getSelectedObject(_view->getResult(), loc);
+		const float d = screen::density();
+		if (!obj) {
+			clearSelection();
+			return true;
+		}
+
+		const auto &label = obj->value.label;
+		Vec2 locInLabel((loc - obj->bbox.origin));
+		uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
+
+		if (charNumber == maxOf<uint32_t>()) {
+			clearSelection();
+			return true;
+		}
+
+		if (_selectionBounds.first.object == _selectionBounds.second.object && obj->index == _selectionBounds.first.object) {
+			if (charNumber < _selectionBounds.first.position) {
+				_selectionBounds.first.position = charNumber;
+				updateRects();
+			} else if (charNumber > _selectionBounds.second.position) {
+				_selectionBounds.second.position = charNumber;
+				updateRects();
+			} else if (charNumber != _selectionBounds.first.position && charNumber != _selectionBounds.second.position) {
+				if (charNumber - _selectionBounds.first.position < _selectionBounds.second.position - charNumber) {
+					_selectionBounds.first.position = charNumber;
+					updateRects();
+				} else {
+					_selectionBounds.second.position = charNumber;
+					updateRects();
+				}
+			}
+		} else if (_selectionBounds.first.object >= obj->index && (_selectionBounds.first.object - obj->index) < 10) {
+			_selectionBounds.first.object = obj->index;
+			_selectionBounds.first.position = charNumber;
+			updateRects();
+		} else if (_selectionBounds.second.object <= obj->index && (obj->index - _selectionBounds.second.object) < 10) {
+			_selectionBounds.second.object = obj->index;
+			_selectionBounds.second.position = charNumber;
+			updateRects();
+		} else if (_selectionBounds.first.object < obj->index && obj->index < _selectionBounds.second.object) {
+			if (obj->index - _selectionBounds.first.object < _selectionBounds.second.object - obj->index) {
+				_selectionBounds.first.object = obj->index;
+				_selectionBounds.first.position = charNumber;
+				updateRects();
+			} else {
+				_selectionBounds.second.object = obj->index;
+				_selectionBounds.second.position = charNumber;
+				updateRects();
+			}
+		} else {
+			clearSelection();
+		}
+	}
+	return true;
+}
+bool RichTextListenerView::Selection::onPressCancel(const Vec2 &) {
+	return true;
+}
+
+bool RichTextListenerView::Selection::onSwipeBegin(const Vec2 &loc) {
+	if (_enabled) {
+		if (node::isTouched(_markerStart, loc, 8.0f)) {
+			_markerTarget = _markerStart;
+			return true;
+		} else if (node::isTouched(_markerEnd, loc, 8.0f)) {
+			_markerTarget = _markerEnd;
+			return true;
+		}
+	}
+	return false;
+}
+bool RichTextListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
+	if (!_markerTarget) {
+		return false;
+	}
+
+	const float density = screen::density();
+	auto size = _markerTarget->getContentSize();
+	auto anchor = _markerTarget->getAnchorPoint();
+	auto offset = Vec2(anchor.x * size.width - size.width / 2.0f, anchor.y * size.height * 1.35f);
+	auto loc = _view->convertToObjectSpace(vec + offset * density);
+
+	if (!_object || _object->type != layout::Object::Type::Label || !_object->bbox.containsPoint(loc)) {
+		auto obj = getSelectedObject(_view->getResult(), loc,
+				(_markerTarget == _markerStart?_selectionBounds.second.object:_selectionBounds.first.object),
+				int32_t((_markerTarget == _markerStart?-1:1) * (_selectionBounds.second.object - _selectionBounds.first.object + 12)));
+		if (!obj) {
+			return true;
+		} else {
+			if (obj->type == layout::Object::Type::Label) {
+				_object = obj;
+			} else {
+				return true;
+			}
+		}
+	}
+
+	if (_object && _object->type == layout::Object::Type::Label) {
+		const auto &label = _object->value.label;
+		Vec2 locInLabel((loc - _object->bbox.origin));
+
+		if (_markerTarget == _markerStart) {
+			uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Prefix);
+			if (charNumber != maxOf<uint32_t>()) {
+				if (_object->index != _selectionBounds.second.object ||
+						(charNumber != _selectionBounds.first.position && charNumber <= _selectionBounds.second.position)) {
+					_selectionBounds.first.object = _object->index;
+					_selectionBounds.first.position = charNumber;
+					updateRects();
+				}
+			}
+		} else {
+			uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Suffix);
+			if (charNumber != maxOf<uint32_t>()) {
+				if (_object->index != _selectionBounds.first.object ||
+						(charNumber != _selectionBounds.second.position && charNumber >= _selectionBounds.first.position)) {
+					_selectionBounds.second.object = _object->index;
+					_selectionBounds.second.position = charNumber;
+					updateRects();
+				}
+			}
+		}
+	}
+
+	return true;
+}
+bool RichTextListenerView::Selection::onSwipeEnd(const Vec2 &v) {
+	if (!_markerTarget) {
+		return false;
+	}
+
+	_markerTarget = nullptr;
+	return true;
+}
+
+void RichTextListenerView::Selection::setEnabled(bool value) {
+	if (value != _enabled) {
+		_enabled = value;
+		onSelection(_view, value);
+	}
+}
+
+bool RichTextListenerView::Selection::isEnabled() const {
+	return _enabled;
+}
+
+bool RichTextListenerView::Selection::hasSelection() const {
+	return _selectionBounds.first.object != maxOf<size_t>() && _selectionBounds.first.object != maxOf<size_t>();
+}
+
+static void pushString(StringStream &stream, const WideString &str) {
+	WideStringView r(str);
+	r.skipChars<chars::CharGroup<char16_t, CharGroupId::OpticalAlignmentBullet>>();
+	if (r.empty()) {
+		stream << string::toUtf8(str) << " ";
+	} else {
+		stream << string::toUtf8(str) << "\r\n";
+	}
+}
+
+String RichTextListenerView::Selection::getSelectedString(size_t maxWords) const {
+	if (hasSelection()) {
+		auto res = _view->getResult();
+		if (res) {
+			if (_selectionBounds.first.object == _selectionBounds.second.object) {
+				auto obj = res->getObject(_selectionBounds.first.object);
+				if (obj && obj->isLabel()) {
+					return string::toUtf8(obj->value.label.format.str(_selectionBounds.first.position, _selectionBounds.second.position, maxWords, true));
+				}
+			} else if (maxWords != maxOf<size_t>()) {
+				auto obj = res->getObject(_selectionBounds.first.object);
+				if (obj && obj->isLabel()) {
+					const rich_text::Label &l = obj->value.label;
+					return string::toUtf8(l.format.str(_selectionBounds.first.position, uint32_t(l.format.chars.size() - 1), maxWords, true));
+				}
+			} else {
+				StringStream ret;
+				auto firstObj = res->getObject(_selectionBounds.first.object);
+				auto lastObj = res->getObject(_selectionBounds.second.object);
+
+				String str;
+				if (firstObj && firstObj->isLabel()) {
+					const rich_text::Label &l = firstObj->value.label;
+					pushString(ret, l.format.str(_selectionBounds.first.position, uint32_t(l.format.chars.size() - 1), maxWords, true));
+				}
+
+				for (size_t i = _selectionBounds.first.object + 1; i < _selectionBounds.second.object; ++i) {
+					auto obj = res->getObject(i);
+					if (obj && obj->isLabel()) {
+						const rich_text::Label &l = obj->value.label;
+						pushString(ret, l.format.str(0, uint32_t(l.format.chars.size() - 1), maxWords, true));
+					}
+				}
+
+				if (lastObj && lastObj->isLabel()) {
+					const rich_text::Label &l = lastObj->value.label;
+					pushString(ret, l.format.str(0, _selectionBounds.second.position, maxWords, true));
+				}
+
+				return ret.str();
+			}
+		}
+	}
+	return String();
+}
+
+Pair<RichTextListenerView::SelectionPosition, RichTextListenerView::SelectionPosition> RichTextListenerView::Selection::getSelectionPosition() const {
+	return _selectionBounds;
+}
+
+const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc) const {
+	const Vector<rich_text::Object> &objs = res->getObjects();
+	for (auto &it : objs) {
+		if (it.isLabel()) {
+			if (loc.x >= it.bbox.getMinX() - 8.0f && loc.x <= it.bbox.getMaxX() + 8.0f
+					&& loc.y >= it.bbox.getMinY() - 8.0f && loc.y <= it.bbox.getMaxY() + 8.0f) {
+				return &it;
+			}
+		}
+	}
+	return nullptr;
+}
+
+const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc, size_t pos, int32_t offset) const {
+	const Vector<rich_text::Object> &objs = res->getObjects();
+	if (offset < 0 && pos > 0) {
+		if (-offset > int32_t(pos)) {
+			offset = int32_t(-pos);
+		}
+
+		auto end = objs.begin() + pos + 1;
+		auto start = objs.begin() + (pos + offset);
+		for (auto it = start; it != end; ++ it) {
+			if (it->isLabel()) {
+				if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
+						&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
+					return &(*it);
+				}
+			}
+		}
+
+	} else if (offset > 0 && pos < objs.size()) {
+		if (pos + offset > objs.size()) {
+			offset = int32_t(objs.size() - pos);
+		}
+
+		auto start = objs.begin() + pos;
+		auto end = objs.begin() + (pos + 1 + offset);
+		for (auto it = start; it != end; ++ it) {
+			if (it->isLabel()) {
+				if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
+						&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
+					return &(*it);
+				}
+			}
+		}
+	}
+	return nullptr;
+}
+
+RichTextListenerView::~RichTextListenerView() { }
+
+bool RichTextListenerView::init(Layout l, rich_text::Source *source, const Vector<String> &ids) {
+	_eventListener = construct<EventListener>();
+
+	if (!View::init(l, source, ids)) {
+		return false;
+	}
+
+	_eventListener->onEvent(ResourceManager::onLightLevel, std::bind(&RichTextListenerView::onLightLevelChanged, this));
+	addComponent(_eventListener);
+
+	_selection = construct<Selection>(this);
+	addChild(_selection, 10);
+
+	onLightLevelChanged();
+
+	return true;
+}
+
+void RichTextListenerView::setUseSelection(bool value) {
+	_useSelection = value;
+}
+
+void RichTextListenerView::setLayout(Layout l) {
+	_selection->clearSelection();
+	View::setLayout(l);
+}
+
+void RichTextListenerView::onLightLevelChanged() {
+	auto level = ResourceManager::getInstance()->getLightLevel();
+	_renderer->setLightLevelValue(level);
+
+	switch(level) {
+	case ResourceManager::LightLevel::Washed:
+		_background->setColor(Color::White);
+		break;
+	case ResourceManager::LightLevel::Normal:
+		_background->setColor(Color::Grey_200);
+		break;
+	case ResourceManager::LightLevel::Dim:
+		_background->setColor(Color::Grey_800);
+		break;
+	}
+}
+
+void RichTextListenerView::onTap(int count, const Vec2 &vec) {
+	if (count == 1 && _tapCallback) {
+		if (auto res = getResult()) {
+			auto loc = convertToObjectSpace(vec);
+			auto &objs = res->getRefs();
+			for (auto &it : objs) {
+				if (isObjectTapped(loc, it)) {
+					return;
+				}
+			}
+		}
+
+		_tapCallback(count, vec);
+	}
+}
+
+
+bool RichTextListenerView::onSwipeEventBegin(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+	if (_useSelection && _selection->isEnabled() && _selection->onSwipeBegin(loc)) {
+		return _selection->onSwipe(loc, d);
+	}
+	return View::onSwipeEventBegin(loc, d, v);
+}
+bool RichTextListenerView::onSwipeEvent(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+	if (_useSelection && _selection->isEnabled() && _selection->onSwipe(loc, d)) {
+		return true;
+	}
+	return View::onSwipeEvent(loc, d, v);
+}
+bool RichTextListenerView::onSwipeEventEnd(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+	if (_useSelection && _selection->isEnabled() && _selection->onSwipeEnd(v)) {
+		return true;
+	}
+	return View::onSwipeEventEnd(loc, d, v);
+}
+
+bool RichTextListenerView::onPressBegin(const Vec2 &loc) {
+	if (_useSelection && _selection->isEnabled()) {
+		return _selection->onPressBegin(loc);
+	}
+	return View::onPressBegin(loc);
+}
+
+bool RichTextListenerView::onLongPress(const Vec2 &vec, const TimeInterval &interval, int count) {
+	if (View::onLongPress(vec, interval, count) && _useSelection) {
+		return _selection->onLongPress(vec, interval, count);
+	}
+	return false;
+}
+
+bool RichTextListenerView::onPressEnd(const Vec2 &loc, const TimeInterval &time) {
+	if (_useSelection && _selection->isEnabled()) {
+		return _selection->onPressEnd(loc, time);
+	}
+	return View::onPressEnd(loc, time);
+}
+bool RichTextListenerView::onPressCancel(const Vec2 &loc, const TimeInterval &time) {
+	if (_useSelection && _selection->isEnabled()) {
+		return _selection->onPressCancel(loc);
+	}
+	return View::onPressCancel(loc, time);
+}
+
+void RichTextListenerView::disableSelection() {
+	_selection->clearSelection();
+}
+bool RichTextListenerView::isSelectionEnabled() const {
+	return _selection->isEnabled();
+}
+
+String RichTextListenerView::getSelectedString(size_t maxWords) const {
+	return _selection->getSelectedString(maxWords);
+}
+Pair<RichTextListenerView::SelectionPosition, RichTextListenerView::SelectionPosition> RichTextListenerView::getSelectionPosition() const {
+	return _selection->getSelectionPosition();
+}
+
+void RichTextListenerView::onPosition() {
+	_selection->setPosition(_root->getPosition());
+	_selection->setContentSize(_root->getContentSize());
+	View::onPosition();
+}
+
+void RichTextListenerView::onRenderer(rich_text::Result *res, bool status) {
+	_selection->clearSelection();
+	View::onRenderer(res, status);
+}
+
+NS_MD_END

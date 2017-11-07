@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef CLASSES_GUI_GALLERYLAYOUT_H_
+#define CLASSES_GUI_GALLERYLAYOUT_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "MaterialToolbarLayout.h"
+#include "SPLayoutSource.h"
 
-NS_EPUB_BEGIN
+NS_MD_BEGIN
 
-class Reader : public layout::Reader {
+class RichTextGalleryLayout : public ToolbarLayout {
 public:
-	using StringReader = StringViewUtf8;
+	virtual bool init(layout::Source *source, const std::string &name, const std::string &sel);
+	virtual void onContentSizeDirty() override;
 
-	virtual ~Reader() { }
+	virtual void onEnter() override;
+
+	virtual void onForegroundTransitionBegan(ContentLayer *l, Layout *overlay) override;
+	virtual void onPush(ContentLayer *l, bool replace) override;
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	void onPosition(float val);
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
+	void onImage(const String &, const Function<void(cocos2d::Texture2D *)> &);
+	void onAssetCaptured(const String &image, const Function<void(cocos2d::Texture2D *)> &tex);
 
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
+	Rc<layout::Source> _source;
+	String _name;
+	Vector<String> _title;
 
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	GalleryScroll *_scroll;
 };
 
-NS_EPUB_END
+NS_MD_END
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* CLASSES_GUI_GALLERYLAYOUT_H_ */

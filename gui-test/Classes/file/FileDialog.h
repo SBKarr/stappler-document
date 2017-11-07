@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef CLASSES_LAYOUTS_FILEDIALOG_H_
+#define CLASSES_LAYOUTS_FILEDIALOG_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "SPDefine.h"
 
-NS_EPUB_BEGIN
+NS_SP_EXT_BEGIN(app)
 
-class Reader : public layout::Reader {
-public:
-	using StringReader = StringViewUtf8;
+namespace dialog {
 
-	virtual ~Reader() { }
-
-protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
-
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
-
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+enum class Mode {
+	SelectDir,
+	OpenFile
 };
 
-NS_EPUB_END
+void open(const std::string &path, const std::function<void(const std::string &)> &func, Mode = Mode::SelectDir);
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+};
+
+NS_SP_EXT_END(app)
+
+#endif /* CLASSES_LAYOUTS_FILEDIALOG_H_ */

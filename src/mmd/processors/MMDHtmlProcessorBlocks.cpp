@@ -54,7 +54,7 @@ using Traits = string::ToStringTraits<memory::PoolInterface>;
 void HtmlProcessor::exportBlockquote(std::ostream &out, token *t) {
 	pad(out, 2);
 	pushNode("blockquote");
-	out << "\n";
+	if (!spExt) { out << "\n"; }
 	padded = 2;
 	exportTokenTree(out, t->child);
 	pad(out, 1);
@@ -87,7 +87,8 @@ void HtmlProcessor::exportDefList(std::ostream &out, token *t) {
 	// lemon's LALR(1) parser can't properly handle this (to my understanding).
 
 	if (!(t->prev && (t->prev->type == BLOCK_DEFLIST))) {
-		pushNode("dl"); out << "\n";
+		pushNode("dl");
+		if (!spExt) { out << "\n"; }
 	}
 
 	padded = 2;
@@ -95,7 +96,8 @@ void HtmlProcessor::exportDefList(std::ostream &out, token *t) {
 	pad(out, 1);
 
 	if (!(t->next && (t->next->type == BLOCK_DEFLIST))) {
-		popNode(); out << "\n";
+		popNode();
+		if (!spExt) { out << "\n"; }
 	}
 	padded = 1;
 }
@@ -104,7 +106,8 @@ void HtmlProcessor::exportDefTerm(std::ostream &out, token *t) {
 	pad(out, 2);
 	pushNode("dt");
 	exportTokenTree(out, t->child);
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 	padded = 2;
 }
 
@@ -140,7 +143,8 @@ void HtmlProcessor::exportFencedCodeBlock(std::ostream &out, token *t) {
 			return;
 		}
 
-		pushNode("pre"); pushNode("code", { pair("class", temp_char) });
+		pushNode("pre");
+		pushNode("code", { pair("class", temp_char) });
 	} else {
 		pushNode("pre"); pushNode("code");
 	}
@@ -153,6 +157,7 @@ void HtmlProcessor::exportFencedCodeBlock(std::ostream &out, token *t) {
 void HtmlProcessor::exportIndentedCodeBlock(std::ostream &out, token *t) {
 	pad(out, 2);
 	pushNode("pre"); pushNode("code");
+
 	exportTokenTreeRaw(out, t->child);
 	popNode(); popNode();
 	padded = 0;
@@ -362,7 +367,8 @@ void HtmlProcessor::exportHeaderText(std::ostream &out, token *t, uint8_t level)
 void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 	pad(out, 2);
 
-	pushNode("table"); out << "\n";
+	pushNode("table");
+	if (!spExt) { out << "\n"; }
 
 	int16_t temp_short;
 
@@ -377,7 +383,8 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 		t->next->child->child->type = TEXT_EMPTY;
 		t->next->child->child->mate->type = TEXT_EMPTY;
 		exportTokenTree(out, t->next->child->child);
-		popNode(); out << "\n";
+		popNode();
+		if (!spExt) { out << "\n"; }
 		temp_short = 1;
 	} else {
 		temp_short = 0;
@@ -386,22 +393,24 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 	padded = 2;
 	readTableColumnAlignments(t);
 
-	pushNode("colgroup"); out << "\n";
+	pushNode("colgroup");
+	if (!spExt) { out << "\n"; }
 
 	for (int i = 0; i < table_column_count; ++i) {
 		switch (table_alignment[i]) {
-			case 'l': pushInlineNode("col", { pair("style", "text-align:left;") }); out << "\n"; break;
+			case 'l': pushInlineNode("col", { pair("style", "text-align:left;") }); if (!spExt) { out << "\n"; } break;
 			case 'N':
-			case 'L': pushInlineNode("col", { pair("style", "text-align:left;"), pair("class", "extended") }); out << "\n"; break;
-			case 'r': pushInlineNode("col", { pair("style", "text-align:right;") }); out << "\n"; break;
-			case 'R': pushInlineNode("col", { pair("style", "text-align:right;"), pair("class", "extended") }); out << "\n"; break;
-			case 'c': pushInlineNode("col", { pair("style", "text-align:center;") }); out << "\n"; break;
-			case 'C': pushInlineNode("col", { pair("style", "text-align:center;"), pair("class", "extended") }); out << "\n"; break;
-			default: pushInlineNode("col"); out << "\n"; break;
+			case 'L': pushInlineNode("col", { pair("style", "text-align:left;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			case 'r': pushInlineNode("col", { pair("style", "text-align:right;") }); if (!spExt) { out << "\n"; } break;
+			case 'R': pushInlineNode("col", { pair("style", "text-align:right;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			case 'c': pushInlineNode("col", { pair("style", "text-align:center;") }); if (!spExt) { out << "\n"; } break;
+			case 'C': pushInlineNode("col", { pair("style", "text-align:center;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			default: pushInlineNode("col"); if (!spExt) { out << "\n"; } break;
 		}
 	}
 
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 	padded = 1;
 	exportTokenTree(out, t->child);
 	pad(out, 1);
@@ -412,17 +421,20 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportTableHeader(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("thead"); out << "\n";
+	pushNode("thead");
+	if (!spExt) { out << "\n"; }
 	in_table_header = 1;
 	exportTokenTree(out, t->child);
 	in_table_header = 0;
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 	padded = 1;
 }
 
 void HtmlProcessor::exportTableSection(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("tbody"); out << "\n";
+	pushNode("tbody");
+	if (!spExt) { out << "\n"; }
 	padded = 2;
 	exportTokenTree(out, t->child);
 	popNode();
@@ -481,7 +493,8 @@ void HtmlProcessor::exportTableCell(std::ostream &out, token *t) {
 
 	exportTokenTree(out, t->child);
 
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 
 	if (t->next) {
 		table_cell_count += t->next->len;
@@ -491,26 +504,33 @@ void HtmlProcessor::exportTableCell(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportTableRow(std::ostream &out, token *t) {
-	pushNode("tr"); out << "\n";
+	pushNode("tr");
+	if (!spExt) { out << "\n"; }
 	table_cell_count = 0;
 	exportTokenTree(out, t->child);
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 }
 
 void HtmlProcessor::exportToc(std::ostream &out, token *t) {
-	pad(out, 2);
-	pushNode("div", { pair("class", "TOC") }); out << "\n";
-	size_t counter = 0;
-	exportTocEntry(out, counter, 0);
-	popNode();
-	padded = 0;
+	if (!spExt) {
+		pad(out, 2);
+		pushNode("div", { pair("class", "TOC") });
+		if (!spExt) { out << "\n"; }
+		size_t counter = 0;
+		exportTocEntry(out, counter, 0);
+		popNode();
+		padded = 0;
+	}
 }
 
 void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t level) {
 	token * entry, * next;
 	short entry_level, next_level;
 
-	out << "\n"; pushNode("ul"); out << "\n";
+	if (!spExt) { out << "\n"; }
+	pushNode("ul");
+	if (!spExt) { out << "\n"; }
 
 	auto &header_stack = content->getHeaders();
 	while (counter < header_stack.size()) {
@@ -536,7 +556,8 @@ void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t 
 				}
 			}
 
-			popNode(); out << "\n";
+			popNode();
+			if (!spExt) { out << "\n"; }
 		} else if (entry_level < level ) {
 			// If entry < level, exit this level
 			// Decrement counter first, so that we can test it again later
@@ -548,7 +569,8 @@ void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t 
 		++ counter;
 	}
 
-	popNode(); out << "\n";
+	popNode();
+	if (!spExt) { out << "\n"; }
 }
 
 void HtmlProcessor::exportBacktick(std::ostream &out, token *t) {
@@ -1066,7 +1088,8 @@ void HtmlProcessor::exportSuperscript(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportLineBreak(std::ostream &out, token *t) {
 	if (t->next) {
-		pushInlineNode("br"); out << "\n";
+		pushInlineNode("br");
+		if (!spExt) { out << "\n"; }
 		padded = 1;
 	}
 }

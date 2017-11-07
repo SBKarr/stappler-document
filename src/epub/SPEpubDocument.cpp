@@ -32,6 +32,16 @@ THE SOFTWARE.
 
 NS_EPUB_BEGIN
 
+static bool checkEpub(const String &path, const String &ct) {
+	return (ct == "application/epub+zip") || Document::isEpub(path);
+}
+
+static Rc<layout::Document> loadEpub(const String &path, const String &ct) {
+	return Rc<epub::Document>::create(FilePath(path));
+}
+
+Document::DocumentFormat Document::EpubFormat(&checkEpub, &loadEpub, nullptr, nullptr);
+
 bool Document::isEpub(const String &path) {
 	return Info::isEpub(path);
 }
@@ -65,6 +75,9 @@ bool Document::init(const FilePath &path) {
 			auto file = _info->getFileData(it);
 			if (!file.empty() && it.entry->type == ManifestFile::Source) {
 				processHtml(it.entry->path, StringView((const char *)file.data(), file.size()), it.linear);
+				if (it.linear) {
+					_spine.push_back(it.entry->path);
+				}
 			}
 		}
 		return true;
@@ -90,20 +103,18 @@ Bytes Document::getFileData(const String &ipath) {
 	}
 	return Bytes();
 }
-Bitmap Document::getImageBitmap(const String &ipath, const Bitmap::StrideFn &fn) {
+Bytes Document::getImageData(const String &ipath) {
+	return getFileData(ipath);
+}
+
+Pair<uint16_t, uint16_t> Document::getImageSize(const String &ipath) {
 	String path(resolveName(ipath));
 	auto &manifest = _info->getManifest();
-	auto imageIt = manifest.find(path);
-	if (imageIt != manifest.end()) {
-		auto &img = imageIt->second;
-		auto vec = _info->getFileData(img);
-		if (vec.empty()) {
-			return Bitmap();
-		}
-
-		return Bitmap(vec, fn);
+	auto fileIt = manifest.find(path);
+	if (fileIt != manifest.end()) {
+		return pair(fileIt->second.width, fileIt->second.height);
 	}
-	return Bitmap();
+	return pair(uint16_t(0), uint16_t(0));
 }
 
 bool Document::valid() const {
@@ -196,16 +207,16 @@ String Document::getLanguage() const {
 }
 
 void Document::processHtml(const String &path, const StringView &html, bool linear) {
+	using ContentPage = layout::ContentPage;
+
 	epub::Reader r;
 	Vector<Pair<String, String>> meta;
-	_content.emplace_back(layout::HtmlPage{path, layout::Node("html", path), layout::HtmlPage::FontMap{}, linear});
-	layout::HtmlPage &c = _content.back();
-
-	if (r.readHtml(c, html, _cssStrings, _mediaQueries, meta, _css)) {
-		layout::FontSource::mergeFontFace(_fontFaces, c.fonts);
-		processMeta(c, meta);
+	auto it = _pages.emplace(path, ContentPage{path, layout::Node("html", path), linear}).first;
+	it->second.queries = layout::style::MediaQuery::getDefaultQueries(it->second.strings);
+	if (r.readHtml(it->second, html, meta)) {
+		processMeta(it->second, meta);
 	} else {
-		_content.pop_back();
+		_pages.erase(it);
 	}
 }
 
@@ -490,6 +501,19 @@ data::Value Document::encodeContents(const ContentRecord &rec) {
 		}
 	}
 	return ret;
+}
+
+void Document::onStyleAttribute(Style &style, const StringView &tag, const StringView &name, const StringView &value,
+	const MediaParameters &media) const {
+	if (name == "epub:type") {
+		if (value == "footnote" || value == "endnote" || value == "footnotes" || value == "endnotes") {
+			if (media.hasOption("tooltip")) {
+				style.set<layout::style::ParameterName::Display>(layout::style::Display::Default);
+			} else {
+				style.set<layout::style::ParameterName::Display>(layout::style::Display::None);
+			}
+		}
+	}
 }
 
 NS_EPUB_END

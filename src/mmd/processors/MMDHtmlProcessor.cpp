@@ -42,6 +42,8 @@ void HtmlProcessor::process(const Content &c, const StringView &str, const Token
 		base_header_level = html_header_level;
 	}
 
+	spExt = ((extensions | Extensions::StapplerLayout) != Extensions::None);
+
 	processHtml(c, str, t);
 }
 
@@ -252,13 +254,34 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	auto & a = link->attributes;
 	VecList attr; attr.reserve(256 / sizeof(VecList::value_type));
 
+	StringView width;
+	StringView height;
+	StringView align;
+
+	for (auto &it : a) {
+		if (it.first == "width") {
+			width = it.second;
+		} else if (it.first == "height") {
+			height = it.second;
+		} else if (spExt && it.first == "align") {
+			align = it.second;
+		} else {
+			attr.emplace_back(it.first, it.second);
+		}
+	}
+
 	// Compatibility mode doesn't allow figures
 	if ((extensions & Extensions::Compatibility) != Extensions::None) {
 		is_figure = false;
 	}
 
 	if (is_figure) {
-		pushNode("figure"); out << "\n";
+		if (spExt) {
+			pushNode("figure", { pair("class", align) });
+		} else {
+			pushNode("figure");
+		}
+		if (!spExt) { out << "\n"; }
 	}
 
 	attr.emplace_back("src", link->url);
@@ -282,19 +305,6 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		attr.emplace_back("title", link->title);
 	}
 
-	StringView width;
-	StringView height;
-
-	for (auto &it : a) {
-		if (it.first == "width") {
-			width = it.second;
-		} else if (it.first == "height") {
-			height = it.second;
-		} else {
-			attr.emplace_back(it.first, it.second);
-		}
-	}
-
 	String style;
 	if (!height.empty() || !width.empty()) {
 		flushBuffer();
@@ -310,17 +320,25 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		attr.emplace_back("style", style);
 	}
 
-	pushInlineNode("img", { }, move(attr));
+	if (spExt && !align.empty()) {
+		pushInlineNode("img", { pair("class", align) }, move(attr));
+	} else {
+		pushInlineNode("img", { }, move(attr));
+	}
 
 	if (is_figure) {
 		if (text) {
-			out << "\n";
-			pushNode("figcaption");
+			if (!spExt) { out << "\n"; }
+			if (spExt && !align.empty()) {
+				pushNode("figcaption", { pair("class", align) });
+			} else {
+				pushNode("figcaption");
+			}
 			exportTokenTree(out, text->child);
 			popNode();
 		}
 
-		out << "\n";
+		if (!spExt) { out << "\n"; }
 		popNode();
 	}
 }

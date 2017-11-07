@@ -79,12 +79,14 @@ enum class Extensions : uint32_t {
 	CriticReject	= 1 << 11,   //!< Reject all proposed changes
 	RandomFoot		= 1 << 12,   //!< Use random numbers for footnote links
 	Transclude		= 1 << 13,   //!< Perform transclusion(s)
+	StapplerLayout	= 1 << 14,   //!< Use stappler layout engine
 	Fake			= uint32_t(1 << 31),   //!< 31 is highest number allowed
 };
 
 SP_DEFINE_ENUM_AS_MASK(Extensions)
 
 constexpr Extensions DefaultExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart;
+constexpr Extensions StapplerExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart | Extensions::StapplerLayout;
 
 /// Define smart typography languages -- first in list is default
 enum class QuotesLanguage {

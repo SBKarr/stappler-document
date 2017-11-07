@@ -24,12 +24,19 @@ THE SOFTWARE.
 #define LAYOUT_EPUB_EPUBDOCUMENT_H_
 
 #include "SLDocument.h"
+#include "SLRendererTypes.h"
 #include "SPEpubInfo.h"
 
 NS_EPUB_BEGIN
 
 class Document : public layout::Document {
 public:
+	static DocumentFormat EpubFormat;
+
+	using Style = layout::Style;
+	using Node = layout::Node;
+	using MediaParameters = layout::MediaParameters;
+
 	static bool isEpub(const String &path);
 
 	Document();
@@ -37,7 +44,8 @@ public:
 	virtual bool init(const FilePath &);
 	virtual bool isFileExists(const String &) const override;
 	virtual Bytes getFileData(const String &) override;
-	virtual Bitmap getImageBitmap(const String &, const Bitmap::StrideFn &fn) override;
+	virtual Bytes getImageData(const String &) override;
+	virtual Pair<uint16_t, uint16_t> getImageSize(const String &) override;
 
 	bool valid() const;
 	operator bool () const;
@@ -63,6 +71,9 @@ public: // meta
 	String getLanguage() const;
 
 protected:
+	virtual void onStyleAttribute(Style &style, const StringView &tag, const StringView &name, const StringView &value,
+		const MediaParameters &) const override;
+
 	virtual void processHtml(const String &, const StringView &, bool linear = true) override;
 
 	void readTocFile(const String &);

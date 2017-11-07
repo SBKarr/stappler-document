@@ -117,6 +117,7 @@ protected:
 	virtual void flushBuffer() = 0;
 
 protected:
+	bool spExt = false;
 	uint8_t html_header_level = maxOf<uint8_t>();
 	std::ostream *output = nullptr;
 	StringStream buffer;

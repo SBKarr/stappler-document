@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_
+#define LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "MaterialMenuSource.h"
+#include "SPEventHandler.h"
 
-NS_EPUB_BEGIN
+NS_MD_BEGIN
 
-class Reader : public layout::Reader {
+class Navigation;
+class MenuSource;
+class GridView;
+
+class LightLevelMenuButton : public material::MenuSourceButton, public stappler::EventHandler {
 public:
-	using StringReader = StringViewUtf8;
-
-	virtual ~Reader() { }
+	virtual bool init() override;
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	cocos2d::Node *onLabel();
+	void onMenuButton(uint32_t id);
+	void onLightLevelChanged();
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
-
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	std::vector<material::MenuSourceButton *> _buttons;
 };
 
-NS_EPUB_END
+NS_MD_END
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_ */

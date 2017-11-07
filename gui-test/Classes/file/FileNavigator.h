@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef CLASSES_APPLICATION_FILENAVIGATOR_H_
+#define CLASSES_APPLICATION_FILENAVIGATOR_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "MaterialToolbarLayout.h"
+#include "SPDataSource.h"
+#include "SPFont.h"
 
-NS_EPUB_BEGIN
+NS_SP_EXT_BEGIN(app)
 
-class Reader : public layout::Reader {
+class FileNavigator : public material::ToolbarLayout {
 public:
-	using StringReader = StringViewUtf8;
+	virtual bool init() override;
 
-	virtual ~Reader() { }
+	virtual void refreshData();
+	virtual void updateData(const std::string &path);
+
+	virtual void onForeground(material::ContentLayer *l, Layout *overlay) override;
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	virtual void onButton(const std::string &);
+	virtual void onDirButton(const std::string &);
+	virtual void openFile(const std::string &);
+	virtual void openDirectory();
+	virtual void switchHidden();
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
+	material::Scroll *_scroll;
+	material::MenuSourceButton *_switchHiddenButton;
 
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	bool _showHidden = false;
+	std::string _path;
+	data::Value _data;
+	Rc<data::Source> _source;
+	Rc<font::HyphenMap> _hyphens;
 };
 
-NS_EPUB_END
+NS_SP_EXT_END(app)
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* CLASSES_APPLICATION_FILENAVIGATOR_H_ */

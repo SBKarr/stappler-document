@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_
+#define LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "MaterialLayout.h"
+#include "RTTooltip.h"
+#include "SPLayoutSource.h"
 
-NS_EPUB_BEGIN
+NS_MD_BEGIN
 
-class Reader : public layout::Reader {
+class RichTextImageView : public Layout {
 public:
-	using StringReader = StringViewUtf8;
+	virtual ~RichTextImageView();
+	virtual bool init(layout::Source *, const String &id, const String &src, const String &alt = "");
 
-	virtual ~Reader() { }
+	virtual void onContentSizeDirty() override;
+
+	virtual void close();
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	virtual void onExpand();
+	virtual Rc<cocos2d::Texture2D> readImage(const String &);
+	virtual void onImage(cocos2d::Texture2D *);
+	virtual void onAssetCaptured(const String &);
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
+	RichTextTooltip *_tooltip = nullptr;
+	MenuSourceButton *_expandButton = nullptr;
+	bool _expanded = true;
 
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	ImageLayer *_sprite = nullptr;
+	Rc<layout::Source> _source;
 };
 
-NS_EPUB_END
+NS_MD_END
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_ */
