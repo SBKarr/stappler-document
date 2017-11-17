@@ -32,7 +32,7 @@ THE SOFTWARE.
 
 NS_MMD_BEGIN
 
-static bool isMmdData(const DataReader<ByteOrder::Network> &data) {
+bool LayoutDocument::isMmdData(const DataReader<ByteOrder::Network> &data) {
 	StringView str((const char *)data.data(), data.size());
 	str.skipChars<StringView::CharGroup<CharGroupId::WhiteSpace>>();
 
@@ -48,7 +48,7 @@ static bool isMmdData(const DataReader<ByteOrder::Network> &data) {
 	return false;
 }
 
-static bool isMmdFile(const String &path) {
+bool LayoutDocument::isMmdFile(const String &path) {
 	auto ext = filepath::lastExtension(path);
 	if (ext == "md" || ext == "markdown") {
 		return true;
@@ -69,7 +69,7 @@ static bool isMmdFile(const String &path) {
 static bool checkMmdFile(const String &path, const String &ct) {
 	StringView ctView(ct);
 
-	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || isMmdFile(path);
+	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || LayoutDocument::isMmdFile(path);
 }
 
 static Rc<layout::Document> loadMmdFile(const String &path, const String &ct) {
@@ -79,7 +79,7 @@ static Rc<layout::Document> loadMmdFile(const String &path, const String &ct) {
 static bool checkMmdData(const DataReader<ByteOrder::Network> &data, const String &ct) {
 	StringView ctView(ct);
 
-	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || isMmdData(data);
+	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || LayoutDocument::isMmdData(data);
 }
 
 static Rc<layout::Document> loadMmdData(const DataReader<ByteOrder::Network> &data, const String &ct) {

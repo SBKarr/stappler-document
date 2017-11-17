@@ -206,26 +206,28 @@ void EpubView::onContentSizeDirty() {
 	}
 
 	ToolbarLayout::onContentSizeDirty();
-	if (_view->getLayout() == RichTextView::Horizontal) {
-		_baseNode->setContentSize(_baseNode->getContentSize() - Size(0.0f, 20.0f));
-		_baseNode->setPosition(0.0f, 20.0f);
+	if (_extendedNavigation) {
+		if (_view->getLayout() == RichTextView::Horizontal) {
+			_baseNode->setContentSize(_baseNode->getContentSize() - Size(0.0f, 20.0f));
+			_baseNode->setPosition(0.0f, 20.0f);
 
-		_navigation->setContentSize(Size(_contentSize.width, 20.0f));
-		_navigation->setPosition(0.0f, 0.0f);
-		_navigation->setAnchorPoint(Vec2(0.0f, 0.0f));
+			_navigation->setContentSize(Size(_contentSize.width, 20.0f));
+			_navigation->setPosition(0.0f, 0.0f);
+			_navigation->setAnchorPoint(Vec2(0.0f, 0.0f));
 
-		_buttonLeft->setVisible(true);
-		_buttonRight->setVisible(true);
-		_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
-	} else {
-		_baseNode->setContentSize(_baseNode->getContentSize() - Size(20.0f, 0.0f));
-		_navigation->setContentSize(Size(20.0f, _contentSize.height));
-		_navigation->setPosition(_contentSize.width, 0.0f);
-		_navigation->setAnchorPoint(Vec2(1.0f, 0.0f));
+			_buttonLeft->setVisible(true);
+			_buttonRight->setVisible(true);
+			_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
+		} else {
+			_baseNode->setContentSize(_baseNode->getContentSize() - Size(20.0f, 0.0f));
+			_navigation->setContentSize(Size(20.0f, _contentSize.height));
+			_navigation->setPosition(_contentSize.width, 0.0f);
+			_navigation->setAnchorPoint(Vec2(1.0f, 0.0f));
 
-		_buttonLeft->setVisible(false);
-		_buttonRight->setVisible(false);
-		_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
+			_buttonLeft->setVisible(false);
+			_buttonRight->setVisible(false);
+			_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
+		}
 	}
 
 	_buttonLeft->setPosition(Vec2(0, 20.0f));
@@ -252,10 +254,9 @@ void EpubView::visit(Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
 			onHideBackButton();
 			_backButtonStatus = None;
 			break;
-		default: break;
+		default:
+			break;
 		}
-
-
 	}
 
 	ToolbarLayout::visit(r, t, f, z);
@@ -341,6 +342,18 @@ void EpubView::setBookmarksEnabled(bool value) {
 
 bool EpubView::isBookmarksEnabled() const {
 	return _contents->isBookmarksEnabled();
+}
+
+void EpubView::setExtendedNavigationEnabled(bool value) {
+	if (value != _extendedNavigation) {
+		_extendedNavigation = value;
+		_navigation->setVisible(_extendedNavigation);
+		_baseNode->setIndicatorVisible(!_extendedNavigation);
+	}
+}
+
+bool EpubView::isExtendedNavigationEnabled() const {
+	return _extendedNavigation;
 }
 
 void EpubView::onLayoutButton() {

@@ -36,6 +36,9 @@ public:
 	using Node = layout::Node;
 	using MediaParameters = layout::MediaParameters;
 
+	static bool isMmdData(const DataReader<ByteOrder::Network> &data);
+	static bool isMmdFile(const String &path);
+
 	virtual ~LayoutDocument() { }
 
 	virtual bool init(const FilePath &, const String &ct = String());

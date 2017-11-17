@@ -60,6 +60,9 @@ public:
 	virtual void setBookmarksEnabled(bool);
 	virtual bool isBookmarksEnabled() const;
 
+	virtual void setExtendedNavigationEnabled(bool);
+	virtual bool isExtendedNavigationEnabled() const;
+
 protected:
 	virtual void onRefreshButton();
 	virtual void onLayoutButton();
@@ -124,6 +127,8 @@ protected:
 	float _tmpIconProgress = 0.0f;
 	IconName _tmpIcon = IconName::None;
 	std::function<void()> _tmpCallback;
+
+	bool _extendedNavigation = true;
 };
 
 NS_MD_END
