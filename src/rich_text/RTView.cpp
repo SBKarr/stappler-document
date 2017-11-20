@@ -34,25 +34,24 @@ THE SOFTWARE.
 
 #include "SPDevice.h"
 #include "SPEventListener.h"
-#include "SPRichTextRenderer.h"
+#include "RTRenderer.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-SP_DECLARE_EVENT_CLASS(RichTextView, onImageLink);
-SP_DECLARE_EVENT_CLASS(RichTextView, onExternalLink);
-SP_DECLARE_EVENT_CLASS(RichTextView, onContentLink);
-SP_DECLARE_EVENT_CLASS(RichTextView, onError);
-SP_DECLARE_EVENT_CLASS(RichTextView, onDocument);
-SP_DECLARE_EVENT_CLASS(RichTextView, onLayout);
+SP_DECLARE_EVENT_CLASS(View, onImageLink);
+SP_DECLARE_EVENT_CLASS(View, onContentLink);
+SP_DECLARE_EVENT_CLASS(View, onError);
+SP_DECLARE_EVENT_CLASS(View, onDocument);
+SP_DECLARE_EVENT_CLASS(View, onLayout);
 
-RichTextView::~RichTextView() { }
+View::~View() { }
 
-bool RichTextView::init(rich_text::Source *source) {
-	return init(RichTextListenerView::Horizontal, source);
+bool View::init(Source *source) {
+	return init(ListenerView::Horizontal, source);
 }
 
-bool RichTextView::init(Layout l, rich_text::Source *source) {
-	if (!RichTextListenerView::init(l, source)) {
+bool View::init(Layout l, Source *source) {
+	if (!ListenerView::init(l, source)) {
 		return false;
 	}
 
@@ -62,12 +61,12 @@ bool RichTextView::init(Layout l, rich_text::Source *source) {
 		_pageMargin = Margin(2.0f, 6.0f, 12.0f);
 	}
 
-	_progress = construct<LinearProgress>();
+	_progress = construct<material::LinearProgress>();
 	_progress->setAnchorPoint(cocos2d::Vec2(0.0f, 1.0f));
 	_progress->setPosition(0.0f, 0.0f);
-	_progress->setLineColor(Color::Blue_500);
+	_progress->setLineColor(material::Color::Blue_500);
 	_progress->setLineOpacity(56);
-	_progress->setBarColor(Color::Blue_500);
+	_progress->setBarColor(material::Color::Blue_500);
 	_progress->setBarOpacity(255);
 	_progress->setVisible(false);
 	_progress->setAnimated(false);
@@ -87,13 +86,13 @@ bool RichTextView::init(Layout l, rich_text::Source *source) {
 	return true;
 }
 
-void RichTextView::onPosition() {
+void View::onPosition() {
 	_highlight->setPosition(_root->getPosition());
 	_highlight->setContentSize(_root->getContentSize());
-	RichTextListenerView::onPosition();
+	ListenerView::onPosition();
 }
 
-void RichTextView::onRestorePosition(rich_text::Result *res, float pos) {
+void View::onRestorePosition(rich_text::Result *res, float pos) {
 	if (_layoutChanged || (!isnan(_savedFontScale) && _savedFontScale != res->getMedia().fontScale)) {
 		setViewPosition(_savedPosition);
 	} else if (!isnan(_savedRelativePosition) && _savedRelativePosition != 0.0f) {
@@ -105,7 +104,7 @@ void RichTextView::onRestorePosition(rich_text::Result *res, float pos) {
 	}
 }
 
-void RichTextView::onRenderer(rich_text::Result *res, bool status) {
+void View::onRenderer(rich_text::Result *res, bool status) {
 	_highlight->setDirty();
 	auto pos = getScrollRelativePosition();
 	if (!isnan(pos) && pos != 0.0f) {
@@ -116,7 +115,7 @@ void RichTextView::onRenderer(rich_text::Result *res, bool status) {
 		_renderSize = Size::ZERO;
 	}
 
-	RichTextListenerView::onRenderer(res, status);
+	ListenerView::onRenderer(res, status);
 	if (status) {
 		_rendererUpdate = true;
 		updateProgress();
@@ -136,14 +135,14 @@ void RichTextView::onRenderer(rich_text::Result *res, bool status) {
 	}
 }
 
-void RichTextView::onContentSizeDirty() {
+void View::onContentSizeDirty() {
 	if (!_renderSize.equals(Size::ZERO) && !_renderSize.equals(_contentSize)) {
 		_savedPosition = getViewPosition();
 		_renderSize = Size::ZERO;
 		_layoutChanged = true;
 	}
 
-	RichTextListenerView::onContentSizeDirty();
+	ListenerView::onContentSizeDirty();
 	if (getLayout() == Horizontal) {
 		_progress->setPosition(0.0f, _contentSize.height);
 	}
@@ -151,29 +150,29 @@ void RichTextView::onContentSizeDirty() {
 	_highlight->setDirty();
 }
 
-void RichTextView::setLayout(Layout l) {
+void View::setLayout(Layout l) {
 	if (!_renderSize.equals(Size::ZERO)) {
 		_savedPosition = getViewPosition();
 		_renderSize = Size::ZERO;
 		_layoutChanged = true;
 	}
-	RichTextListenerView::setLayout(l);
+	ListenerView::setLayout(l);
 	_highlight->setDirty();
 	onLayout(this);
 }
 
-void RichTextView::setOverscrollFrontOffset(float value) {
-	RichTextListenerView::setOverscrollFrontOffset(value);
+void View::setOverscrollFrontOffset(float value) {
+	ListenerView::setOverscrollFrontOffset(value);
 	_progress->setPosition(0.0f, _contentSize.height - value);
 }
 
-void RichTextView::setSource(rich_text::Source *source) {
+void View::setSource(CommonSource *source) {
 	if (_source) {
 		if (_sourceErrorListener) { _eventListener->removeHandlerNode(_sourceErrorListener); }
 		if (_sourceUpdateListener) { _eventListener->removeHandlerNode(_sourceUpdateListener); }
 		if (_sourceAssetListener) { _eventListener->removeHandlerNode(_sourceAssetListener); }
 	}
-	RichTextListenerView::setSource(source);
+	ListenerView::setSource(source);
 	if (_source) {
 		_source->setEnabled(_renderingEnabled);
 		_sourceErrorListener = _eventListener->onEventWithObject(rich_text::Source::onError, _source,
@@ -181,40 +180,37 @@ void RichTextView::setSource(rich_text::Source *source) {
 			onSourceError((rich_text::Source::Error)ev.getIntValue());
 		});
 		_sourceUpdateListener = _eventListener->onEventWithObject(rich_text::Source::onUpdate, _source,
-				std::bind(&RichTextView::onSourceUpdate, this));
+				std::bind(&View::onSourceUpdate, this));
 		_sourceAssetListener = _eventListener->onEventWithObject(rich_text::Source::onDocument, _source,
-				std::bind(&RichTextView::onSourceAsset, this));
+				std::bind(&View::onSourceAsset, this));
 	}
 }
 
-void RichTextView::setProgressColor(const Color &color) {
+void View::setProgressColor(const material::Color &color) {
 	_progress->setBarColor(color);
 }
 
-void RichTextView::onLightLevelChanged() {
-	RichTextListenerView::onLightLevelChanged();
+void View::onLightLevelChanged() {
+	ListenerView::onLightLevelChanged();
 	_rendererUpdate = true;
 	updateProgress();
 }
 
-void RichTextView::onLink(const String &str, const Vec2 &vec) {
-	if (str.front() == '#') {
-		onId(str, vec);
+void View::onLink(const String &ref, const String &target, const Vec2 &vec) {
+	if (ref.front() == '#') {
+		if (target == "_self") {
+			onPositionRef(StringView(ref.data() + 1, ref.size() - 1), false);
+		} else {
+			onId(ref, target, vec);
+		}
 		return;
 	}
 
-	if (str.compare(0, 7, "http://") == 0 || str.compare(0, 8, "https://") == 0) {
-		stappler::Device::getInstance()->goToUrl(str);
-		onExternalLink(this, str);
-	} else if (str.compare(0, 7, "mailto:") == 0) {
-		stappler::Device::getInstance()->mailTo(str);
-		onExternalLink(this, str);
-	} else if (str.compare(0, 4, "tel:") == 0) {
-		stappler::Device::getInstance()->makePhoneCall(str);
-		onExternalLink(this, str);
-	} else if (str.compare(0, 10, "gallery://") == 0) {
-		StringView r(str);
-		r.offset(10);
+	StringView r(ref);
+	if (r.is("http://") || r.is("https://") || r.is("mailto:") || r.is("tel:")) {
+		ListenerView::onLink(ref, target, vec);
+	} else if (r.is("gallery://")) {
+		r.offset("gallery://"_len);
 		StringView name = r.readUntil<StringView::Chars<':'>>();
 		if (r.is(':')) {
 			++ r;
@@ -223,20 +219,22 @@ void RichTextView::onLink(const String &str, const Vec2 &vec) {
 			onGallery(name.str(), "", vec);
 		}
 	} else {
-		onContentLink(this, str);
-		onFile(str, vec);
+		onContentLink(this, ref);
+		onFile(ref, vec);
 	}
 }
 
-void RichTextView::onId(const String &str, const Vec2 &vec) {
+void View::onId(const String &ref, const String &target, const Vec2 &vec) {
 	auto doc = _renderer->getDocument();
 	if (!doc) {
 		return;
 	}
+
 	Vector<String> ids;
-	string::split(str, ",", [&ids] (const StringView &r) {
+	string::split(ref, ",", [&ids] (const StringView &r) {
 		ids.push_back(r.str());
 	});
+
 	for (auto &it : ids) {
 		if (it.front() == '#') {
 			it = it.substr(1);
@@ -254,6 +252,11 @@ void RichTextView::onId(const String &str, const Vec2 &vec) {
 			return;
 		}
 
+		if (node.second->getHtmlName() == "figure") {
+			onFigure(node.second);
+			return;
+		}
+
 		auto attrIt = node.second->getAttributes().find("x-type");
 		if (node.second->getHtmlName() == "img" || (attrIt != node.second->getAttributes().end() && attrIt->second == "image")) {
 			onImage(ids.front(), vec);
@@ -263,16 +266,16 @@ void RichTextView::onId(const String &str, const Vec2 &vec) {
 
 	auto pos = convertToNodeSpace(vec);
 
-	float width = _contentSize.width - metrics::horizontalIncrement();
-	if (width > metrics::horizontalIncrement() * 9) {
-		width = metrics::horizontalIncrement() * 9;
+	float width = _contentSize.width - material::metrics::horizontalIncrement();
+	if (width > material::metrics::horizontalIncrement() * 9) {
+		width = material::metrics::horizontalIncrement() * 9;
 	}
 
 	if (!_tooltip) {
-		_tooltip = construct<RichTextTooltip>(_source, ids);
+		_tooltip = construct<Tooltip>(_source, ids);
 		_tooltip->setPosition(pos);
 		_tooltip->setAnchorPoint(Vec2(0, 1));
-		_tooltip->setMaxContentSize(Size(width, _contentSize.height - metrics::horizontalIncrement() ));
+		_tooltip->setMaxContentSize(Size(width, _contentSize.height - material::metrics::horizontalIncrement() ));
 		_tooltip->setOriginPosition(pos, _contentSize, convertToWorldSpace(pos));
 		_tooltip->setCloseCallback([this] {
 			_tooltip = nullptr;
@@ -281,7 +284,7 @@ void RichTextView::onId(const String &str, const Vec2 &vec) {
 	}
 }
 
-void RichTextView::onImage(const String &id, const Vec2 &) {
+void View::onImage(const String &id, const Vec2 &) {
 	auto node = _source->getDocument()->getNodeByIdGlobal(id);
 
 	if (!node.first || !node.second) {
@@ -329,27 +332,27 @@ void RichTextView::onImage(const String &id, const Vec2 &) {
 
 	if (!src.empty()) {
 		if (node.second->getNodes().empty()) {
-			construct<RichTextImageView>(_source, String(), src, alt);
+			construct<ImageView>(_source, String(), src, alt);
 		} else {
-			construct<RichTextImageView>(_source, id, src, alt);
+			construct<ImageView>(_source, id, src, alt);
 		}
 	}
 }
 
-void RichTextView::onGallery(const String &name, const String &image, const Vec2 &) {
+void View::onGallery(const String &name, const String &image, const Vec2 &) {
 	if (_source) {
-		auto l = Rc<RichTextGalleryLayout>::create(_source, name, image);
+		auto l = Rc<GalleryLayout>::create(_source, name, image);
 		if (l) {
-			Scene::getRunningScene()->pushContentNode(l);
+			material::Scene::getRunningScene()->pushContentNode(l);
 		}
 	}
 }
 
-void RichTextView::onContentFile(const String &str) {
+void View::onContentFile(const String &str) {
 	onFile(str, Vec2(0.0f, 0.0f));
 }
 
-void RichTextView::setRenderingEnabled(bool value) {
+void View::setRenderingEnabled(bool value) {
 	if (_renderingEnabled != value) {
 		_renderingEnabled = value;
 		if (_renderer) {
@@ -361,32 +364,72 @@ void RichTextView::setRenderingEnabled(bool value) {
 	}
 }
 
-void RichTextView::clearHighlight() {
+void View::clearHighlight() {
 	_highlight->clearSelection();
 }
-void RichTextView::addHighlight(const Pair<SelectionPosition, SelectionPosition> &p) {
+void View::addHighlight(const Pair<SelectionPosition, SelectionPosition> &p) {
 	_highlight->addSelection(p);
 }
-void RichTextView::addHighlight(const SelectionPosition &first, const SelectionPosition &second) {
+void View::addHighlight(const SelectionPosition &first, const SelectionPosition &second) {
 	addHighlight(pair(first, second));
 }
-float RichTextView::getBookmarkScrollPosition(size_t objIdx, uint32_t pos) const {
+
+float View::getBookmarkScrollPosition(size_t objIdx, uint32_t pos, bool inView) const {
+	float ret = nan();
 	auto res = _renderer->getResult();
 	if (res) {
 		if (auto obj = res->getObject(objIdx)) {
 			if (obj->type == layout::Object::Type::Label) {
 				auto line = obj->value.label.format.getLine(pos);
 				if (line) {
-					return (obj->bbox.origin.y + (line->pos - line->height) / res->getMedia().density) / res->getContentSize().height;
+					ret = ((obj->bbox.origin.y + (line->pos - line->height) / res->getMedia().density));
 				}
 			}
-			return obj->bbox.origin.y / res->getContentSize().height;
+			ret = obj->bbox.origin.y;
+		}
+		if (!isnan(ret) && inView) {
+			if (!(res->getMedia().flags & layout::RenderFlag::PaginatedLayout)) {
+				ret -= res->getMedia().pageMargin.top;
+			}
+			ret += _objectsOffset;
+
+			if (ret > getScrollMaxPosition()) {
+				ret = getScrollMaxPosition();
+			} else if (ret < getScrollMinPosition()) {
+				ret = getScrollMinPosition();
+			}
 		}
 	}
-	return nan();
+	return ret;
 }
 
-void RichTextView::onFile(const String &str, const Vec2 &) {
+float View::getBookmarkScrollRelativePosition(size_t objIdx, uint32_t pos, bool inView) const {
+	float ret = nan();
+	auto res = _renderer->getResult();
+	if (res) {
+		if (auto obj = res->getObject(objIdx)) {
+			if (obj->type == layout::Object::Type::Label) {
+				auto line = obj->value.label.format.getLine(pos);
+				if (line) {
+					ret = ((obj->bbox.origin.y + (line->pos - line->height) / res->getMedia().density))
+							/ res->getContentSize().height;
+				}
+			}
+			ret = (obj->bbox.origin.y) / res->getContentSize().height;
+		}
+		if (!isnan(ret) && inView) {
+			auto s = _objectsOffset + ret * res->getContentSize().height;
+			ret = s / getScrollLength();
+		}
+	}
+	return ret;
+}
+
+void View::onFile(const String &str, const Vec2 &pos) {
+	onPositionRef(str, false);
+}
+
+void View::onPositionRef(const StringView &str, bool middle) {
 	auto res = _renderer->getResult();
 	if (res) {
 		auto &idx = res->getIndex();
@@ -407,7 +450,11 @@ void RichTextView::onFile(const String &str, const Vec2 &) {
 					setScrollPosition(num * _renderSize.width);
 				}
 			} else {
-				pos -= getOverscrollFrontOffset();
+				if (middle) {
+					pos -= getScrollSize() * 0.35f;
+				}
+				pos -= _paddingGlobal.top;
+				pos += _objectsOffset;
 				if (pos > getScrollMaxPosition()) {
 					pos = getScrollMaxPosition();
 				} else if (pos < getScrollMinPosition()) {
@@ -422,27 +469,76 @@ void RichTextView::onFile(const String &str, const Vec2 &) {
 	}
 }
 
-void RichTextView::onObjectPressEnd(const Vec2 &vec, const rich_text::Object &obj) {
-	if (obj.type == rich_text::Object::Type::Ref) {
-		auto &ref = obj.value.ref.target;
-		onLink(ref, vec);
+void View::onFigure(const layout::Node *node) {
+	auto &attr = node->getAttributes();
+	auto &nodes = node->getNodes();
+	auto it = attr.find("type");
+	if (it == attr.end() || it->second == "image") {
+		String source, alt;
+		const layout::Node *caption = nullptr;
+		for (auto &it : nodes) {
+			if (it.getHtmlName() == "img") {
+				auto &nattr = it.getAttributes();
+				auto srcAttr = nattr.find("src");
+				if (srcAttr != nattr.end()) {
+					source = srcAttr->second;
+				}
+
+				srcAttr = nattr.find("alt");
+				if (srcAttr != nattr.end()) {
+					alt = srcAttr->second;
+				}
+			} else if (it.getHtmlName() == "figcaption") {
+				caption = &it;
+			}
+		}
+		if (!source.empty()) {
+			onImageFigure(source, alt, caption);
+		}
+	} else if (it->second == "video") {
+		for (auto &it : nodes) {
+			if (it.getHtmlName() == "img") {
+				auto &nattr = it.getAttributes();
+				auto srcAttr = nattr.find("src");
+				if (srcAttr != nattr.end()) {
+					onVideoFigure(srcAttr->second);
+				}
+			}
+		}
 	}
 }
 
-void RichTextView::onSourceError(rich_text::Source::Error err) {
+void View::onImageFigure(const String &src, const String &alt, const layout::Node *node) {
+	auto scene = material::Scene::getRunningScene();
+	Rc<ImageView> image;
+	if (!node || node->getHtmlId().empty()) {
+		image = Rc<ImageView>::create(_source, String(), src, alt);
+	} else {
+		image = Rc<ImageView>::create(_source, node->getHtmlId(), src, alt);
+	}
+	if (image) {
+		scene->pushContentNode(image);
+	}
+}
+
+void View::onVideoFigure(const String &src) {
+	Device::getInstance()->goToUrl(src, true);
+}
+
+void View::onSourceError(rich_text::Source::Error err) {
 	onError(this, err);
 	updateProgress();
 }
 
-void RichTextView::onSourceUpdate() {
+void View::onSourceUpdate() {
 	updateProgress();
 }
 
-void RichTextView::onSourceAsset() {
+void View::onSourceAsset() {
 	updateProgress();
 }
 
-void RichTextView::updateProgress() {
+void View::updateProgress() {
 	if (_progress) {
 		if (!_renderingEnabled || !_source) {
 			_progress->setVisible(false);
@@ -463,7 +559,7 @@ void RichTextView::updateProgress() {
 	}
 }
 
-RichTextView::ViewPosition RichTextView::getViewObjectPosition(float pos) const {
+View::ViewPosition View::getViewObjectPosition(float pos) const {
 	ViewPosition ret{maxOf<size_t>(), 0.0f, pos};
 	auto res = _renderer->getResult();
 	if (res) {
@@ -487,11 +583,11 @@ RichTextView::ViewPosition RichTextView::getViewObjectPosition(float pos) const 
 	return ret;
 }
 
-RichTextView::Page *RichTextView::onConstructPageNode(const PageData &data, float density) {
+View::Page *View::onConstructPageNode(const PageData &data, float density) {
 	return construct<PageWithLabel>(data, density);
 }
 
-float RichTextView::getViewContentPosition(float pos) const {
+float View::getViewContentPosition(float pos) const {
 	if (isnan(pos)) {
 		pos = getScrollPosition();
 	}
@@ -514,7 +610,7 @@ float RichTextView::getViewContentPosition(float pos) const {
 	return 0.0f;
 }
 
-RichTextView::ViewPosition RichTextView::getViewPosition() const {
+View::ViewPosition View::getViewPosition() const {
 	if (_renderSize.equals(Size::ZERO)) {
 		return ViewPosition{maxOf<size_t>(), 0.0f, 0.0f};
 	}
@@ -522,7 +618,7 @@ RichTextView::ViewPosition RichTextView::getViewPosition() const {
 	return getViewObjectPosition(getViewContentPosition());
 }
 
-void RichTextView::setViewPosition(const ViewPosition &pos, bool offseted) {
+void View::setViewPosition(const ViewPosition &pos, bool offseted) {
 	if (_renderingEnabled) {
 		auto res = _renderer->getResult();
 		if (res && pos.object != maxOf<size_t>()) {
@@ -558,11 +654,11 @@ void RichTextView::setViewPosition(const ViewPosition &pos, bool offseted) {
 	}
 }
 
-void RichTextView::setPositionCallback(const PositionCallback &cb) {
+void View::setPositionCallback(const PositionCallback &cb) {
 	_positionCallback = cb;
 }
-const RichTextView::PositionCallback &RichTextView::getPositionCallback() const {
+const View::PositionCallback &View::getPositionCallback() const {
 	return _positionCallback;
 }
 
-NS_MD_END
+NS_RT_END

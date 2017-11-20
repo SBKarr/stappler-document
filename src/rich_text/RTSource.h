@@ -20,24 +20,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTSOURCE_H_
-#define LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTSOURCE_H_
+#ifndef RICH_TEXT_RTSOURCE_H_
+#define RICH_TEXT_RTSOURCE_H_
 
-#include "Material.h"
-#include "SPLayoutSource.h"
+#include "RTCommonSource.h"
+#include "RTCommon.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class RichTextSource : public layout::Source, EventHandler {
+class Source : public CommonSource, EventHandler {
 public:
-	virtual ~RichTextSource();
-
-	RichTextSource();
+	virtual ~Source();
+	Source();
 
 protected:
 	virtual void onFontSizeChanged();
 };
 
-NS_MD_END
+NS_RT_END
 
-#endif /* LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTSOURCE_H_ */
+#endif /* RICH_TEXT_RTSOURCE_H_ */

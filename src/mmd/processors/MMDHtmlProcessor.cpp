@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include "MMDEngine.h"
 #include "MMDContent.h"
 #include "MMDCore.h"
+#include "SPString.h"
 
 NS_MMD_BEGIN
 
@@ -235,6 +236,12 @@ void HtmlProcessor::exportLink(std::ostream &out, token * text, Content::Link * 
 		attr.emplace_back(it.first, it.second);
 	}
 
+	if (spExt) {
+		if (!url.empty() && url.front() == '#') {
+			attr.emplace_back("target", "_self");
+		}
+	}
+
 	pushNode("a", { }, move(attr));
 
 	// If we're printing contents of bracket as text, then ensure we include it all
@@ -254,9 +261,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	auto & a = link->attributes;
 	VecList attr; attr.reserve(256 / sizeof(VecList::value_type));
 
-	StringView width;
-	StringView height;
-	StringView align;
+	StringView width, height, align, type;
 
 	for (auto &it : a) {
 		if (it.first == "width") {
@@ -265,6 +270,9 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 			height = it.second;
 		} else if (spExt && it.first == "align") {
 			align = it.second;
+		} else if (it.first == "type") {
+			type = it.second;
+			attr.emplace_back(it.first, it.second);
 		} else {
 			attr.emplace_back(it.first, it.second);
 		}
@@ -277,7 +285,8 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 
 	if (is_figure) {
 		if (spExt) {
-			pushNode("figure", { pair("class", align) });
+			auto idStr = toString("figure:", figureId);
+			pushNode("figure", { pair("class", align), pair("id", idStr), pair("type", type) });
 		} else {
 			pushNode("figure");
 		}
@@ -305,6 +314,13 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		attr.emplace_back("title", link->title);
 	}
 
+	stappler::String idStr;
+	if (spExt) {
+		idStr = toString("#figure:", figureId);
+		attr.emplace_back("href", idStr);
+		attr.emplace_back("type", type);
+	}
+
 	String style;
 	if (!height.empty() || !width.empty()) {
 		flushBuffer();
@@ -330,7 +346,8 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		if (text) {
 			if (!spExt) { out << "\n"; }
 			if (spExt && !align.empty()) {
-				pushNode("figcaption", { pair("class", align) });
+				auto idStr = toString("figcaption:", figureId);
+				pushNode("figcaption", { pair("class", align), pair("id", idStr) });
 			} else {
 				pushNode("figcaption");
 			}
@@ -341,6 +358,8 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		if (!spExt) { out << "\n"; }
 		popNode();
 	}
+
+	++ figureId;
 }
 
 NS_MMD_END

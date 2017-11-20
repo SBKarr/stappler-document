@@ -20,19 +20,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTLISTENERVIEW_H_
-#define LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTLISTENERVIEW_H_
+#ifndef RICH_TEXT_RTLISTENERTVIEW_H_
+#define RICH_TEXT_RTLISTENERTVIEW_H_
 
+#include "RTCommonView.h"
 #include "RTSource.h"
-#include "SPRichTextView.h"
 #include "SPEventHeader.h"
 #include "SPDynamicBatchNode.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class RichTextListenerView : public rich_text::View {
+class ListenerView : public CommonView {
 public:
 	static EventHeader onSelection;
+	static EventHeader onExternalLink;
 
 	struct SelectionPosition {
 		size_t object;
@@ -41,7 +42,7 @@ public:
 
 	class Selection : public DynamicBatchNode {
 	public:
-		virtual bool init(RichTextListenerView *);
+		virtual bool init(ListenerView *);
 
 		virtual void clearSelection();
 		virtual void selectLabel(const rich_text::Object *, const Vec2 &);
@@ -67,15 +68,14 @@ public:
 		virtual Pair<SelectionPosition, SelectionPosition> getSelectionPosition() const;
 
 	protected:
-		virtual const rich_text::Object *getSelectedObject(rich_text::Result *, const Vec2 &) const;
-		virtual const rich_text::Object *getSelectedObject(rich_text::Result *, const Vec2 &, size_t pos, int32_t offset) const;
+		virtual const Object *getSelectedObject(Result *, const Vec2 &) const;
+		virtual const Object *getSelectedObject(Result *, const Vec2 &, size_t pos, int32_t offset) const;
 
-	    virtual void updateBlendFunc(cocos2d::Texture2D *) override;
 		virtual void emplaceRect(const Rect &, size_t idx, size_t count);
 		virtual void updateRects();
 
-		RichTextListenerView *_view = nullptr;
-		const rich_text::Object *_object = nullptr;
+		ListenerView *_view = nullptr;
+		const Object *_object = nullptr;
 		size_t _index = 0;
 		Pair<SelectionPosition, SelectionPosition> _selectionBounds;
 
@@ -85,8 +85,8 @@ public:
 		bool _enabled = false;
 	};
 
-	virtual ~RichTextListenerView();
-	virtual bool init(Layout, rich_text::Source * = nullptr, const Vector<String> &ids = {}) override;
+	virtual ~ListenerView();
+	virtual bool init(Layout, CommonSource * = nullptr, const Vector<String> &ids = {}) override;
 
 	virtual void setLayout(Layout l) override;
 	virtual void setUseSelection(bool);
@@ -100,6 +100,9 @@ public:
 protected:
 	virtual void onTap(int count, const Vec2 &loc) override;
 	virtual void onLightLevelChanged();
+
+	virtual void onObjectPressEnd(const Vec2 &, const rich_text::Object &) override;
+	virtual void onLink(const String &ref, const String &target, const Vec2 &);
 
 	virtual bool onSwipeEventBegin(const Vec2 &loc, const Vec2 &d, const Vec2 &v) override;
 	virtual bool onSwipeEvent(const Vec2 &loc, const Vec2 &d, const Vec2 &v) override;
@@ -119,6 +122,6 @@ protected:
 	Selection *_selection = nullptr;
 };
 
-NS_MD_END
+NS_RT_END
 
-#endif /* LIBS_MATERIAL_GUI_RICHTEXT_MATERIALRICHTEXTLISTENERVIEW_H_ */
+#endif /* RICH_TEXT_RTLISTENERTVIEW_H_ */

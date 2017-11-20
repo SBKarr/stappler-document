@@ -48,6 +48,14 @@
 
 NS_MMD_BEGIN
 
+void Processor::setMetaCallback(const MetaCallback &cb) {
+	meta_callback = cb;
+}
+
+const Processor::MetaCallback &Processor::getMetaCallback() const {
+	return meta_callback;
+}
+
 void Processor::process(const Content &c, const StringView &, const Token &) {
 	content = &c;
 	extensions = c.getExtensions();

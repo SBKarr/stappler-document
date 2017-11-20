@@ -20,20 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTVIEW_H_
-#define LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTVIEW_H_
+#ifndef RICH_TEXT_RTVIEW_H_
+#define RICH_TEXT_RTVIEW_H_
 
 #include "RTListenerView.h"
 #include "SPEventHeader.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class RichTextTooltip;
-
-class RichTextView : public RichTextListenerView {
+class View : public ListenerView {
 public:
 	static EventHeader onImageLink;
-	static EventHeader onExternalLink;
 	static EventHeader onContentLink;
 	static EventHeader onError;
 	static EventHeader onDocument;
@@ -54,41 +51,40 @@ public:
 		virtual void onContentSizeDirty() override;
 
 	protected:
-		Label *_label;
+		material::Label *_label;
 	};
 
 	class Highlight : public DynamicBatchNode {
 	public:
-		virtual bool init(RichTextView *);
-	    virtual void visit(Renderer *, const Mat4 &, uint32_t, ZPath &) override;
+		virtual bool init(View *);
+	    virtual void visit(cocos2d::Renderer *, const Mat4 &, uint32_t, ZPath &) override;
 
 		virtual void clearSelection();
 		virtual void addSelection(const Pair<SelectionPosition, SelectionPosition> &);
 
 		virtual void setDirty();
 	protected:
-	    virtual void updateBlendFunc(cocos2d::Texture2D *) override;
 		virtual void emplaceRect(const Rect &, size_t idx, size_t count);
 		virtual void updateRects();
 
-		RichTextView *_view = nullptr;
+		View *_view = nullptr;
 		Vector<Pair<SelectionPosition, SelectionPosition>> _selectionBounds;
 
 		bool _dirty = false;
 		bool _enabled = false;
 	};
 
-	virtual ~RichTextView();
+	virtual ~View();
 
-	virtual bool init(rich_text::Source *);
-	virtual bool init(Layout, rich_text::Source *);
+	virtual bool init(Source *);
+	virtual bool init(Layout, Source *);
 	virtual void onContentSizeDirty() override;
 	virtual void setLayout(Layout l) override;
 
 	virtual void setOverscrollFrontOffset(float value) override;
-	virtual void setSource(rich_text::Source *) override;
+	virtual void setSource(CommonSource *) override;
 
-	virtual void setProgressColor(const Color &);
+	virtual void setProgressColor(const material::Color &);
 
 	virtual float getViewContentPosition(float = nan()) const;
 	virtual ViewPosition getViewObjectPosition(float) const;
@@ -107,7 +103,8 @@ public:
 	virtual void addHighlight(const Pair<SelectionPosition, SelectionPosition> &);
 	virtual void addHighlight(const SelectionPosition &, const SelectionPosition &);
 
-	virtual float getBookmarkScrollPosition(size_t, uint32_t) const;
+	virtual float getBookmarkScrollPosition(size_t, uint32_t, bool inView) const;
+	virtual float getBookmarkScrollRelativePosition(size_t, uint32_t, bool inView) const;
 
 protected:
 	virtual void onPosition() override;
@@ -116,15 +113,18 @@ protected:
 	virtual void onRenderer(rich_text::Result *, bool) override;
 
 	virtual void onLightLevelChanged() override;
-	virtual void onLink(const String &, const Vec2 &);
-	virtual void onId(const String &, const Vec2 &);
+	virtual void onLink(const String &ref, const String &target, const Vec2 &) override;
+	virtual void onId(const String &ref, const String &target, const Vec2 &);
 	virtual void onImage(const String &id, const Vec2 &);
 	virtual void onGallery(const String &name, const String &image, const Vec2 &);
 	virtual void onFile(const String &, const Vec2 &);
+	virtual void onPositionRef(const StringView &, bool middle);
 
-	virtual void onObjectPressEnd(const Vec2 &, const rich_text::Object &) override;
+	virtual void onFigure(const layout::Node *node);
+	virtual void onImageFigure(const String &src, const String &alt, const layout::Node *);
+	virtual void onVideoFigure(const String &src);
 
-	virtual void onSourceError(rich_text::Source::Error);
+	virtual void onSourceError(Source::Error);
 	virtual void onSourceUpdate();
 	virtual void onSourceAsset();
 
@@ -141,12 +141,12 @@ protected:
 	EventHandlerNode *_sourceErrorListener = nullptr;
 	EventHandlerNode *_sourceUpdateListener = nullptr;
 	EventHandlerNode *_sourceAssetListener = nullptr;
-	LinearProgress *_progress = nullptr;
-	RichTextTooltip *_tooltip = nullptr;
+	material::LinearProgress *_progress = nullptr;
+	Tooltip *_tooltip = nullptr;
 	PositionCallback _positionCallback = nullptr;
 	Highlight *_highlight = nullptr;
 };
 
-NS_MD_END
+NS_RT_END
 
-#endif /* LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTVIEW_H_ */
+#endif /* RICH_TEXT_RTVIEW_H_ */

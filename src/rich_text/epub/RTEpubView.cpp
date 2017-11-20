@@ -27,12 +27,14 @@ THE SOFTWARE.
 
 #include "RTView.h"
 #include "RTEpubView.h"
+
+#include "RTFontSizeMenu.h"
+#include "RTLightLevelMenu.h"
 #include "RTEpubContentsView.h"
 #include "RTEpubNavigation.h"
+#include "RTRenderer.h"
 
 #include "MaterialMenuSource.h"
-#include "MaterialFontSizeMenu.h"
-#include "MaterialLightLevelMenu.h"
 #include "MaterialResourceManager.h"
 #include "MaterialButton.h"
 #include "MaterialToolbar.h"
@@ -46,11 +48,12 @@ THE SOFTWARE.
 #include "SPEventListener.h"
 #include "SPDevice.h"
 #include "SPScreen.h"
-#include "SPRichTextRenderer.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-bool EpubView::init(RichTextSource *source, const String &title, font::HyphenMap *hmap) {
+USING_NS_MD;
+
+bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) {
 	if (!ToolbarLayout::init()) {
 		return false;
 	}
@@ -117,46 +120,14 @@ bool EpubView::init(RichTextSource *source, const String &title, font::HyphenMap
 	//_selectionSource->addButton("AppShare"_locale, IconName::Social_share, std::bind(&EpubView::onShareButton, this));
 	_selectionSource->addButton("AppReportMisprint"_locale, IconName::Content_report, std::bind(&EpubView::onMisprintButton, this));
 
-	_view = construct<RichTextView>(_source);
-	_view->setHyphens(_hyphens);
-	_view->setIndicatorVisible(false);
-	_view->setTapCallback([this] (int count, const Vec2 &loc) {
-		_navigation->close();
-		if (_sidebar->isNodeEnabled()) {
-			_sidebar->hide();
-		}
-		setFlexibleLevelAnimated(1.0f, 0.25f);
-		if (_view->getLayout() == ScrollView::Horizontal) {
-			auto pos = _view->convertToNodeSpace(loc);
-		}
-	});
-	_view->setAnimationCallback([this] {
-		_buttonLeft->setSwallowTouches(false);
-		_buttonRight->setSwallowTouches(false);
-	});
-	_view->setPositionCallback([this] (float val) {
-		_navigation->setReaderProgress(_view->getScrollRelativePosition(val));
-		showBackButton(_view->getScrollRelativePosition());
-	});
+	auto view = constructTextView(_source);
+	setBaseNode(view, 1);
+	_view = view;
 
-	setBaseNode(_view, 1);
-
-	_navigation = construct<EpubNavigation>(_view, [this] (float val) {
-		auto res =_view->getResult();
-		if (res->getMedia().flags & layout::RenderFlag::PaginatedLayout) {
-			auto pages = res->getNumPages();
-			val = floorf(val * (pages + 1)) / (pages + 1);
-			if (val > 1.0f) {
-				val = 1.0f;
-			} else if (val < 0.0f) {
-				val = 0.0f;
-			}
-			onProgressPosition(val);
-		} else {
-			onProgressPosition(val);
-		}
-	});
-	addChild(_navigation, 2);
+	auto navigation = constructNavigationView();
+	addChild(navigation, 2);
+	navigation->setView(view);
+	_navigation = navigation;
 
 	_sidebar = construct<material::SidebarLayout>(material::SidebarLayout::Right);
 	_sidebar->setNodeWidthCallback([] (const Size &size) -> float {
@@ -167,30 +138,30 @@ bool EpubView::init(RichTextSource *source, const String &title, font::HyphenMap
 			setFlexibleLevelAnimated(1.0f, 0.25f);
 			_contents->setSelectedPosition(_view->getViewContentPosition());
 		}
+		_view->setLinksEnabled(!value);
 	});
 	_sidebar->setBackgroundActiveOpacity(0);
 
-	_contents = construct<EpubContentsView>(std::bind(&EpubView::onContentsRef, this, std::placeholders::_1),
-			std::bind(&EpubView::onBookmarkData, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	_contents->setAnchorPoint(Vec2(1.0f, 0.0f));
-	_contents->setVisible(false);
-	_contents->setColors(Color::Blue_500, Color::Yellow_A400);
+	auto contents = constructContentsView();
+	contents->setAnchorPoint(Vec2(1.0f, 0.0f));
+	contents->setVisible(false);
+	_sidebar->setNode(contents);
+	_contents = contents;
 
-	_sidebar->setNode(_contents);
-	_sidebar->setEnabled(false);
+	_sidebar->setEdgeSwipeEnabled(false);
 	addChild(_sidebar, 3);
 
 	auto l = Rc<EventListener>::create();
-	l->onEventWithObject(RichTextSource::onDocument, source, [this] (const Event &) {
+	l->onEventWithObject(Source::onDocument, source, [this] (const Event &) {
 		onDocument(_source->getDocument());
 	});
-	l->onEventWithObject(RichTextView::onDocument, _view, [this] (const Event &) {
+	l->onEventWithObject(View::onDocument, _view, [this] (const Event &) {
 		onDocument(_view->getDocument());
 	});
-	l->onEventWithObject(RichTextView::onSelection, _view, [this] (const Event &) {
+	l->onEventWithObject(View::onSelection, _view, [this] (const Event &) {
 		onSelection(_view->isSelectionEnabled());
 	});
-	l->onEventWithObject(RichTextView::onContentLink, _view, [this] (const Event &) {
+	l->onEventWithObject(View::onContentLink, _view, [this] (const Event &) {
 		//showBackButton(_view->getScrollRelativePosition());
 	});
 	addComponent(l);
@@ -199,7 +170,7 @@ bool EpubView::init(RichTextSource *source, const String &title, font::HyphenMap
 }
 
 void EpubView::onContentSizeDirty() {
-	if (_view->getLayout() == RichTextView::Horizontal && !Device::getInstance()->isTablet() && _contentSize.height < 440.0f && _contentSize.width > _contentSize.height) {
+	if (_view->getLayout() == View::Horizontal && !Device::getInstance()->isTablet() && _contentSize.height < 440.0f && _contentSize.width > _contentSize.height) {
 		_toolbar->setMinified(true);
 	} else {
 		_toolbar->setMinified(false);
@@ -207,7 +178,7 @@ void EpubView::onContentSizeDirty() {
 
 	ToolbarLayout::onContentSizeDirty();
 	if (_extendedNavigation) {
-		if (_view->getLayout() == RichTextView::Horizontal) {
+		if (_view->getLayout() == View::Horizontal) {
 			_baseNode->setContentSize(_baseNode->getContentSize() - Size(0.0f, 20.0f));
 			_baseNode->setPosition(0.0f, 20.0f);
 
@@ -217,7 +188,6 @@ void EpubView::onContentSizeDirty() {
 
 			_buttonLeft->setVisible(true);
 			_buttonRight->setVisible(true);
-			_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
 		} else {
 			_baseNode->setContentSize(_baseNode->getContentSize() - Size(20.0f, 0.0f));
 			_navigation->setContentSize(Size(20.0f, _contentSize.height));
@@ -226,9 +196,10 @@ void EpubView::onContentSizeDirty() {
 
 			_buttonLeft->setVisible(false);
 			_buttonRight->setVisible(false);
-			_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
 		}
 	}
+
+	_sidebar->setContentSize(Size(_contentSize.width, _contentSize.height - getCurrentFlexibleMax()));
 
 	_buttonLeft->setPosition(Vec2(0, 20.0f));
 	_buttonLeft->setContentSize(cocos2d::Size(48.0f, _contentSize.height - 20.0f - getCurrentFlexibleMax()));
@@ -239,7 +210,7 @@ void EpubView::onContentSizeDirty() {
 	_backButton->setPosition(16.0f, 24.0f + 8.0f);
 }
 
-void EpubView::visit(Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
+void EpubView::visit(cocos2d::Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
 	if (!_visible) {
 		return;
 	}
@@ -321,16 +292,16 @@ void EpubView::onRefreshButton() {
 	_view->refresh();
 }
 
-void EpubView::setLayout(RichTextView::Layout l) {
-	if (l == RichTextView::Horizontal) {
+void EpubView::setLayout(View::Layout l) {
+	if (l == View::Horizontal) {
 		setFlexibleToolbar(false);
-		_view->setLayout(RichTextView::Horizontal);
+		_view->setLayout(View::Horizontal);
 		_layoutButton->setNameIcon(IconName::Stappler_layout_horizontal);
 		_layoutButton->setName("horizontal");
 	} else {
 		setStatusBarTracked(true);
 		setFlexibleToolbar(true);
-		_view->setLayout(RichTextView::Vertical);
+		_view->setLayout(View::Vertical);
 		_layoutButton->setNameIcon(IconName::Stappler_layout_vertical);
 		_layoutButton->setName("vertical");
 	}
@@ -359,10 +330,10 @@ bool EpubView::isExtendedNavigationEnabled() const {
 void EpubView::onLayoutButton() {
 	if (_layoutButton && _view) {
 		auto l = _view->getLayout();
-		if (l == RichTextView::Vertical) {
-			setLayout(RichTextView::Horizontal);
+		if (l == View::Vertical) {
+			setLayout(View::Horizontal);
 		} else {
-			setLayout(RichTextView::Vertical);
+			setLayout(View::Vertical);
 		}
 	}
 }
@@ -452,7 +423,7 @@ void EpubView::onBookmarkData(size_t object, size_t pos, float scroll) {
 		const rich_text::Object * obj = res->getObject(object);
 		if (obj && obj->type == rich_text::Object::Type::Label) {
 			float objPos = float(pos) / float(obj->value.label.format.chars.size());
-			_view->setViewPosition(RichTextView::ViewPosition{object, objPos, scroll}, true);
+			_view->setViewPosition(View::ViewPosition{object, objPos, scroll}, true);
 		}
 	}
 
@@ -513,6 +484,74 @@ void EpubView::hideSelectionToolbar() {
 	_toolbar->setNavButtonIconProgress(_tmpIconProgress, 0.25f);
 }
 
+
+Rc<View> EpubView::constructTextView(Source *source) {
+	Rc<View> view = Rc<View>::create(_source);
+	view->setHyphens(_hyphens);
+	view->setIndicatorVisible(false);
+	view->setTapCallback([this] (int count, const Vec2 &loc) {
+		onTextViewTapCallback(count, loc);
+	});
+	view->setAnimationCallback([this] {
+		onTextViewAnimationCallback();
+	});
+	view->setPositionCallback([this] (float val) {
+		onTextViewPositionCallback(val);
+	});
+	return view;
+}
+
+void EpubView::onTextViewTapCallback(int count, const Vec2 &loc) {
+	_navigation->close();
+	if (_sidebar->isNodeEnabled()) {
+		_sidebar->hide();
+	}
+	setFlexibleLevelAnimated(1.0f, 0.25f);
+	if (_view->getLayout() == ScrollView::Horizontal) {
+		auto pos = _view->convertToNodeSpace(loc);
+	}
+}
+
+void EpubView::onTextViewAnimationCallback() {
+	_buttonLeft->setSwallowTouches(false);
+	_buttonRight->setSwallowTouches(false);
+}
+
+void EpubView::onTextViewPositionCallback(float val) {
+	_navigation->setReaderProgress(_view->getScrollRelativePosition(val));
+	showBackButton(_view->getScrollRelativePosition());
+}
+
+Rc<EpubContentsView> EpubView::constructContentsView() {
+	auto contents = Rc<EpubContentsView>::create(std::bind(&EpubView::onContentsRef, this, std::placeholders::_1),
+			std::bind(&EpubView::onBookmarkData, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	contents->setColors(Color::Blue_500, Color::Yellow_A400);
+	return contents;
+}
+
+Rc<EpubNavigation> EpubView::constructNavigationView() {
+	auto navigation = Rc<EpubNavigation>::create([this] (float val) {
+		onNavigationViewCallback(val);
+	});
+	return navigation;
+}
+
+void EpubView::onNavigationViewCallback(float val) {
+	auto res =_view->getResult();
+	if (res->getMedia().flags & layout::RenderFlag::PaginatedLayout) {
+		auto pages = res->getNumPages();
+		val = floorf(val * (pages + 1)) / (pages + 1);
+		if (val > 1.0f) {
+			val = 1.0f;
+		} else if (val < 0.0f) {
+			val = 0.0f;
+		}
+		onProgressPosition(val);
+	} else {
+		onProgressPosition(val);
+	}
+}
+
 void EpubView::onCopyButton() {
 
 }
@@ -529,4 +568,4 @@ void EpubView::onMisprintButton() {
 
 }
 
-NS_MD_END
+NS_RT_END

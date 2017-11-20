@@ -24,11 +24,11 @@ THE SOFTWARE.
 **/
 
 #include "Material.h"
-#include "MaterialFontSizeMenu.h"
 #include "MaterialLabel.h"
 #include "MaterialResourceManager.h"
+#include "RTFontSizeMenu.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
 float FontSizeMenuButton::FontScaleFactor() {
 	return 1.0f / stappler::screen::density();
@@ -39,7 +39,7 @@ bool FontSizeMenuButton::init() {
 		return false;
 	}
 
-	onEvent(ResourceManager::onUserFont, std::bind(&FontSizeMenuButton::onTextFontsChanged, this));
+	onEvent(material::ResourceManager::onUserFont, std::bind(&FontSizeMenuButton::onTextFontsChanged, this));
 
 	auto fontConfig = Rc<material::MenuSource>::create();
 
@@ -84,23 +84,23 @@ void FontSizeMenuButton::onMenuButton(uint32_t id) {
 	switch(id) {
 	case 0:
 		setNameIcon(material::IconName::Stappler_text_format_200);
-		ResourceManager::getInstance()->setUserFontScale(1.0f + 1.0f * FontScaleFactor());
+		material::ResourceManager::getInstance()->setUserFontScale(1.0f + 1.0f * FontScaleFactor());
 		break;
 	case 1:
 		setNameIcon(material::IconName::Stappler_text_format_175);
-		ResourceManager::getInstance()->setUserFontScale(1.0f + 0.75f * FontScaleFactor());
+		material::ResourceManager::getInstance()->setUserFontScale(1.0f + 0.75f * FontScaleFactor());
 		break;
 	case 2:
 		setNameIcon(material::IconName::Stappler_text_format_150);
-		ResourceManager::getInstance()->setUserFontScale(1.0f + 0.5f * FontScaleFactor());
+		material::ResourceManager::getInstance()->setUserFontScale(1.0f + 0.5f * FontScaleFactor());
 		break;
 	case 3:
 		setNameIcon(material::IconName::Stappler_text_format_125);
-		ResourceManager::getInstance()->setUserFontScale(1.0f + 0.25f * FontScaleFactor());
+		material::ResourceManager::getInstance()->setUserFontScale(1.0f + 0.25f * FontScaleFactor());
 		break;
 	case 4:
 		setNameIcon(material::IconName::Stappler_text_format_100);
-		ResourceManager::getInstance()->setUserFontScale(1.0f + 0.0f * FontScaleFactor());
+		material::ResourceManager::getInstance()->setUserFontScale(1.0f + 0.0f * FontScaleFactor());
 		break;
 	default: break;
 	}
@@ -116,7 +116,7 @@ void FontSizeMenuButton::onTextFontsChanged() {
 		it->setSelected(false);
 	}
 
-	auto scale = ResourceManager::getInstance()->getUserFontScale();
+	auto scale = material::ResourceManager::getInstance()->getUserFontScale();
 	if (scale < 1.0f + 0.125f * FontScaleFactor()) {
 		setNameIcon(material::IconName::Stappler_text_format_100);
 		_buttons.at(4)->setSelected(true);
@@ -135,4 +135,4 @@ void FontSizeMenuButton::onTextFontsChanged() {
 	}
 }
 
-NS_MD_END
+NS_RT_END

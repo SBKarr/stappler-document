@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_EPUBDOCUMENTINFO_H_
-#define LAYOUT_EPUB_EPUBDOCUMENTINFO_H_
+#ifndef EPUB_EPUBINFO_H_
+#define EPUB_EPUBINFO_H_
 
 #include "SPLayout.h"
 
@@ -29,6 +29,9 @@ THE SOFTWARE.
 #define NS_EPUB_END NS_SP_EXT_END(epub)
 
 NS_EPUB_BEGIN
+
+class Document;
+class Reader;
 
 struct MetaProp {
 	String id;
@@ -182,4 +185,4 @@ protected:
 
 NS_EPUB_END
 
-#endif /* LAYOUT_EPUB_EPUBDOCUMENTINFO_H_ */
+#endif /* EPUB_EPUBINFO_H_ */

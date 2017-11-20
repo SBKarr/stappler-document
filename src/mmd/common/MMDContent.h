@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_MMDCONTENT_H_
-#define MMD_SRC_MMDCONTENT_H_
+#ifndef MMD_COMMON_MMDCONTENT_H_
+#define MMD_COMMON_MMDCONTENT_H_
 
 #include "MMDToken.h"
 
@@ -176,4 +176,4 @@ bool table_has_caption(token * t);
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDCONTENT_H_ */
+#endif /* MMD_COMMON_MMDCONTENT_H_ */

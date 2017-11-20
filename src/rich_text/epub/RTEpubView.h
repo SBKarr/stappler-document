@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef CLASSES_LAYOUTS_FILES_FILEEPUBVIEW_H_
-#define CLASSES_LAYOUTS_FILES_FILEEPUBVIEW_H_
+#ifndef RICH_TEXT_EPUB_RTEPUBVIEW_H_
+#define RICH_TEXT_EPUB_RTEPUBVIEW_H_
 
 #include "RTSource.h"
 #include "RTEpubContentsView.h"
@@ -33,15 +33,13 @@ THE SOFTWARE.
 #include "SLFontFormatter.h"
 #include "SLResult.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class EpubNavigation;
-
-class EpubView : public ToolbarLayout {
+class EpubView : public material::ToolbarLayout {
 public:
-	virtual bool init(RichTextSource *, const String &title, font::HyphenMap *);
+	virtual bool init(Source *, const String &title, font::HyphenMap *);
 	virtual void onContentSizeDirty() override;
-    virtual void visit(Renderer *, const Mat4 &, uint32_t, ZPath &) override;
+    virtual void visit(cocos2d::Renderer *, const Mat4 &, uint32_t, ZPath &) override;
 
 	virtual void onEnter() override;
 	virtual void onExit() override;
@@ -55,7 +53,7 @@ public:
 	virtual void onScroll(float delta, bool finished) override;
 
 	virtual void setBookmarksSource(data::Source *);
-	virtual void setLayout(RichTextView::Layout);
+	virtual void setLayout(View::Layout);
 
 	virtual void setBookmarksEnabled(bool);
 	virtual bool isBookmarksEnabled() const;
@@ -91,6 +89,16 @@ protected:
 	virtual void hideSelectionToolbar();
 
 protected:
+	virtual Rc<View> constructTextView(Source *);
+	virtual void onTextViewTapCallback(int count, const Vec2 &loc);
+	virtual void onTextViewAnimationCallback();
+	virtual void onTextViewPositionCallback(float val);
+
+	virtual Rc<EpubContentsView> constructContentsView();
+
+	virtual Rc<EpubNavigation> constructNavigationView();
+	virtual void onNavigationViewCallback(float val);
+
 	virtual void onCopyButton();
 	virtual void onBookmarkButton();
 	virtual void onEmailButton();
@@ -103,18 +111,18 @@ protected:
 		Hide, Show, Wait, None
 	} _backButtonStatus = None;
 
-	Rc<RichTextSource> _source;
+	Rc<Source> _source;
 	Rc<font::HyphenMap> _hyphens;
 
-	Rc<MenuSource> _viewSource;
-	Rc<MenuSource> _selectionSource;
+	Rc<material::MenuSource> _viewSource;
+	Rc<material::MenuSource> _selectionSource;
 
-	RichTextView * _view = nullptr;
-	MenuSourceButton *_layoutButton = nullptr;
+	View * _view = nullptr;
+	material::MenuSourceButton *_layoutButton = nullptr;
 
-	Button *_buttonRight = nullptr;
-	Button *_buttonLeft = nullptr;
-	FloatingActionButton *_backButton = nullptr;
+	material::Button *_buttonRight = nullptr;
+	material::Button *_buttonLeft = nullptr;
+	material::FloatingActionButton *_backButton = nullptr;
 
 	EpubNavigation *_navigation = nullptr;
 	EpubContentsView *_contents = nullptr;
@@ -125,7 +133,7 @@ protected:
 	rich_text::Result::BoundIndex _currentBounds;
 
 	float _tmpIconProgress = 0.0f;
-	IconName _tmpIcon = IconName::None;
+	material::IconName _tmpIcon = material::IconName::None;
 	std::function<void()> _tmpCallback;
 
 	bool _extendedNavigation = true;
@@ -133,4 +141,4 @@ protected:
 
 NS_MD_END
 
-#endif /* CLASSES_LAYOUTS_FILES_FILEEPUBVIEW_H_ */
+#endif /* RICH_TEXT_EPUB_RTEPUBVIEW_H_ */

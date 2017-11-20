@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_MMDCHARS_H_
-#define MMD_SRC_MMDCHARS_H_
+#ifndef MMD_COMMON_MMDCHARS_H_
+#define MMD_COMMON_MMDCHARS_H_
 
 #include "SPCommon.h"
 #include "SPCharReader.h"
@@ -81,4 +81,4 @@ inline bool isLeadMultibyte(char x) { return (x & 0xC0) == 0xC0; }
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDCHARS_H_ */
+#endif /* MMD_COMMON_MMDCHARS_H_ */

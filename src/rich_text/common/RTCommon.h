@@ -20,30 +20,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_
-#define LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_
+#ifndef RICH_TEXT_COMMON_RTCOMMON_H_
+#define RICH_TEXT_COMMON_RTCOMMON_H_
 
-#include "MaterialMenuSource.h"
-#include "SPEventHandler.h"
+#include "SPFont.h"
+#include "SLRendererTypes.h"
+#include "SLResult.h"
+#include "SLDocument.h"
 
-NS_MD_BEGIN
+#define NS_RT_BEGIN NS_SP_EXT_BEGIN(rich_text)
+#define NS_RT_END NS_SP_EXT_END(rich_text)
 
-class Navigation;
-class MenuSource;
-class GridView;
+NS_RT_BEGIN
 
-class LightLevelMenuButton : public material::MenuSourceButton, public stappler::EventHandler {
-public:
-	virtual bool init() override;
+using FontSource = font::FontSource;
+using MediaParameters = layout::MediaParameters;
+using MediaResolver = layout::MediaResolver;
+using Result = layout::Result;
+using PageData = layout::Result::PageData;
+using Object = layout::Object;
+using Layout = layout::Layout;
+using Document = layout::Document;
 
-protected:
-	cocos2d::Node *onLabel();
-	void onMenuButton(uint32_t id);
-	void onLightLevelChanged();
+using Outline = layout::Outline;
+using Background = layout::BackgroundStyle;
+using Label = layout::Label;
+using Link = layout::Link;
 
-	std::vector<material::MenuSourceButton *> _buttons;
-};
+class CommonSource;
+class Source;
+class CommonView;
+class ListenerView;
+class View;
+class Tooltip;
+class Source;
+class ImageView;
 
-NS_MD_END
+class EpubContentsView;
+class EpubNavigation;
+class EpubView;
 
-#endif /* LIBS_MATERIAL_GUI_CONFIGURATIONMENU_MATERIALLIGHTLEVELMENU_H_ */
+NS_RT_END
+
+#endif /* RICH_TEXT_RTCOMMON_H_ */

@@ -32,76 +32,74 @@ THE SOFTWARE.
 #include "MaterialImageLayer.h"
 #include "RTImageView.h"
 
+#include "RTDrawer.h"
+#include "RTRenderer.h"
 #include "SLResult.h"
 #include "SLDocument.h"
-#include "SPRichTextRenderer.h"
-#include "SPRichTextDrawer.h"
 #include "SPTextureCache.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-RichTextImageView::~RichTextImageView() { }
+ImageView::~ImageView() { }
 
-bool RichTextImageView::init(layout::Source *source, const String &id, const String &src, const String &alt) {
+bool ImageView::init(CommonSource *source, const String &id, const String &src, const String &alt) {
 	if (!Layout::init() || !source) {
 		return false;
 	}
 
+	if (!isSourceValid(source, src)) {
+		return false;
+	}
+
+	_src = src;
 	_source = source;
-	if (!_source->isActual()) {
-		return false;
-	}
 
-	auto doc = _source->getDocument();
-	if (!doc->isFileExists(src)) {
-		return false;
-	}
+	auto contentLayer = material::Scene::getRunningScene()->getContentLayer();
 
-	auto contentLayer = Scene::getRunningScene()->getContentLayer();
-
-	auto incr = metrics::horizontalIncrement();
+	auto incr = material::metrics::horizontalIncrement();
 	auto size = contentLayer->getContentSize();
 	auto pos = Vec2(incr / 4.0f, incr / 2.0f);
 
-	_tooltip = construct<RichTextTooltip>(source, id.empty()?Vector<String>():Vector<String>{id});
+	auto tooltip = constructTooltip(source, id.empty()?Vector<String>():Vector<String>{id});
 
 	Size maxSize;
-	maxSize.width = size.width - metrics::horizontalIncrement();
-	maxSize.height = size.height - metrics::horizontalIncrement() * 2.0f;
+	maxSize.width = size.width - material::metrics::horizontalIncrement();
+	maxSize.height = size.height - material::metrics::horizontalIncrement() * 2.0f;
 
-	if (maxSize.width > metrics::horizontalIncrement() * 9) {
-		maxSize.width = metrics::horizontalIncrement() * 9;
+	if (maxSize.width > material::metrics::horizontalIncrement() * 9) {
+		maxSize.width = material::metrics::horizontalIncrement() * 9;
 	}
 
-	if (maxSize.height > metrics::horizontalIncrement() * 9) {
-		maxSize.height = metrics::horizontalIncrement() * 9;
+	if (maxSize.height > material::metrics::horizontalIncrement() * 9) {
+		maxSize.height = material::metrics::horizontalIncrement() * 9;
 	}
 
-	size.width -= metrics::horizontalIncrement();
-	_tooltip->setOriginPosition(Vec2(0, incr / 2.0f), size, contentLayer->convertToWorldSpace(pos));
-	_tooltip->setMaxContentSize(maxSize);
-	_tooltip->setPosition(pos);
-	if (auto r = _tooltip->getRenderer()) {
+	size.width -= material::metrics::horizontalIncrement();
+	tooltip->setOriginPosition(Vec2(0, incr / 2.0f), size, contentLayer->convertToWorldSpace(pos));
+	tooltip->setMaxContentSize(maxSize);
+	tooltip->setPosition(pos);
+	if (auto r = tooltip->getRenderer()) {
 		r->addOption("image-view");
 	}
-	addChild(_tooltip, 2);
+	addChild(tooltip, 2);
+	_tooltip = tooltip;
 
 	auto actions = _tooltip->getActions();
 	actions->clear();
 	if (!id.empty()) {
-		_expandButton = actions->addButton("Expand", IconName::Navigation_expand_less, std::bind(&RichTextImageView::onExpand, this));
+		_expandButton = actions->addButton("Expand", material::IconName::Navigation_expand_less, std::bind(&ImageView::onExpand, this));
 	} else {
 		_expanded = false;
 	}
 
 	auto toolbar = _tooltip->getToolbar();
 	toolbar->setTitle(alt);
-	toolbar->setNavButtonIcon(IconName::Dynamic_Navigation);
+	toolbar->setNavButtonIcon(material::IconName::Dynamic_Navigation);
 	toolbar->setNavButtonIconProgress(1.0f, 0.0f);
-	toolbar->setNavCallback(std::bind(&RichTextImageView::close, this));
+	toolbar->setNavCallback(std::bind(&ImageView::close, this));
 	toolbar->setSwallowTouches(true);
 
-	_sprite = construct<ImageLayer>();
+	_sprite = construct<material::ImageLayer>();
 	_sprite->setPosition(0, 0);
 	_sprite->setAnchorPoint(Vec2(0, 0));
 	_sprite->setActionCallback([this] {
@@ -111,24 +109,18 @@ bool RichTextImageView::init(layout::Source *source, const String &id, const Str
 	});
 	addChild(_sprite, 1);
 
-	if (_source->tryReadLock(this)) {
-		onAssetCaptured(src);
-	}
-
-	contentLayer->pushNode(this);
 	return true;
 }
 
-Rc<cocos2d::Texture2D> RichTextImageView::readImage(const std::string &src) {
-	auto doc = _source->getDocument();
-	return TextureCache::uploadTexture(doc->getImageData(src));
+Rc<cocos2d::Texture2D> ImageView::readImage(const std::string &src) {
+	return TextureCache::uploadTexture(_source->getImageData(src));
 }
 
-void RichTextImageView::onImage(cocos2d::Texture2D *img) {
+void ImageView::onImage(cocos2d::Texture2D *img) {
 	_sprite->setTexture(img);
 }
 
-void RichTextImageView::onAssetCaptured(const String &src) {
+void ImageView::onAssetCaptured(const String &src) {
 	Rc<cocos2d::Texture2D> *img = new Rc<cocos2d::Texture2D>(nullptr);
 	rich_text::Drawer::thread().perform([this, img, src] (const Task &) -> bool {
 		*img = readImage(src);
@@ -141,52 +133,80 @@ void RichTextImageView::onAssetCaptured(const String &src) {
 }
 
 
-void RichTextImageView::onContentSizeDirty() {
+void ImageView::onContentSizeDirty() {
 	cocos2d::Node::onContentSizeDirty();
 
 	if (!_contentSize.equals(Size::ZERO)) {
 		Size maxSize;
-		maxSize.width = _contentSize.width - metrics::horizontalIncrement();
-		maxSize.height = _contentSize.height - metrics::horizontalIncrement() * 2.0f;
+		maxSize.width = _contentSize.width - material::metrics::horizontalIncrement();
+		maxSize.height = _contentSize.height - material::metrics::horizontalIncrement() * 2.0f;
 
-		if (maxSize.width > metrics::horizontalIncrement() * 9) {
-			maxSize.width = metrics::horizontalIncrement() * 9;
+		if (maxSize.width > material::metrics::horizontalIncrement() * 9) {
+			maxSize.width = material::metrics::horizontalIncrement() * 9;
 		}
 
-		if (maxSize.height > metrics::horizontalIncrement() * 9) {
-			maxSize.height = metrics::horizontalIncrement() * 9;
+		if (maxSize.height > material::metrics::horizontalIncrement() * 9) {
+			maxSize.height = material::metrics::horizontalIncrement() * 9;
 		}
 
 		if (_tooltip->getRenderer()) {
 			_tooltip->setMaxContentSize(maxSize);
 		} else {
 			//_tooltip->setContentSize(Size(maxSize.width, _tooltip->getToolbar()->getContentSize().height));
-			_tooltip->setContentSize(Size(maxSize.width, metrics::miniBarHeight()));
+			_tooltip->setContentSize(Size(maxSize.width, material::metrics::miniBarHeight()));
 		}
 	}
 
 	_sprite->setContentSize(_contentSize);
 }
 
-void RichTextImageView::close() {
-	auto contentLayer = Scene::getRunningScene()->getContentLayer();
+void ImageView::onEnter() {
+	Layout::onEnter();
+
+	acquireImageAsset(_src);
+}
+
+void ImageView::close() {
+	auto contentLayer = material::Scene::getRunningScene()->getContentLayer();
 	contentLayer->popNode(this);
 }
 
-void RichTextImageView::onExpand() {
+void ImageView::acquireImageAsset(const String &src) {
+	if (!_sprite->getTexture() && _source->tryReadLock(this)) {
+		onAssetCaptured(src);
+	}
+}
+
+Rc<Tooltip> ImageView::constructTooltip(CommonSource *source, const Vector<String> &ids) const {
+	return Rc<Tooltip>::create(source, ids);
+}
+
+bool ImageView::isSourceValid(CommonSource *source, const String & src) const {
+	if (!source->isActual()) {
+		return false;
+	}
+
+	if (!source->isFileExists(src)) {
+		return false;
+	}
+
+	return true;
+}
+
+void ImageView::onExpand() {
 	if (_expanded) {
 		_tooltip->setExpanded(false);
 		if (_expandButton) {
-			_expandButton->setNameIcon(IconName::Navigation_expand_more);
+			_expandButton->setNameIcon(material::IconName::Navigation_expand_more);
 		}
 		_expanded = false;
 	} else {
 		_tooltip->setExpanded(true);
 		if (_expandButton) {
-			_expandButton->setNameIcon(IconName::Navigation_expand_less);
+			_expandButton->setNameIcon(material::IconName::Navigation_expand_less);
 		}
 		_expanded = true;
 	}
 }
 
-NS_MD_END
+NS_RT_END

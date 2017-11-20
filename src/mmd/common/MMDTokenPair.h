@@ -38,8 +38,8 @@
 	THE SOFTWARE.
 
 */
-#ifndef MMD_SRC_MMDTOKENPAIR_H_
-#define MMD_SRC_MMDTOKENPAIR_H_
+#ifndef MMD_COMMON_MMDTOKENPAIR_H_
+#define MMD_COMMON_MMDTOKENPAIR_H_
 
 #include "MMDCommon.h"
 
@@ -90,4 +90,4 @@ struct TokenPairEngine {
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDTOKENPAIR_H_ */
+#endif /* MMD_COMMON_MMDTOKENPAIR_H_ */

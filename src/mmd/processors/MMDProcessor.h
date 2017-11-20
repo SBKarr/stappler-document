@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_PROCESSORS_MMDPROCESSOR_H_
-#define MMD_SRC_PROCESSORS_MMDPROCESSOR_H_
+#ifndef MMD_PROCESSORS_MMDPROCESSOR_H_
+#define MMD_PROCESSORS_MMDPROCESSOR_H_
 
 #include "MMDContent.h"
 
@@ -57,11 +57,16 @@ public:
 	template <typename T>
 	using Vector = Content::Vector<T>;
 
+	using MetaCallback = Function<StringView(const StringView &)>;
+
 	using String = Content::String;
 	using StringStream = Content::StringStream;
 
 	Processor() { }
 	virtual ~Processor() { }
+
+	void setMetaCallback(const MetaCallback &);
+	const MetaCallback &getMetaCallback() const;
 
 	virtual void process(const Content &, const StringView &, const Token &);
 
@@ -120,8 +125,10 @@ protected:
 	Vector<Content::Footnote *> used_footnotes;
 	Vector<Content::Footnote *> used_citations;
 	Vector<Content::Footnote *> used_glossaries;
+
+	MetaCallback meta_callback;
 };
 
 NS_MMD_END
 
-#endif /* MMD_SRC_PROCESSORS_MMDPROCESSOR_H_ */
+#endif /* MMD_PROCESSORS_MMDPROCESSOR_H_ */

@@ -20,12 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_EPUBDOCUMENT_H_
-#define LAYOUT_EPUB_EPUBDOCUMENT_H_
+#ifndef EPUB_EPUBDOCUMENT_H_
+#define EPUB_EPUBDOCUMENT_H_
 
+#include "EpubInfo.h"
 #include "SLDocument.h"
 #include "SLRendererTypes.h"
-#include "SPEpubInfo.h"
 
 NS_EPUB_BEGIN
 
@@ -87,4 +87,4 @@ protected:
 
 NS_EPUB_END
 
-#endif /* LAYOUT_EPUB_EPUBDOCUMENT_H_ */
+#endif /* EPUB_EPUBDOCUMENT_H_ */

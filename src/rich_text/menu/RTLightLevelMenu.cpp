@@ -24,18 +24,18 @@ THE SOFTWARE.
 **/
 
 #include "Material.h"
-#include "MaterialLightLevelMenu.h"
 #include "MaterialLabel.h"
 #include "MaterialResourceManager.h"
+#include "RTLightLevelMenu.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
 bool LightLevelMenuButton::init() {
 	if (!MenuSourceButton::init()) {
 		return false;
 	}
 
-	onEvent(ResourceManager::onLightLevel, std::bind(&LightLevelMenuButton::onLightLevelChanged, this));
+	onEvent(material::ResourceManager::onLightLevel, std::bind(&LightLevelMenuButton::onLightLevelChanged, this));
 
 	auto lightLevelConfig = Rc<material::MenuSource>::create();
 	auto c = lightLevelConfig->addCustom(24, std::bind(&LightLevelMenuButton::onLabel, this), 170);
@@ -77,15 +77,15 @@ void LightLevelMenuButton::onMenuButton(uint32_t id) {
 	switch(id) {
 	case 0:
 		setNameIcon(material::IconName::Image_brightness_7);
-		ResourceManager::getInstance()->setLightLevel(ResourceManager::LightLevel::Washed);
+		material::ResourceManager::getInstance()->setLightLevel(material::ResourceManager::LightLevel::Washed);
 		break;
 	case 1:
 		setNameIcon(material::IconName::Image_brightness_5);
-		ResourceManager::getInstance()->setLightLevel(ResourceManager::LightLevel::Normal);
+		material::ResourceManager::getInstance()->setLightLevel(material::ResourceManager::LightLevel::Normal);
 		break;
 	case 2:
 		setNameIcon(material::IconName::Image_brightness_3);
-		ResourceManager::getInstance()->setLightLevel(ResourceManager::LightLevel::Dim);
+		material::ResourceManager::getInstance()->setLightLevel(material::ResourceManager::LightLevel::Dim);
 		break;
 	default: break;
 	}
@@ -101,17 +101,17 @@ void LightLevelMenuButton::onLightLevelChanged() {
 		it->setSelected(false);
 	}
 
-	auto level = ResourceManager::getInstance()->getLightLevel();
-	if (level == ResourceManager::LightLevel::Dim) {
+	auto level = material::ResourceManager::getInstance()->getLightLevel();
+	if (level == material::ResourceManager::LightLevel::Dim) {
 		setNameIcon(material::IconName::Image_brightness_3);
 		_buttons.at(2)->setSelected(true);
-	} else if (level == ResourceManager::LightLevel::Normal) {
+	} else if (level == material::ResourceManager::LightLevel::Normal) {
 		setNameIcon(material::IconName::Image_brightness_5);
 		_buttons.at(1)->setSelected(true);
-	} else if (level == ResourceManager::LightLevel::Washed) {
+	} else if (level == material::ResourceManager::LightLevel::Washed) {
 		setNameIcon(material::IconName::Image_brightness_7);
 		_buttons.at(0)->setSelected(true);
 	}
 }
 
-NS_MD_END
+NS_RT_END

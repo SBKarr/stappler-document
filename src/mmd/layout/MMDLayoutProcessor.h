@@ -20,15 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_
-#define EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_
+#ifndef MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_
+#define MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_
 
 #include "SLDocument.h"
 #include "MMDHtmlProcessor.h"
 
 NS_MMD_BEGIN
-
-class LayoutDocument;
 
 class LayoutProcessor : public HtmlProcessor {
 public:
@@ -58,15 +56,10 @@ protected:
 	virtual void flushBuffer();
 
 	Vector<layout::Node *> _nodeStack;
-
-	layout::MediaQueryId _minWidthQuery;
-	layout::MediaQueryId _mediumWidthQuery;
-	layout::MediaQueryId _maxWidthQuery;
-
 	LayoutDocument *_document = nullptr;
 	Page *_page;
 };
 
 NS_MMD_END
 
-#endif /* EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_ */
+#endif /* MMD_LAYOUT_MMDLAYOUTPROCESSOR_H_ */

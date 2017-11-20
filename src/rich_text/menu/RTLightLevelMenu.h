@@ -20,29 +20,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef CLASSES_MENU_SPFONTSIZEMENU_H_
-#define CLASSES_MENU_SPFONTSIZEMENU_H_
+#ifndef RICH_TEXT_MENU_RTLIGHTLEVELMENU_H_
+#define RICH_TEXT_MENU_RTLIGHTLEVELMENU_H_
 
+#include "RTCommon.h"
 #include "MaterialMenuSource.h"
 #include "SPEventHandler.h"
-#include "SPFont.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class FontSizeMenuButton : public MenuSourceButton, public EventHandler {
+class LightLevelMenuButton : public material::MenuSourceButton, public stappler::EventHandler {
 public:
-	static float FontScaleFactor();
-
-	virtual bool init();
+	virtual bool init() override;
 
 protected:
 	cocos2d::Node *onLabel();
 	void onMenuButton(uint32_t id);
-	void onTextFontsChanged();
+	void onLightLevelChanged();
 
 	std::vector<material::MenuSourceButton *> _buttons;
 };
 
-NS_MD_END
+NS_RT_END
 
-#endif /* CLASSES_MENU_SPFONTSIZEMENU_H_ */
+#endif /* RICH_TEXT_MENU_RTLIGHTLEVELMENU_H_ */

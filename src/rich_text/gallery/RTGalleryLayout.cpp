@@ -35,11 +35,11 @@ THE SOFTWARE.
 #include "SPThread.h"
 #include "SPTextureCache.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
 Thread s_galleryRendererThread("RichTextGalleryLayout");
 
-bool RichTextGalleryLayout::init(layout::Source *source, const String &name, const String &sel) {
+bool GalleryLayout::init(CommonSource *source, const String &name, const String &sel) {
 	if (!ToolbarLayout::init()) {
 		return false;
 	}
@@ -73,10 +73,10 @@ bool RichTextGalleryLayout::init(layout::Source *source, const String &name, con
 
 	setTitle(_title[selected]);
 
-	_scroll = construct<GalleryScroll>(std::bind(&RichTextGalleryLayout::onImage, this, std::placeholders::_1, std::placeholders::_2),
+	_scroll = construct<material::GalleryScroll>(std::bind(&GalleryLayout::onImage, this, std::placeholders::_1, std::placeholders::_2),
 			images, selected);
-	_scroll->setActionCallback([this] (GalleryScroll::Action a) {
-		if (a == GalleryScroll::Tap) {
+	_scroll->setActionCallback([this] (material::GalleryScroll::Action a) {
+		if (a == material::GalleryScroll::Tap) {
 			if (getCurrentFlexibleHeight() == 0.0f) {
 				setFlexibleLevelAnimated(1.0f, 0.35f);
 			} else {
@@ -94,7 +94,7 @@ bool RichTextGalleryLayout::init(layout::Source *source, const String &name, con
 	return true;
 }
 
-void RichTextGalleryLayout::onPosition(float val) {
+void GalleryLayout::onPosition(float val) {
 	auto n = (size_t)roundf(val);
 	auto title = _title.at(n);
 	if (!title.empty() && getTitle() != title) {
@@ -107,18 +107,18 @@ void RichTextGalleryLayout::onPosition(float val) {
 	btn->setLabelOpacity((uint8_t)(diff * 255.0f));
 }
 
-void RichTextGalleryLayout::onContentSizeDirty() {
+void GalleryLayout::onContentSizeDirty() {
 	ToolbarLayout::onContentSizeDirty();
 
 	_scroll->setContentSize(getContentSize());
 }
 
-void RichTextGalleryLayout::onEnter() {
+void GalleryLayout::onEnter() {
 	ToolbarLayout::onEnter();
 	setFlexibleLevel(0.0f);
 }
 
-void RichTextGalleryLayout::onForegroundTransitionBegan(ContentLayer *l, Layout *overlay) {
+void GalleryLayout::onForegroundTransitionBegan(material::ContentLayer *l, Layout *overlay) {
 	ToolbarLayout::onForegroundTransitionBegan(l, overlay);
 	if (auto t = dynamic_cast<ToolbarLayout *>(overlay)) {
 		auto toolbar = t->getToolbar();
@@ -127,7 +127,7 @@ void RichTextGalleryLayout::onForegroundTransitionBegan(ContentLayer *l, Layout 
 	}
 }
 
-void RichTextGalleryLayout::onPush(ContentLayer *l, bool replace) {
+void GalleryLayout::onPush(material::ContentLayer *l, bool replace) {
 	auto prev = l->getPrevNode();
 	if (auto t = dynamic_cast<ToolbarLayout *>(prev)) {
 		auto toolbar = t->getToolbar();
@@ -136,11 +136,11 @@ void RichTextGalleryLayout::onPush(ContentLayer *l, bool replace) {
 	}
 }
 
-void RichTextGalleryLayout::onImage(const String &image, const Function<void(cocos2d::Texture2D *)> &tex) {
-	_source->retainReadLock(this, std::bind(&RichTextGalleryLayout::onAssetCaptured, this, image, tex));
+void GalleryLayout::onImage(const String &image, const Function<void(cocos2d::Texture2D *)> &tex) {
+	_source->retainReadLock(this, std::bind(&GalleryLayout::onAssetCaptured, this, image, tex));
 }
 
-void RichTextGalleryLayout::onAssetCaptured(const String &imageLink, const Function<void(cocos2d::Texture2D *)> &cb) {
+void GalleryLayout::onAssetCaptured(const String &imageLink, const Function<void(cocos2d::Texture2D *)> &cb) {
 	StringView r(imageLink);
 	std::string image = r.readUntil<StringView::Chars<'?'>>().str();
 	if (!_source->isActual()) {
@@ -163,4 +163,4 @@ void RichTextGalleryLayout::onAssetCaptured(const String &imageLink, const Funct
 	}, this);
 }
 
-NS_MD_END
+NS_RT_END

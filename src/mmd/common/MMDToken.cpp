@@ -583,13 +583,13 @@ void sp_mmd_token_split_on_char(token * t, const char * source, const char c) {
 	}
 
 	size_t start = t->start;
-	size_t pos = 0;
-	size_t stop = t->len;
+	uint32_t pos = 0;
+	uint32_t stop = t->len;
 	token * n = NULL;
 
 	while (pos + 1 < stop) {
 		if (source[start + pos] == c) {
-			n = sp_mmd_token_new(t->type, start + pos + 1, stop - (pos + 1));
+			n = sp_mmd_token_new(t->type, uint32_t(start + pos + 1), stop - (pos + 1));
 			n->next = t->next;
 			t->next = n;
 
@@ -641,7 +641,7 @@ void sp_mmd_token_split(token * t, uint32_t start, uint32_t len, unsigned short 
 			// We will end up with t->A->T2
 
 			// Create T2
-			token * T2 = sp_mmd_token_new(t->type, stop, t->start + t->len - stop);
+			token * T2 = sp_mmd_token_new(t->type, stop, uint32_t(t->start + t->len - stop));
 			T2->next = t->next;
 
 			if (t->next) {

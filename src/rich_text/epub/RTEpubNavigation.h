@@ -23,19 +23,19 @@ THE SOFTWARE.
 #ifndef CLASSES_LAYOUTS_FILES_FILEEPUBNAVIGATION_H_
 #define CLASSES_LAYOUTS_FILES_FILEEPUBNAVIGATION_H_
 
+#include "RTCommon.h"
 #include "MaterialNode.h"
 
-NS_MD_BEGIN
-
-class RichTextView;
+NS_RT_BEGIN
 
 class EpubNavigation : public cocos2d::Node {
 public:
 	using Callback = std::function<void(float)>;
 
-	virtual bool init(RichTextView *view, const Callback & = nullptr);
+	virtual bool init(const Callback & = nullptr);
 	virtual void onContentSizeDirty() override;
 
+	virtual void setView(View *view);
 	virtual void setReaderProgress(float p);
 	virtual void onResult(layout::Result *);
 
@@ -57,11 +57,11 @@ protected:
 	class Scroll;
 	class Bookmarks;
 
-	RichTextView *_view = nullptr;
+	View *_view = nullptr;
 	Scroll *_scroll = nullptr;
 
-	ButtonIcon *_icon = nullptr;
-	RoundedProgress *_progress = nullptr;
+	material::ButtonIcon *_icon = nullptr;
+	material::RoundedProgress *_progress = nullptr;
 	Bookmarks *_bookmarks = nullptr;
 
 	float _openProgress = 0.0f;
@@ -73,6 +73,6 @@ protected:
 	Callback _callback = nullptr;
 };
 
-NS_MD_END
+NS_RT_END
 
 #endif /* CLASSES_LAYOUTS_FILES_FILEEPUBNAVIGATION_H_ */

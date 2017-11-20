@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 #include "Material.h"
 #include "FileNavigator.h"
+
+#include "../../../src/epub/EpubDocument.h"
 #include "FileImageView.h"
 
 #include "RTEpubView.h"
@@ -40,8 +42,6 @@ THE SOFTWARE.
 #include "SPFilesystem.h"
 #include "SPDevice.h"
 #include "SPStorage.h"
-#include "SPEpubDocument.h"
-
 #include "FileDialog.h"
 
 NS_SP_EXT_BEGIN(app)
@@ -335,11 +335,11 @@ void FileNavigator::openFile(const std::string &file) {
 		material::Scene::getRunningScene()->getContentLayer()->pushNode(view);
 	} else {
 		if (layout::Document::canOpenDocumnt(FilePath(file))) {
-			auto source = Rc<material::RichTextSource>::create(FilePath(file));
-			auto view = Rc<material::EpubView>::create(source, filepath::name(file), _hyphens);
+			auto source = Rc<rich_text::Source>::create(FilePath(file));
+			auto view = Rc<rich_text::EpubView>::create(source, filepath::name(file), _hyphens);
 			view->setLayout(ScrollView::Vertical);
 			view->setTitle(filepath::name(file));
-			material::RichTextSource *s = source;
+			rich_text::Source *s = source;
 
 			view->getToolbar()->getActionMenuSource()->addButton("refresh", material::IconName::Navigation_refresh,
 					[s] (material::Button *b, material::MenuSourceButton *) {

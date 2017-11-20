@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_MMDCOMMON_H_
-#define MMD_SRC_MMDCOMMON_H_
+#ifndef MMD_COMMON_MMDCOMMON_H_
+#define MMD_COMMON_MMDCOMMON_H_
 
 #include "SPCommon.h"
 #include "SPCharReader.h"
@@ -59,6 +59,13 @@ using token = _sp_mmd_token;
 class Engine;
 class Token;
 class Content;
+
+class Processor;
+class HtmlProcessor;
+class HtmlOutputProcessor;
+
+class LayoutDocument;
+class LayoutProcessor;
 
 struct TokenPair;
 struct TokenPairEngine;
@@ -100,4 +107,4 @@ enum class QuotesLanguage {
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDCOMMON_H_ */
+#endif /* MMD_COMMON_MMDCOMMON_H_ */

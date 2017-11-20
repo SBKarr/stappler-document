@@ -27,13 +27,13 @@ THE SOFTWARE.
 #include "MaterialResourceManager.h"
 #include "RTSource.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-RichTextSource::~RichTextSource() { }
+Source::~Source() { }
 
-RichTextSource::RichTextSource() {
-	_scale = ResourceManager::getInstance()->getUserFontScale();
-	onEvent(ResourceManager::onUserFont, std::bind(&RichTextSource::onFontSizeChanged, this));
+Source::Source() {
+	_scale = material::ResourceManager::getInstance()->getUserFontScale();
+	onEvent(material::ResourceManager::onUserFont, std::bind(&Source::onFontSizeChanged, this));
 
 	using namespace layout::style;
 
@@ -88,8 +88,8 @@ RichTextSource::RichTextSource() {
 	});
 }
 
-void RichTextSource::onFontSizeChanged() {
-	setFontScale(ResourceManager::getInstance()->getUserFontScale());
+void Source::onFontSizeChanged() {
+	setFontScale(material::ResourceManager::getInstance()->getUserFontScale());
 }
 
-NS_MD_END
+NS_RT_END

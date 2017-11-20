@@ -49,6 +49,8 @@ DOCUMENT_SOURCE_DIR_MATERIAL := \
 DOCUMENT_INCLUDE_MATERIAL := \
 	$(DOCUMENT_INCLUDE_STAPPLER) \
 	$(DOCUMENT_MAKEFILE_DIR)src/rich_text \
+	$(DOCUMENT_MAKEFILE_DIR)src/rich_text/articles \
+	$(DOCUMENT_MAKEFILE_DIR)src/rich_text/common \
 	$(DOCUMENT_MAKEFILE_DIR)src/rich_text/epub \
 	$(DOCUMENT_MAKEFILE_DIR)src/rich_text/gallery \
 	$(DOCUMENT_MAKEFILE_DIR)src/rich_text/menu

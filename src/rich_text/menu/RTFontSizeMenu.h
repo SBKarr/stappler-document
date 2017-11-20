@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LAYOUT_EPUB_SPEPUBREADER_H_
-#define LAYOUT_EPUB_SPEPUBREADER_H_
+#ifndef RICH_TEXT_MENU_RTFONTSIZEMENU_H_
+#define RICH_TEXT_MENU_RTFONTSIZEMENU_H_
 
-#include "SLReader.h"
-#include "SPEpubInfo.h"
+#include "RTCommon.h"
+#include "MaterialMenuSource.h"
+#include "SPEventHandler.h"
+#include "SPFont.h"
 
-NS_EPUB_BEGIN
+NS_RT_BEGIN
 
-class Reader : public layout::Reader {
+class FontSizeMenuButton : public material::MenuSourceButton, public EventHandler {
 public:
-	using StringReader = StringViewUtf8;
+	static float FontScaleFactor();
 
-	virtual ~Reader() { }
+	virtual bool init();
 
 protected:
-	virtual void onPushTag(Tag &) override;
-	virtual void onPopTag(Tag &) override;
-	virtual void onInlineTag(Tag &) override;
-	virtual void onTagContent(Tag &, StringReader &) override;
+	cocos2d::Node *onLabel();
+	void onMenuButton(uint32_t id);
+	void onTextFontsChanged();
 
-	bool isCaseAllowed() const;
-	bool isNamespaceImplemented(const String &) const;
-
-	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
-	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
-
-	struct SwitchData {
-		bool parsed = false;
-		bool active = false;
-	};
-
-	Vector<SwitchData> _switchStatus;
+	std::vector<material::MenuSourceButton *> _buttons;
 };
 
-NS_EPUB_END
+NS_RT_END
 
-#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */
+#endif /* RICH_TEXT_MENU_RTFONTSIZEMENU_H_ */

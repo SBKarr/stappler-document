@@ -20,38 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef CLASSES_GUI_GALLERYLAYOUT_H_
-#define CLASSES_GUI_GALLERYLAYOUT_H_
+#ifndef EXTENSIONS_DOCUMENT_SRC_EXTENSIONDOCUMENT_H_
+#define EXTENSIONS_DOCUMENT_SRC_EXTENSIONDOCUMENT_H_
 
-#include "RTCommonSource.h"
-#include "MaterialToolbarLayout.h"
-
-NS_RT_BEGIN
-
-class GalleryLayout : public material::ToolbarLayout {
-public:
-	virtual bool init(CommonSource *source, const std::string &name, const std::string &sel);
-	virtual void onContentSizeDirty() override;
-
-	virtual void onEnter() override;
-
-	virtual void onForegroundTransitionBegan(material::ContentLayer *l, Layout *overlay) override;
-	virtual void onPush(material::ContentLayer *l, bool replace) override;
-
-protected:
-	void onPosition(float val);
-
-	void onImage(const String &, const Function<void(cocos2d::Texture2D *)> &);
-	void onAssetCaptured(const String &image, const Function<void(cocos2d::Texture2D *)> &tex);
-
-	Rc<CommonSource> _source;
-	String _name;
-	Vector<String> _title;
+#include "MMDCommon.h"
+#include "EpubInfo.h"
 
 
-	material::GalleryScroll *_scroll;
-};
 
-NS_RT_END
-
-#endif /* CLASSES_GUI_GALLERYLAYOUT_H_ */
+#endif /* EXTENSIONS_DOCUMENT_SRC_EXTENSIONDOCUMENT_H_ */

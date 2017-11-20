@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_MMDAHOCORASICK_H_
-#define MMD_SRC_MMDAHOCORASICK_H_
+#ifndef MMD_COMMON_MMDAHOCORASICK_H_
+#define MMD_COMMON_MMDAHOCORASICK_H_
 
 #include "MMDCommon.h"
 
@@ -97,4 +97,4 @@ protected:
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDAHOCORASICK_H_ */
+#endif /* MMD_COMMON_MMDAHOCORASICK_H_ */

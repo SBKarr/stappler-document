@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_SRC_MMDTOKEN_H_
-#define MMD_SRC_MMDTOKEN_H_
+#ifndef MMD_COMMON_MMDTOKEN_H_
+#define MMD_COMMON_MMDTOKEN_H_
 
 #include "MMDCommon.h"
 
@@ -70,4 +70,4 @@ protected:
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDTOKEN_H_ */
+#endif /* MMD_COMMON_MMDTOKEN_H_ */

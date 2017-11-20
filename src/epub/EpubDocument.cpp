@@ -23,9 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
+#include "EpubDocument.h"
+
+#include "EpubReader.h"
 #include "SPLayout.h"
-#include "SPEpubDocument.h"
-#include "SPEpubReader.h"
 #include "SPLocale.h"
 #include "SPHtmlParser.h"
 #include "SLFont.h"

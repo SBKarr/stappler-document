@@ -27,16 +27,18 @@ THE SOFTWARE.
 #include "MaterialResourceManager.h"
 
 #include "RTListenerView.h"
+#include "RTRenderer.h"
 
 #include "SPEventListener.h"
-#include "SPRichTextRenderer.h"
 #include "SPLayer.h"
+#include "SPDevice.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-SP_DECLARE_EVENT_CLASS(RichTextListenerView, onSelection);
+SP_DECLARE_EVENT_CLASS(ListenerView, onSelection);
+SP_DECLARE_EVENT_CLASS(ListenerView, onExternalLink);
 
-bool RichTextListenerView::Selection::init(RichTextListenerView *view) {
+bool ListenerView::Selection::init(ListenerView *view) {
 	if (!DynamicBatchNode::init()) {
 		return false;
 	}
@@ -49,7 +51,7 @@ bool RichTextListenerView::Selection::init(RichTextListenerView *view) {
 		.closePath());
 	_markerStart->setContentSize(Size(24.0f, 24.0f));
 	_markerStart->setAnchorPoint(Vec2(1.0f, 1.0f));
-	_markerStart->setColor(Color::Blue_500);
+	_markerStart->setColor(material::Color::Blue_500);
 	_markerStart->setOpacity(192);
 	_markerStart->setVisible(false);
 	addChild(_markerStart, 1);
@@ -62,14 +64,14 @@ bool RichTextListenerView::Selection::init(RichTextListenerView *view) {
 		.closePath());
 	_markerEnd->setContentSize(Size(24.0f, 24.0f));
 	_markerEnd->setAnchorPoint(Vec2(0.0f, 1.0f));
-	_markerEnd->setColor(Color::Blue_500);
+	_markerEnd->setColor(material::Color::Blue_500);
 	_markerEnd->setOpacity(192);
 	_markerEnd->setVisible(false);
 	addChild(_markerEnd, 2);
 
 	_view = view;
 
-	setColor(Color::Blue_400);
+	setColor(material::Color::Blue_400);
 	setOpacity(48);
 
 	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
@@ -82,7 +84,7 @@ bool RichTextListenerView::Selection::init(RichTextListenerView *view) {
 	return true;
 }
 
-void RichTextListenerView::Selection::clearSelection() {
+void ListenerView::Selection::clearSelection() {
 	_index = 0;
 	_object = nullptr;
 	_quads->clear();
@@ -95,7 +97,7 @@ void RichTextListenerView::Selection::clearSelection() {
 
 	setEnabled(false);
 }
-void RichTextListenerView::Selection::selectLabel(const rich_text::Object *obj, const Vec2 &loc) {
+void ListenerView::Selection::selectLabel(const rich_text::Object *obj, const Vec2 &loc) {
 	if (obj->type == layout::Object::Type::Label) {
 		_index = obj->index;
 		_object = obj;
@@ -119,7 +121,7 @@ void RichTextListenerView::Selection::selectLabel(const rich_text::Object *obj, 
 	}
 }
 
-void RichTextListenerView::Selection::selectWholeLabel() {
+void ListenerView::Selection::selectWholeLabel() {
 	if (_object) {
 		const auto &label = _object->value.label;
 
@@ -130,12 +132,7 @@ void RichTextListenerView::Selection::selectWholeLabel() {
 	}
 }
 
-void RichTextListenerView::Selection::updateBlendFunc(cocos2d::Texture2D *) {
-	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
-	setOpacityModifyRGB(true);
-}
-
-void RichTextListenerView::Selection::emplaceRect(const Rect &rect, size_t idx, size_t count) {
+void ListenerView::Selection::emplaceRect(const Rect &rect, size_t idx, size_t count) {
 	Vec2 origin;
 	if (_view->isVertical()) {
 		origin = Vec2(rect.origin.x, - rect.origin.y - _view->getObjectsOffset() - rect.size.height);
@@ -165,7 +162,7 @@ void RichTextListenerView::Selection::emplaceRect(const Rect &rect, size_t idx, 
 	}
 }
 
-void RichTextListenerView::Selection::updateRects() {
+void ListenerView::Selection::updateRects() {
 	auto res = _view->getResult();
 	if (res) {
 		_quads->clear();
@@ -203,17 +200,18 @@ void RichTextListenerView::Selection::updateRects() {
 			++ rectIdx;
 		}
 		updateColor();
+		updateBlendFunc(nullptr);
 	}
 }
 
-bool RichTextListenerView::Selection::onTap(int, const Vec2 &) {
+bool ListenerView::Selection::onTap(int, const Vec2 &) {
 	return true;
 }
 
-bool RichTextListenerView::Selection::onPressBegin(const Vec2 &) {
+bool ListenerView::Selection::onPressBegin(const Vec2 &) {
 	return true;
 }
-bool RichTextListenerView::Selection::onLongPress(const Vec2 &vec, const TimeInterval &, int count) {
+bool ListenerView::Selection::onLongPress(const Vec2 &vec, const TimeInterval &, int count) {
 	if (!_markerTarget) {
 		auto res = _view->getResult();
 		if (res && count == 1) {
@@ -231,7 +229,7 @@ bool RichTextListenerView::Selection::onLongPress(const Vec2 &vec, const TimeInt
 	}
 	return true;
 }
-bool RichTextListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInterval &time) {
+bool ListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInterval &time) {
 	if (isEnabled() && time < TimeInterval::milliseconds(425)) {
 		auto loc = _view->convertToObjectSpace(vec);
 		auto obj = getSelectedObject(_view->getResult(), loc);
@@ -290,11 +288,11 @@ bool RichTextListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInte
 	}
 	return true;
 }
-bool RichTextListenerView::Selection::onPressCancel(const Vec2 &) {
+bool ListenerView::Selection::onPressCancel(const Vec2 &) {
 	return true;
 }
 
-bool RichTextListenerView::Selection::onSwipeBegin(const Vec2 &loc) {
+bool ListenerView::Selection::onSwipeBegin(const Vec2 &loc) {
 	if (_enabled) {
 		if (node::isTouched(_markerStart, loc, 8.0f)) {
 			_markerTarget = _markerStart;
@@ -306,7 +304,7 @@ bool RichTextListenerView::Selection::onSwipeBegin(const Vec2 &loc) {
 	}
 	return false;
 }
-bool RichTextListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
+bool ListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
 	if (!_markerTarget) {
 		return false;
 	}
@@ -361,7 +359,7 @@ bool RichTextListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
 
 	return true;
 }
-bool RichTextListenerView::Selection::onSwipeEnd(const Vec2 &v) {
+bool ListenerView::Selection::onSwipeEnd(const Vec2 &v) {
 	if (!_markerTarget) {
 		return false;
 	}
@@ -370,18 +368,18 @@ bool RichTextListenerView::Selection::onSwipeEnd(const Vec2 &v) {
 	return true;
 }
 
-void RichTextListenerView::Selection::setEnabled(bool value) {
+void ListenerView::Selection::setEnabled(bool value) {
 	if (value != _enabled) {
 		_enabled = value;
 		onSelection(_view, value);
 	}
 }
 
-bool RichTextListenerView::Selection::isEnabled() const {
+bool ListenerView::Selection::isEnabled() const {
 	return _enabled;
 }
 
-bool RichTextListenerView::Selection::hasSelection() const {
+bool ListenerView::Selection::hasSelection() const {
 	return _selectionBounds.first.object != maxOf<size_t>() && _selectionBounds.first.object != maxOf<size_t>();
 }
 
@@ -395,7 +393,7 @@ static void pushString(StringStream &stream, const WideString &str) {
 	}
 }
 
-String RichTextListenerView::Selection::getSelectedString(size_t maxWords) const {
+String ListenerView::Selection::getSelectedString(size_t maxWords) const {
 	if (hasSelection()) {
 		auto res = _view->getResult();
 		if (res) {
@@ -441,11 +439,11 @@ String RichTextListenerView::Selection::getSelectedString(size_t maxWords) const
 	return String();
 }
 
-Pair<RichTextListenerView::SelectionPosition, RichTextListenerView::SelectionPosition> RichTextListenerView::Selection::getSelectionPosition() const {
+Pair<ListenerView::SelectionPosition, ListenerView::SelectionPosition> ListenerView::Selection::getSelectionPosition() const {
 	return _selectionBounds;
 }
 
-const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc) const {
+const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc) const {
 	const Vector<rich_text::Object> &objs = res->getObjects();
 	for (auto &it : objs) {
 		if (it.isLabel()) {
@@ -458,7 +456,7 @@ const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich
 	return nullptr;
 }
 
-const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc, size_t pos, int32_t offset) const {
+const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc, size_t pos, int32_t offset) const {
 	const Vector<rich_text::Object> &objs = res->getObjects();
 	if (offset < 0 && pos > 0) {
 		if (-offset > int32_t(pos)) {
@@ -495,16 +493,16 @@ const rich_text::Object *RichTextListenerView::Selection::getSelectedObject(rich
 	return nullptr;
 }
 
-RichTextListenerView::~RichTextListenerView() { }
+ListenerView::~ListenerView() { }
 
-bool RichTextListenerView::init(Layout l, rich_text::Source *source, const Vector<String> &ids) {
+bool ListenerView::init(Layout l, CommonSource *source, const Vector<String> &ids) {
 	_eventListener = construct<EventListener>();
 
-	if (!View::init(l, source, ids)) {
+	if (!CommonView::init(l, source, ids)) {
 		return false;
 	}
 
-	_eventListener->onEvent(ResourceManager::onLightLevel, std::bind(&RichTextListenerView::onLightLevelChanged, this));
+	_eventListener->onEvent(material::ResourceManager::onLightLevel, std::bind(&ListenerView::onLightLevelChanged, this));
 	addComponent(_eventListener);
 
 	_selection = construct<Selection>(this);
@@ -515,40 +513,42 @@ bool RichTextListenerView::init(Layout l, rich_text::Source *source, const Vecto
 	return true;
 }
 
-void RichTextListenerView::setUseSelection(bool value) {
+void ListenerView::setUseSelection(bool value) {
 	_useSelection = value;
 }
 
-void RichTextListenerView::setLayout(Layout l) {
+void ListenerView::setLayout(Layout l) {
 	_selection->clearSelection();
-	View::setLayout(l);
+	CommonView::setLayout(l);
 }
 
-void RichTextListenerView::onLightLevelChanged() {
-	auto level = ResourceManager::getInstance()->getLightLevel();
+void ListenerView::onLightLevelChanged() {
+	auto level = material::ResourceManager::getInstance()->getLightLevel();
 	_renderer->setLightLevelValue(level);
 
 	switch(level) {
-	case ResourceManager::LightLevel::Washed:
-		_background->setColor(Color::White);
+	case material::ResourceManager::LightLevel::Washed:
+		_background->setColor(material::Color::White);
 		break;
-	case ResourceManager::LightLevel::Normal:
-		_background->setColor(Color::Grey_200);
+	case material::ResourceManager::LightLevel::Normal:
+		_background->setColor(material::Color::Grey_200);
 		break;
-	case ResourceManager::LightLevel::Dim:
-		_background->setColor(Color::Grey_800);
+	case material::ResourceManager::LightLevel::Dim:
+		_background->setColor(material::Color::Grey_800);
 		break;
 	}
 }
 
-void RichTextListenerView::onTap(int count, const Vec2 &vec) {
+void ListenerView::onTap(int count, const Vec2 &vec) {
 	if (count == 1 && _tapCallback) {
-		if (auto res = getResult()) {
-			auto loc = convertToObjectSpace(vec);
-			auto &objs = res->getRefs();
-			for (auto &it : objs) {
-				if (isObjectTapped(loc, it)) {
-					return;
+		if (_linksEnabled) {
+			if (auto res = getResult()) {
+				auto loc = convertToObjectSpace(vec);
+				auto &objs = res->getRefs();
+				for (auto &it : objs) {
+					if (isObjectTapped(loc, it)) {
+						return;
+					}
 				}
 			}
 		}
@@ -557,76 +557,94 @@ void RichTextListenerView::onTap(int count, const Vec2 &vec) {
 	}
 }
 
+void ListenerView::onObjectPressEnd(const Vec2 &vec, const rich_text::Object &obj) {
+	if (obj.type == rich_text::Object::Type::Ref) {
+		onLink(obj.value.ref.target, obj.value.ref.mode, vec);
+	}
+}
 
-bool RichTextListenerView::onSwipeEventBegin(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+void ListenerView::onLink(const String &ref, const String &target, const Vec2 &pos) {
+	if (ref.compare(0, 7, "http://") == 0 || ref.compare(0, 8, "https://") == 0) {
+		stappler::Device::getInstance()->goToUrl(ref);
+		onExternalLink(this, ref);
+	} else if (ref.compare(0, 7, "mailto:") == 0) {
+		stappler::Device::getInstance()->mailTo(ref);
+		onExternalLink(this, ref);
+	} else if (ref.compare(0, 4, "tel:") == 0) {
+		stappler::Device::getInstance()->makePhoneCall(ref);
+		onExternalLink(this, ref);
+	}
+}
+
+bool ListenerView::onSwipeEventBegin(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
 	if (_useSelection && _selection->isEnabled() && _selection->onSwipeBegin(loc)) {
 		return _selection->onSwipe(loc, d);
 	}
-	return View::onSwipeEventBegin(loc, d, v);
+	return CommonView::onSwipeEventBegin(loc, d, v);
 }
-bool RichTextListenerView::onSwipeEvent(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+bool ListenerView::onSwipeEvent(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
 	if (_useSelection && _selection->isEnabled() && _selection->onSwipe(loc, d)) {
 		return true;
 	}
-	return View::onSwipeEvent(loc, d, v);
+	return CommonView::onSwipeEvent(loc, d, v);
 }
-bool RichTextListenerView::onSwipeEventEnd(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
+bool ListenerView::onSwipeEventEnd(const Vec2 &loc, const Vec2 &d, const Vec2 &v) {
 	if (_useSelection && _selection->isEnabled() && _selection->onSwipeEnd(v)) {
 		return true;
 	}
-	return View::onSwipeEventEnd(loc, d, v);
+	return CommonView::onSwipeEventEnd(loc, d, v);
 }
 
-bool RichTextListenerView::onPressBegin(const Vec2 &loc) {
+bool ListenerView::onPressBegin(const Vec2 &loc) {
 	if (_useSelection && _selection->isEnabled()) {
 		return _selection->onPressBegin(loc);
 	}
-	return View::onPressBegin(loc);
+	return CommonView::onPressBegin(loc);
 }
 
-bool RichTextListenerView::onLongPress(const Vec2 &vec, const TimeInterval &interval, int count) {
-	if (View::onLongPress(vec, interval, count) && _useSelection) {
+bool ListenerView::onLongPress(const Vec2 &vec, const TimeInterval &interval, int count) {
+	if (CommonView::onLongPress(vec, interval, count) && _useSelection) {
 		return _selection->onLongPress(vec, interval, count);
 	}
 	return false;
 }
 
-bool RichTextListenerView::onPressEnd(const Vec2 &loc, const TimeInterval &time) {
+bool ListenerView::onPressEnd(const Vec2 &loc, const TimeInterval &time) {
 	if (_useSelection && _selection->isEnabled()) {
 		return _selection->onPressEnd(loc, time);
 	}
-	return View::onPressEnd(loc, time);
+	return CommonView::onPressEnd(loc, time);
 }
-bool RichTextListenerView::onPressCancel(const Vec2 &loc, const TimeInterval &time) {
+bool ListenerView::onPressCancel(const Vec2 &loc, const TimeInterval &time) {
 	if (_useSelection && _selection->isEnabled()) {
 		return _selection->onPressCancel(loc);
 	}
-	return View::onPressCancel(loc, time);
+	return CommonView::onPressCancel(loc, time);
 }
 
-void RichTextListenerView::disableSelection() {
+void ListenerView::disableSelection() {
 	_selection->clearSelection();
 }
-bool RichTextListenerView::isSelectionEnabled() const {
+bool ListenerView::isSelectionEnabled() const {
 	return _selection->isEnabled();
 }
 
-String RichTextListenerView::getSelectedString(size_t maxWords) const {
+String ListenerView::getSelectedString(size_t maxWords) const {
 	return _selection->getSelectedString(maxWords);
 }
-Pair<RichTextListenerView::SelectionPosition, RichTextListenerView::SelectionPosition> RichTextListenerView::getSelectionPosition() const {
+Pair<ListenerView::SelectionPosition, ListenerView::SelectionPosition> ListenerView::getSelectionPosition() const {
 	return _selection->getSelectionPosition();
 }
 
-void RichTextListenerView::onPosition() {
+void ListenerView::onPosition() {
 	_selection->setPosition(_root->getPosition());
 	_selection->setContentSize(_root->getContentSize());
-	View::onPosition();
+	CommonView::onPosition();
 }
 
-void RichTextListenerView::onRenderer(rich_text::Result *res, bool status) {
+void ListenerView::onRenderer(rich_text::Result *res, bool status) {
 	_selection->clearSelection();
-	View::onRenderer(res, status);
+	CommonView::onRenderer(res, status);
 }
 
-NS_MD_END
+NS_RT_END

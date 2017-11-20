@@ -26,6 +26,8 @@ THE SOFTWARE.
 #include "SPLayout.h"
 #include "MMDLayoutProcessor.h"
 #include "MMDLayoutDocument.h"
+#include "MMDToken.h"
+#include "MMDCore.h"
 #include "SLParser.h"
 #include "SLStyle.h"
 
@@ -38,24 +40,7 @@ bool LayoutProcessor::init(LayoutDocument *doc) {
 
 	layout::Style style;
 	_page->root.pushStyle(move(style));
-
 	_page->strings.insert(pair(layout::CssStringId("monospace"_hash), "monospace"));
-
-	auto mediaCssStringFn = [&] (layout::CssStringId strId, const StringView &string) {
-		_page->strings.insert(pair(strId, string.str()));
-	};
-
-	_minWidthQuery = _page->queries.size();
-	_page->queries.emplace_back();
-	_page->queries.back().parse("max-width:500px", mediaCssStringFn);
-
-	_mediumWidthQuery = _page->queries.size();
-	_page->queries.emplace_back();
-	_page->queries.back().parse("min-width:500px and max-width:750px", mediaCssStringFn);
-
-	_maxWidthQuery = _page->queries.size();
-	_page->queries.emplace_back();
-	_page->queries.back().parse("min-width:750px", mediaCssStringFn);
 
 	return true;
 }
@@ -63,7 +48,39 @@ bool LayoutProcessor::init(LayoutDocument *doc) {
 void LayoutProcessor::processHtml(const Content &c, const StringView &str, const Token &t) {
 	source = str;
 	exportTokenTree(buffer, t);
+	exportFootnoteList(buffer);
+	exportCitationList(buffer);
 	flushBuffer();
+
+	token * entry = nullptr;
+	uint8_t init_level = 0, level = 0;
+
+	std::array<LayoutDocument::ContentRecord *, 8> level_list;
+
+	auto &header_stack = content->getHeaders();
+	if (header_stack.empty()) {
+		return;
+	}
+
+	init_level = rawLevelForHeader(header_stack.front());
+	level_list[init_level - 1] = &_document->_contents;
+
+	for (auto &it : header_stack) {
+		entry = it;
+		level = rawLevelForHeader(it);
+		if (auto c = level_list[level - 1]) {
+			buffer.clear();
+			exportTokenTree(buffer, entry->child);
+			auto str = buffer.weak();
+
+			auto id = labelFromHeader(source, entry);
+
+			c->childs.push_back(LayoutDocument::ContentRecord{
+				stappler::String(str.data(), str.size()),
+				stappler::String(id.data(), id.size())});
+			level_list[level] = &c->childs.back();
+		}
+	}
 }
 
 void LayoutProcessor::addCssString(const stappler::String &origStr) {

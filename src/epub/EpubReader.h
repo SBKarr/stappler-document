@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,38 +20,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef CLASSES_GUI_GALLERYLAYOUT_H_
-#define CLASSES_GUI_GALLERYLAYOUT_H_
+#ifndef EPUB_EPUBREADER_H_
+#define EPUB_EPUBREADER_H_
 
-#include "RTCommonSource.h"
-#include "MaterialToolbarLayout.h"
+#include "EpubInfo.h"
+#include "SLReader.h"
 
-NS_RT_BEGIN
+NS_EPUB_BEGIN
 
-class GalleryLayout : public material::ToolbarLayout {
+class Reader : public layout::Reader {
 public:
-	virtual bool init(CommonSource *source, const std::string &name, const std::string &sel);
-	virtual void onContentSizeDirty() override;
+	using StringReader = StringViewUtf8;
 
-	virtual void onEnter() override;
-
-	virtual void onForegroundTransitionBegan(material::ContentLayer *l, Layout *overlay) override;
-	virtual void onPush(material::ContentLayer *l, bool replace) override;
+	virtual ~Reader() { }
 
 protected:
-	void onPosition(float val);
+	virtual void onPushTag(Tag &) override;
+	virtual void onPopTag(Tag &) override;
+	virtual void onInlineTag(Tag &) override;
+	virtual void onTagContent(Tag &, StringReader &) override;
 
-	void onImage(const String &, const Function<void(cocos2d::Texture2D *)> &);
-	void onAssetCaptured(const String &image, const Function<void(cocos2d::Texture2D *)> &tex);
+	bool isCaseAllowed() const;
+	bool isNamespaceImplemented(const String &) const;
 
-	Rc<CommonSource> _source;
-	String _name;
-	Vector<String> _title;
+	//virtual bool isStyleAttribute(const String &tagName, const String &name) const override;
+	//virtual void addStyleAttribute(layout::style::Tag &tag, const String &name, const String &value) override;
 
+	struct SwitchData {
+		bool parsed = false;
+		bool active = false;
+	};
 
-	material::GalleryScroll *_scroll;
+	Vector<SwitchData> _switchStatus;
 };
 
-NS_RT_END
+NS_EPUB_END
 
-#endif /* CLASSES_GUI_GALLERYLAYOUT_H_ */
+#endif /* LAYOUT_EPUB_SPEPUBREADER_H_ */

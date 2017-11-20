@@ -296,7 +296,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 		if (footnote_para_counter == 0) {
 			out << " ";
 			String ref = Traits::toString("#cnref:", citation_being_printed);
-			pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversecitation") });
+			if (!spExt) {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversecitation") });
+			} else {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversecitation"), pair("target", "_self") });
+			}
 			out << "&#160;&#8617;";
 			popNode();
 		}
@@ -315,7 +319,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 			}
 
 			String ref = Traits::toString("#fnref:", temp_short);
-			pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversefootnote") });
+			if (!spExt) {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversefootnote") });
+			} else {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversefootnote"), pair("target", "_self") });
+			}
 			out << "&#160;&#8617;";
 			popNode();
 		}
@@ -327,7 +335,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 		if (footnote_para_counter == 0) {
 			out << " ";
 			String ref = Traits::toString("#gnref:", glossary_being_printed);
-			pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reverseglossary") });
+			if (!spExt) {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reverseglossary") });
+			} else {
+				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reverseglossary"), pair("target", "_self") });
+			}
 			out << "&#160;&#8617;";
 			popNode();
 		}
@@ -861,7 +873,7 @@ void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
 		}
 
 		if ((extensions & Extensions::RandomFoot) != Extensions::None) {
-			srand(random_seed_base + temp_short);
+			srand(unsigned(random_seed_base + temp_short));
 			temp_short3 = rand() % 32000 + 1;
 		} else {
 			temp_short3 = temp_short;
@@ -931,6 +943,14 @@ void HtmlProcessor::exportPairBracketVariable(std::ostream &out, token *t) {
 	if (!temp_char2.empty()) {
 		printHtml(out, temp_char2);
 	} else {
+		if (meta_callback) {
+			temp_char2 = meta_callback(temp_char);
+			if (!temp_char2.empty()) {
+				printHtml(out, temp_char2);
+				return;
+			}
+		}
+
 		exportTokenTree(out, t->child);
 	}
 }

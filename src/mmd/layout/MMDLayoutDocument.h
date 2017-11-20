@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_
-#define EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_
+#ifndef MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_
+#define MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_
 
 #include "MMDCommon.h"
 #include "SLDocument.h"
@@ -41,8 +41,8 @@ public:
 
 	virtual ~LayoutDocument() { }
 
-	virtual bool init(const FilePath &, const String &ct = String());
-	virtual bool init(const DataReader<ByteOrder::Network> &, const String &ct = String());
+	virtual bool init(const FilePath &, const String &ct = String()) override;
+	virtual bool init(const DataReader<ByteOrder::Network> &, const String &ct = String()) override;
 
 	// Default style, that can be redefined with css
 	virtual Style beginStyle(const Node &, const Vector<const Node *> &, const MediaParameters &) const override;
@@ -53,9 +53,16 @@ public:
 protected:
 	friend class LayoutProcessor;
 
+	void onTag(layout::Style &style, const StringView &tag, const StringView &parent, const MediaParameters &media) const;
+
 	layout::ContentPage *acquireRootPage();
+
+	layout::MediaQueryId _minWidthQuery;
+	layout::MediaQueryId _mediumWidthQuery;
+	layout::MediaQueryId _maxWidthQuery;
+	layout::MediaQueryId _imageViewQuery;
 };
 
 NS_MMD_END
 
-#endif /* EXTENSIONS_DOCUMENT_SRC_MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_ */
+#endif /* MMD_LAYOUT_MMDLAYOUTDOCUMENT_H_ */

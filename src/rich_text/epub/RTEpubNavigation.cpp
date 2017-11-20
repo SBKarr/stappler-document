@@ -29,8 +29,8 @@ THE SOFTWARE.
 
 #include "RTEpubNavigation.h"
 
-#include "SPRichTextRenderer.h"
-#include "SPRichTextDrawer.h"
+#include "RTRenderer.h"
+#include "RTDrawer.h"
 #include "SPScrollView.h"
 #include "SPScrollController.h"
 #include "SPActions.h"
@@ -41,9 +41,9 @@ THE SOFTWARE.
 #include "SPRoundedSprite.h"
 #include "RTView.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class EpubNavigation::Scroll : public MaterialNode {
+class EpubNavigation::Scroll : public material::MaterialNode {
 public:
 	static float getScrollSize() {
 		if (Device::getInstance()->isTablet()) {
@@ -53,7 +53,7 @@ public:
 		}
 	}
 
-	virtual bool init(rich_text::Renderer *r, const Callback &cb, const Callback &scb) {
+	virtual bool init(const Callback &cb, const Callback &scb) {
 		if (!MaterialNode::init()) {
 			return false;
 		}
@@ -82,7 +82,6 @@ public:
 		_scissor->addChild(_view);
 		addChild(_scissor);
 
-		_renderer = r;
 		return true;
 	}
 
@@ -98,10 +97,14 @@ public:
 		} else {
 			_view->setPosition(_contentSize.width - 20.0f, 0.0f);
 			_view->setAnchorPoint(Vec2(1.0f, 0.0f));
-			_view->setContentSize(Size(getScrollSize(), _contentSize.height - metrics::appBarHeight() - screen::statusBarHeight()));
+			_view->setContentSize(Size(getScrollSize(), _contentSize.height - material::metrics::appBarHeight() - screen::statusBarHeight()));
 			_view->setEnabled(_contentSize.width > getScrollSize());
 			_view->setVisible(_contentSize.width > 20.0f);
 		}
+	}
+
+	virtual void setRenderer(rich_text::Renderer *r) {
+		_renderer = r;
 	}
 
 	virtual void setLayout(ScrollView::Layout l) {
@@ -193,14 +196,14 @@ public:
 				}, this);
 			}
 
-			auto label = construct<Label>(FontType::Caption);
+			auto label = construct<material::Label>(material::FontType::Caption);
 			label->setNormalizedPosition(Vec2(0.5f, 0.0f));
 			label->setAnchorPoint(Anchor::MiddleBottom);
 			label->setString(toString(data.num + 1));
 			label->tryUpdateLabel();
 			page->addChild(label, 2);
 
-			auto layer = construct<Layer>(Color::White);
+			auto layer = construct<Layer>(material::Color::White);
 			layer->setNormalizedPosition(Vec2(0.5f, 0.0f));
 			layer->setAnchorPoint(Anchor::MiddleBottom);
 			layer->setContentSize(label->getContentSize() + Size(8.0f, 2.0f));
@@ -289,7 +292,7 @@ void EpubNavigation::Bookmarks::onContentSizeDirty() {
 	for (auto &it : _positions) {
 		if (!isnan(it.first) && !isnan(it.second)) {
 			auto s = Rc<RoundedSprite>::create(0);
-			s->setColor(Color::White);
+			s->setColor(material::Color::White);
 			s->setTextureSize(_borderRadius);
 			s->setAnchorPoint(Anchor::BottomLeft);
 
@@ -327,15 +330,12 @@ void EpubNavigation::Bookmarks::setBorderRadius(uint32_t r) {
 	_contentSizeDirty = true;
 }
 
-bool EpubNavigation::init(RichTextView *view, const Callback &cb) {
+bool EpubNavigation::init(const Callback &cb) {
 	if (!Node::init()) {
 		return false;
 	}
 
-	_view = view;
 	_callback = cb;
-
-	auto r = _view->getRenderer();
 
 	auto gl = construct<gesture::Listener>();
 	gl->setSwallowTouches(true);
@@ -383,27 +383,27 @@ bool EpubNavigation::init(RichTextView *view, const Callback &cb) {
 	_listener = gl;
 	addComponent(gl);
 
-	_progress = construct<RoundedProgress>();
+	_progress = construct<material::RoundedProgress>();
 	_progress->setBorderRadius(6);
-	_progress->setBarColor(Color::Grey_500);
-	_progress->setLineColor(Color::Grey_300);
+	_progress->setBarColor(material::Color::Grey_500);
+	_progress->setLineColor(material::Color::Grey_300);
 	addChild(_progress, 6);
 
 	_bookmarks = construct<Bookmarks>();
 	_bookmarks->setBorderRadius(6);
-	_bookmarks->setColor(Color::LightGreen_500);
+	_bookmarks->setColor(material::Color::LightGreen_500);
 	_bookmarks->setOpacity(168);
 	addChild(_bookmarks, 7);
 
-	_icon = construct<ButtonIcon>(IconName::Navigation_expand_less, std::bind(&EpubNavigation::onButton, this));
-	_icon->setIconColor(Color::Black);
+	_icon = construct<material::ButtonIcon>(material::IconName::Navigation_expand_less, std::bind(&EpubNavigation::onButton, this));
+	_icon->setIconColor(material::Color::Black);
 	_icon->setSwallowTouches(true);
 	_icon->setBackgroundVisible(false);
 	_icon->setAnimationOpacity(0);
 	//_icon->setTouchPadding(24.0f);
 	addChild(_icon, 5);
 
-	_scroll = construct<Scroll>(r, [this] (float v) {
+	_scroll = construct<Scroll>([this] (float v) {
 		if (_callback) {
 			_progress->setProgress(v);
 			_callback(v);
@@ -433,7 +433,7 @@ void EpubNavigation::onContentSizeDirty() {
 		_scroll->setPosition(0.0f, 0.0f);
 		_scroll->setAnchorPoint(Vec2::ZERO);
 	} else {
-		_progress->setContentSize(Size(12.0f, _contentSize.height - 8.0f - metrics::appBarHeight() - screen::statusBarHeight() - 48.0f));
+		_progress->setContentSize(Size(12.0f, _contentSize.height - 8.0f - material::metrics::appBarHeight() - screen::statusBarHeight() - 48.0f));
 		_progress->setPosition(Vec2(_contentSize.width - 4.0f, 4.0f + 48.0f));
 		_progress->setAnchorPoint(Vec2(1.0f, 0.0f));
 		_progress->setInverted(true);
@@ -451,6 +451,11 @@ void EpubNavigation::onContentSizeDirty() {
 	_bookmarks->setAnchorPoint(_progress->getAnchorPoint());
 
 	onOpenProgress(_openProgress);
+}
+
+void EpubNavigation::setView(View *view) {
+	_view = view;
+	_scroll->setRenderer(_view->getRenderer());
 }
 
 void EpubNavigation::open() {
@@ -521,11 +526,11 @@ void EpubNavigation::onButton() {
 void EpubNavigation::onOpenProgress(float val) {
 	_openProgress = val;
 	if (_contentSize.width > _contentSize.height) {
-		_icon->setIconName(val==0.0f ? IconName::Navigation_expand_less : IconName::Navigation_expand_more);
+		_icon->setIconName(val==0.0f ? material::IconName::Navigation_expand_less : material::IconName::Navigation_expand_more);
 		_scroll->setContentSize(Size(_contentSize.width, 20.0f + Scroll::getScrollSize() * _openProgress));
 		_scroll->setLayout(ScrollView::Horizontal);
 	} else {
-		_icon->setIconName(val==0.0f ? IconName::Navigation_chevron_left : IconName::Navigation_chevron_right);
+		_icon->setIconName(val==0.0f ? material::IconName::Navigation_chevron_left : material::IconName::Navigation_chevron_right);
 		_scroll->setContentSize(Size(20.0f + Scroll::getScrollSize() * _openProgress, _contentSize.height));
 		_scroll->setLayout(ScrollView::Vertical);
 	}
@@ -572,4 +577,4 @@ void EpubNavigation::propagateProgress(float value) const {
 	}
 }
 
-NS_MD_END
+NS_RT_END

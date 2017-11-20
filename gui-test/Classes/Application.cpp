@@ -26,6 +26,8 @@ THE SOFTWARE.
 #include "Material.h"
 #include "Application.h"
 
+#include "../../src/rich_text/menu/RTFontSizeMenu.h"
+#include "../../src/rich_text/menu/RTLightLevelMenu.h"
 #include "MaterialIconSprite.h"
 #include "SPEvent.h"
 #include "SPString.h"
@@ -53,8 +55,6 @@ THE SOFTWARE.
 
 #include "SPFilesystem.h"
 
-#include "MaterialFontSizeMenu.h"
-#include "MaterialLightLevelMenu.h"
 #include "MaterialImage.h"
 
 #include "FileNavigator.h"

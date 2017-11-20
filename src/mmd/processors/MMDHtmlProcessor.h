@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef MMD_SRC_MMDHTMLPROCESSOR_H_
-#define MMD_SRC_MMDHTMLPROCESSOR_H_
+#ifndef MMD_PROCESSORS_MMDHTMLPROCESSOR_H_
+#define MMD_PROCESSORS_MMDHTMLPROCESSOR_H_
 
 #include "MMDProcessor.h"
 
@@ -121,8 +121,9 @@ protected:
 	uint8_t html_header_level = maxOf<uint8_t>();
 	std::ostream *output = nullptr;
 	StringStream buffer;
+	uint32_t figureId = 0;
 };
 
 NS_MMD_END
 
-#endif /* MMD_SRC_MMDHTMLPROCESSOR_H_ */
+#endif /* MMD_PROCESSORS_MMDHTMLPROCESSOR_H_ */

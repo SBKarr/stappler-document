@@ -1,6 +1,6 @@
 
-#ifndef MMD_SRC_MMDCORE_H_
-#define MMD_SRC_MMDCORE_H_
+#ifndef MMD_COMMON_MMDCORE_H_
+#define MMD_COMMON_MMDCORE_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -432,4 +432,4 @@ size_t scan_value(const char * c);
 } // extern c
 #endif
 
-#endif /* MMD_SRC_MMDCORE_H_ */
+#endif /* MMD_COMMON_MMDCORE_H_ */

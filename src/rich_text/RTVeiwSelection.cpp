@@ -31,14 +31,14 @@ THE SOFTWARE.
 #include "SPGestureListener.h"
 #include "SPDrawPathNode.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-bool RichTextView::PageWithLabel::init(const PageData &data, float density) {
+bool View::PageWithLabel::init(const PageData &data, float density) {
 	if (!Page::init(data, density)) {
 		return false;
 	}
 
-	_label = construct<Label>(FontType::Caption);
+	_label = construct<material::Label>(material::FontType::Caption);
 	_label->setString(toString(data.num + 1));
 	_label->setPosition(Vec2(4.0f, 0.0f));
 	addChild(_label, 1);
@@ -46,7 +46,7 @@ bool RichTextView::PageWithLabel::init(const PageData &data, float density) {
 	return true;
 }
 
-void RichTextView::PageWithLabel::onContentSizeDirty() {
+void View::PageWithLabel::onContentSizeDirty() {
 	Page::onContentSizeDirty();
 	if (_data.isSplit) {
 		if (_data.num % 2 == 0) {
@@ -63,14 +63,14 @@ void RichTextView::PageWithLabel::onContentSizeDirty() {
 }
 
 
-bool RichTextView::Highlight::init(RichTextView *view) {
+bool View::Highlight::init(View *view) {
 	if (!DynamicBatchNode::init()) {
 		return false;
 	}
 
 	_view = view;
 
-	setColor(Color::Teal_500);
+	setColor(material::Color::Teal_500);
 	setOpacity(48);
 
 	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
@@ -79,7 +79,7 @@ bool RichTextView::Highlight::init(RichTextView *view) {
 
 	return true;
 }
-void RichTextView::Highlight::visit(Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
+void View::Highlight::visit(cocos2d::Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
 	if (!_visible) {
 		return;
 	}
@@ -91,25 +91,21 @@ void RichTextView::Highlight::visit(Renderer *r, const Mat4 &t, uint32_t f, ZPat
 	DynamicBatchNode::visit(r, t, f, z);
 }
 
-void RichTextView::Highlight::clearSelection() {
+void View::Highlight::clearSelection() {
 	_selectionBounds.clear();
 	setDirty();
 }
-void RichTextView::Highlight::addSelection(const Pair<SelectionPosition, SelectionPosition> &p) {
+void View::Highlight::addSelection(const Pair<SelectionPosition, SelectionPosition> &p) {
 	_selectionBounds.push_back(p);
 	setDirty();
 }
 
-void RichTextView::Highlight::setDirty() {
+void View::Highlight::setDirty() {
 	_dirty = true;
 	_quads->clear();
 }
 
-void RichTextView::Highlight::updateBlendFunc(cocos2d::Texture2D *) {
-	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
-	setOpacityModifyRGB(true);
-}
-void RichTextView::Highlight::emplaceRect(const Rect &rect, size_t idx, size_t count) {
+void View::Highlight::emplaceRect(const Rect &rect, size_t idx, size_t count) {
 	Vec2 origin;
 	if (_view->isVertical()) {
 		origin = Vec2(rect.origin.x, - rect.origin.y - _view->getObjectsOffset() - rect.size.height);
@@ -129,7 +125,7 @@ void RichTextView::Highlight::emplaceRect(const Rect &rect, size_t idx, size_t c
 	auto id = _quads->emplace();
 	_quads->setGeometry(id, origin, rect.size, 0.0f);
 }
-void RichTextView::Highlight::updateRects() {
+void View::Highlight::updateRects() {
 	auto res = _view->getResult();
 	if (res) {
 		_quads->clear();
@@ -171,7 +167,8 @@ void RichTextView::Highlight::updateRects() {
 			++ rectIdx;
 		}
 		updateColor();
+		updateBlendFunc(nullptr);
 	}
 }
 
-NS_MD_END
+NS_RT_END

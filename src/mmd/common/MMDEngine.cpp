@@ -264,7 +264,7 @@ static void automatic_search_text(const StringView &str, token * t, const Trie &
 	token * tok = t;
 
 	for (auto &it : res) {
-		sp_mmd_token_split(tok, it.start, it.len, it.match_type);
+		sp_mmd_token_split(tok, uint32_t(it.start), uint32_t(it.len), it.match_type);
 
 		// Advance token to next token
 		while (tok->start < it.start + it.len) {
@@ -362,7 +362,7 @@ bool Engine::Internal::prepare() {
 		// Process abbreviations, glossary, etc.
 		if ((content.getExtensions() & Extensions::Compatibility) == Extensions::None) {
 			// Only search if we have a target
-			int count = content.getAbbreviations().size() + content.getGlossary().size();
+			auto count = content.getAbbreviations().size() + content.getGlossary().size();
 			if (count > 0) {
 				Trie ac;
 				for (auto &it : content.getAbbreviations()) {

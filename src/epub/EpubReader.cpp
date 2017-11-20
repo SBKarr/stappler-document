@@ -24,8 +24,8 @@ THE SOFTWARE.
 **/
 
 #include "SPLayout.h"
-#include "SPEpubReader.h"
-#include "SPEpubDocument.h"
+#include "EpubDocument.h"
+#include "EpubReader.h"
 #include "SLStyle.h"
 
 NS_EPUB_BEGIN

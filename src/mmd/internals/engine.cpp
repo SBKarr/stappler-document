@@ -1159,8 +1159,8 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 	int type;								// TOKEN type
 	token * t;								// Create tokens for incorporation
 
-	token * root = sp_mmd_token_new(0, start, 0);		// Store the final parse tree here
-	token * line = sp_mmd_token_new(0, start, 0);		// Store current line here
+	token * root = sp_mmd_token_new(0, uint32_t(start), 0);		// Store the final parse tree here
+	token * line = sp_mmd_token_new(0, uint32_t(start), 0);		// Store current line here
 
 	const char * last_stop = &e->str[start];	// Remember where last token ended
 
@@ -1174,20 +1174,20 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 
 			if (type) {
 				// Create a default token type for the skipped characters
-				t = sp_mmd_token_new(TEXT_PLAIN, (size_t)(last_stop - e->str), (size_t)(s.start - last_stop));
+				t = sp_mmd_token_new(TEXT_PLAIN, (uint32_t)(last_stop - e->str), uint32_t(s.start - last_stop));
 
 				sp_mmd_token_append_child(line, t);
 			} else {
 				if (stop > last_stop) {
 					// Source text ends without newline
-					t = sp_mmd_token_new(TEXT_PLAIN, (size_t)(last_stop - e->str), (size_t)(stop - last_stop));
+					t = sp_mmd_token_new(TEXT_PLAIN, (uint32_t)(last_stop - e->str), uint32_t(stop - last_stop));
 
 					sp_mmd_token_append_child(line, t);
 				}
 			}
 		} else if (type == 0 && stop > last_stop) {
 			// Source text ends without newline
-			t = sp_mmd_token_new(TEXT_PLAIN, (size_t)(last_stop - e->str), (size_t)(stop - last_stop));
+			t = sp_mmd_token_new(TEXT_PLAIN, (uint32_t)(last_stop - e->str), uint32_t(stop - last_stop));
 			sp_mmd_token_append_child(line, t);
 		}
 
@@ -1211,15 +1211,15 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 				// We hit the end of a line
 				switch (type) {
 					case TEXT_NL_SP:
-						t = sp_mmd_token_new(TEXT_NL, (size_t)(s.start - e->str), (size_t)(s.cur - s.start) - 1);
+						t = sp_mmd_token_new(TEXT_NL, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
 						break;
 
 					case TEXT_LINEBREAK_SP:
-						t = sp_mmd_token_new(TEXT_LINEBREAK, (size_t)(s.start - e->str), (size_t)(s.cur - s.start) - 1);
+						t = sp_mmd_token_new(TEXT_LINEBREAK, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
 						break;
 
 					default:
-						t = sp_mmd_token_new(type, (size_t)(s.start - e->str), (size_t)(s.cur - s.start));
+						t = sp_mmd_token_new(type, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start));
 						break;
 				}
 
@@ -1247,26 +1247,26 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 
 				switch (type) {
 					case TEXT_NL_SP:
-						line = sp_mmd_token_new(0, s.cur - e->str - 1, 0);
-						t = sp_mmd_token_new(NON_INDENT_SPACE, (size_t)(s.cur - e->str - 1), 1);
+						line = sp_mmd_token_new(0, uint32_t(s.cur - e->str - 1), 0);
+						t = sp_mmd_token_new(NON_INDENT_SPACE, uint32_t(s.cur - e->str - 1), 1);
 						sp_mmd_token_append_child(line, t);
 						break;
 
 					case TEXT_LINEBREAK_SP:
-						line = sp_mmd_token_new(0, s.cur - e->str - 1, 0);
-						t = sp_mmd_token_new(NON_INDENT_SPACE, (size_t)(s.cur - e->str - 1), 1);
+						line = sp_mmd_token_new(0, uint32_t(s.cur - e->str - 1), 0);
+						t = sp_mmd_token_new(NON_INDENT_SPACE, uint32_t(s.cur - e->str - 1), 1);
 						sp_mmd_token_append_child(line, t);
 						break;
 
 					default:
-						line = sp_mmd_token_new(0, s.cur - e->str, 0);
+						line = sp_mmd_token_new(0, uint32_t(s.cur - e->str), 0);
 						break;
 				}
 
 				break;
 
 			default:
-				t = sp_mmd_token_new(type, (size_t)(s.start - e->str), (size_t)(s.cur - s.start));
+				t = sp_mmd_token_new(type, uint32_t(s.start - e->str), uint32_t(s.cur - s.start));
 				sp_mmd_token_append_child(line, t);
 				break;
 		}
@@ -1667,7 +1667,7 @@ void sp_mmd_assign_ambidextrous_tokens_in_block(mmd_engine * e, token * block, s
 							offset++;
 						}
 
-						t->len = offset - t->start;
+						t->len = uint32_t(offset - t->start);
 						t->can_close = 0;
 
 						// Shift next token right and move those characters as child node
@@ -1677,8 +1677,8 @@ void sp_mmd_assign_ambidextrous_tokens_in_block(mmd_engine * e, token * block, s
 						}
 
 						if ((t->next != NULL) && ((t->next->type == TEXT_PLAIN) || (t->next->type == TEXT_NUMBER_POSS_LIST))) {
-							t->next->len = t->next->start + t->next->len - offset;
-							t->next->start = offset;
+							t->next->len = uint32_t(t->next->start + t->next->len - offset);
+							t->next->start = uint32_t(offset);
 						}
 
 						t->child = sp_mmd_token_new(TEXT_PLAIN, t->start + 1, t->len - 1);

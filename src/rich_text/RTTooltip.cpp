@@ -34,26 +34,26 @@ THE SOFTWARE.
 #include "RTListenerView.h"
 #include "RTTooltip.h"
 
-#include "SPRichTextView.h"
-#include "SPRichTextRenderer.h"
+#include "RTCommonView.h"
+#include "RTRenderer.h"
 #include "SLResult.h"
 #include "SPScrollView.h"
 #include "SPGestureListener.h"
 #include "SPEventListener.h"
 #include "SPActions.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-SP_DECLARE_EVENT_CLASS(RichTextTooltip, onCopy);
+SP_DECLARE_EVENT_CLASS(Tooltip, onCopy);
 
-RichTextTooltip::~RichTextTooltip() { }
+Tooltip::~Tooltip() { }
 
-bool RichTextTooltip::init(rich_text::Source *s, const Vector<String> &ids) {
+bool Tooltip::init(CommonSource *s, const Vector<String> &ids) {
 	if (!MaterialNode::init()) {
 		return false;
 	}
 
-	auto l = construct<gesture::Listener>();
+	auto l = Rc<gesture::Listener>::create();
 	l->setTouchCallback([this] (gesture::Event ev, const gesture::Touch &) {
 		if (ev == gesture::Event::Ended || ev == gesture::Event::Cancelled) {
 			if (!_expanded) {
@@ -70,15 +70,15 @@ bool RichTextTooltip::init(rich_text::Source *s, const Vector<String> &ids) {
 	_listener = l;
 
 	if (!ids.empty()) {
-		_view = construct<RichTextListenerView>(RichTextListenerView::Vertical, s, ids);
+		_view = construct<ListenerView>(ListenerView::Vertical, s, ids);
 		_view->setAnchorPoint(Vec2(0, 0));
 		_view->setPosition(Vec2(0, 0));
-		_view->setResultCallback(std::bind(&RichTextTooltip::onResult, this, std::placeholders::_1));
+		_view->setResultCallback(std::bind(&Tooltip::onResult, this, std::placeholders::_1));
 		_view->setUseSelection(true);
 		_view->getGestureListener()->setSwallowTouches(true);
 
 		auto el = Rc<EventListener>::create();
-		el->onEventWithObject(RichTextListenerView::onSelection, _view, std::bind(&RichTextTooltip::onSelection, this));
+		el->onEventWithObject(ListenerView::onSelection, _view, std::bind(&Tooltip::onSelection, this));
 		_view->addComponent(el);
 
 		auto r = _view->getRenderer();
@@ -97,11 +97,11 @@ bool RichTextTooltip::init(rich_text::Source *s, const Vector<String> &ids) {
 	_layout->setStatusBarTracked(false);
 
 	_actions = Rc<material::MenuSource>::create();;
-	_actions->addButton("Close", IconName::Navigation_close, std::bind(&RichTextTooltip::close, this));
+	_actions->addButton("Close", material::IconName::Navigation_close, std::bind(&Tooltip::close, this));
 
 	_selectionActions = Rc<material::MenuSource>::create();
-	_selectionActions->addButton("Copy", IconName::Content_content_copy, std::bind(&RichTextTooltip::copySelection, this));
-	_selectionActions->addButton("Close", IconName::Content_remove_circle_outline, std::bind(&RichTextTooltip::cancelSelection, this));
+	_selectionActions->addButton("Copy", material::IconName::Content_content_copy, std::bind(&Tooltip::copySelection, this));
+	_selectionActions->addButton("Close", material::IconName::Content_remove_circle_outline, std::bind(&Tooltip::cancelSelection, this));
 
 	_toolbar->setActionMenuSource(_actions);
 	_toolbar->setNavButtonIcon(material::IconName::None);
@@ -128,11 +128,11 @@ bool RichTextTooltip::init(rich_text::Source *s, const Vector<String> &ids) {
 	return true;
 }
 
-void RichTextTooltip::onContentSizeDirty() {
+void Tooltip::onContentSizeDirty() {
 	MaterialNode::onContentSizeDirty();
-	if (_originPosition.y - metrics::horizontalIncrement() / 4 < _contentSize.height * _anchorPoint.y) {
+	if (_originPosition.y - material::metrics::horizontalIncrement() / 4 < _contentSize.height * _anchorPoint.y) {
 		setAnchorPoint(Vec2(_anchorPoint.x,
-				(_originPosition.y - metrics::horizontalIncrement() / 4) / _contentSize.height));
+				(_originPosition.y - material::metrics::horizontalIncrement() / 4) / _contentSize.height));
 	}
 
 	_layout->onContentSizeDirty();
@@ -145,13 +145,13 @@ void RichTextTooltip::onContentSizeDirty() {
 	}
 }
 
-void RichTextTooltip::onEnter()  {
+void Tooltip::onEnter()  {
 	if (!_view) {
 		setShadowZIndex(3.0f);
 	}
 	MaterialNode::onEnter();
 }
-void RichTextTooltip::onResult(rich_text::Result *r) {
+void Tooltip::onResult(rich_text::Result *r) {
 	auto bgColor = r->getBackgroundColor();
 	setBackgroundColor(bgColor);
 	_toolbar->setColor(bgColor);
@@ -170,14 +170,14 @@ void RichTextTooltip::onResult(rich_text::Result *r) {
 
 	stopAllActions();
 	setShadowZIndexAnimated(3.0f, 0.25f);
-	runAction(action::sequence(construct<ResizeTo>(0.25, cs), [this] {
+	runAction(action::sequence(construct<material::ResizeTo>(0.25, cs), [this] {
 		if (_layout->getOpacity() != 255) {
 			_layout->setOpacity(255);
 		}
 	}));
 }
 
-void RichTextTooltip::setMaxContentSize(const Size &size) {
+void Tooltip::setMaxContentSize(const Size &size) {
 	_maxContentSize = size;
 	if (_layout->getContentSize().width != _maxContentSize.width) {
 		_layout->setContentSize(Size(_maxContentSize.width,
@@ -185,7 +185,7 @@ void RichTextTooltip::setMaxContentSize(const Size &size) {
 	}
 }
 
-void RichTextTooltip::setOriginPosition(const Vec2 &pos, const Size &parentSize, const Vec2 &worldPos) {
+void Tooltip::setOriginPosition(const Vec2 &pos, const Size &parentSize, const Vec2 &worldPos) {
 	_originPosition = pos;
 	_worldPos = worldPos;
 	_parentSize = parentSize;
@@ -193,13 +193,13 @@ void RichTextTooltip::setOriginPosition(const Vec2 &pos, const Size &parentSize,
 	setAnchorPoint(Vec2(_originPosition.x / _parentSize.width, 1.0f));
 }
 
-void RichTextTooltip::setExpanded(bool value) {
+void Tooltip::setExpanded(bool value) {
 	if (value != _expanded) {
 		_expanded = value;
 
 		if (_expanded) {
 			stopAllActions();
-			runAction(action::sequence(construct<ResizeTo>(0.25, _defaultSize), [this] {
+			runAction(action::sequence(construct<material::ResizeTo>(0.25, _defaultSize), [this] {
 				_view->setVisible(true);
 				_view->setOpacity(0);
 				_view->runAction(cocos2d::FadeIn::create(0.15f));
@@ -212,7 +212,7 @@ void RichTextTooltip::setExpanded(bool value) {
 			auto newSize = Size(_defaultSize.width, _toolbar->getDefaultToolbarHeight());
 			if (!newSize.equals(_defaultSize)) {
 				stopAllActions();
-				runAction(action::sequence(construct<ResizeTo>(0.25, newSize), [this] {
+				runAction(action::sequence(construct<material::ResizeTo>(0.25, newSize), [this] {
 					_toolbar->setShadowZIndex(0.0f);
 					onDelayedFadeOut();
 				}));
@@ -223,13 +223,13 @@ void RichTextTooltip::setExpanded(bool value) {
 	}
 }
 
-void RichTextTooltip::pushToForeground() {
-	auto foreground = Scene::getRunningScene()->getForegroundLayer();
+void Tooltip::pushToForeground() {
+	auto foreground = material::Scene::getRunningScene()->getForegroundLayer();
 	setPosition(foreground->convertToNodeSpace(_worldPos));
-	foreground->pushNode(this, std::bind(&RichTextTooltip::close, this));
+	foreground->pushNode(this, std::bind(&Tooltip::close, this));
 }
 
-void RichTextTooltip::close() {
+void Tooltip::close() {
 	if (_closeCallback) {
 		_closeCallback();
 	}
@@ -237,18 +237,18 @@ void RichTextTooltip::close() {
 	_layout->setVisible(false);
 	stopAllActions();
 	setShadowZIndexAnimated(0.0f, 0.25f);
-	runAction(action::sequence(construct<ResizeTo>(0.25, Size(0, 0)), [this] {
-		auto foreground = Scene::getRunningScene()->getForegroundLayer();
+	runAction(action::sequence(construct<material::ResizeTo>(0.25, Size(0, 0)), [this] {
+		auto foreground = material::Scene::getRunningScene()->getForegroundLayer();
 		foreground->popNode(this);
 	}));
 }
 
-void RichTextTooltip::onDelayedFadeOut() {
+void Tooltip::onDelayedFadeOut() {
 	stopActionByTag(2);
 	runAction(action::sequence(3.0f, cocos2d::FadeTo::create(0.25f, 48)), 2);
 }
 
-void RichTextTooltip::onFadeIn() {
+void Tooltip::onFadeIn() {
 	stopActionByTag(1);
 	auto a = getActionByTag(3);
 	if (!a || getOpacity() != 255) {
@@ -256,7 +256,7 @@ void RichTextTooltip::onFadeIn() {
 	}
 }
 
-void RichTextTooltip::onFadeOut() {
+void Tooltip::onFadeOut() {
 	stopActionByTag(3);
 	auto a = getActionByTag(2);
 	if (!a || getOpacity() != 48) {
@@ -264,34 +264,34 @@ void RichTextTooltip::onFadeOut() {
 	}
 }
 
-void RichTextTooltip::setCloseCallback(const CloseCallback &cb) {
+void Tooltip::setCloseCallback(const CloseCallback &cb) {
 	_closeCallback = cb;
 }
 
-rich_text::Renderer *RichTextTooltip::getRenderer() const {
+rich_text::Renderer *Tooltip::getRenderer() const {
 	return _view?_view->getRenderer():nullptr;
 }
 
-String RichTextTooltip::getSelectedString() const {
+String Tooltip::getSelectedString() const {
 	return (_view && _view->isSelectionEnabled())?_view->getSelectedString():String();
 }
 
-void RichTextTooltip::onLightLevel() {
+void Tooltip::onLightLevel() {
 	MaterialNode::onLightLevel();
 }
 
-void RichTextTooltip::copySelection() {
+void Tooltip::copySelection() {
 	if (_view && _view->isSelectionEnabled()) {
 		onCopy(this);
 		_view->disableSelection();
 	}
 }
-void RichTextTooltip::cancelSelection() {
+void Tooltip::cancelSelection() {
 	if (_view) {
 		_view->disableSelection();
 	}
 }
-void RichTextTooltip::onSelection() {
+void Tooltip::onSelection() {
 	if (_view) {
 		if (_view->isSelectionEnabled()) {
 			_toolbar->replaceActionMenuSource(_selectionActions, 2);
@@ -301,4 +301,4 @@ void RichTextTooltip::onSelection() {
 	}
 }
 
-NS_MD_END
+NS_RT_END

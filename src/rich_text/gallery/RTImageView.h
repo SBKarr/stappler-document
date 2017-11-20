@@ -23,35 +23,42 @@ THE SOFTWARE.
 #ifndef LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_
 #define LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_
 
+#include "RTCommonSource.h"
 #include "MaterialLayout.h"
 #include "RTTooltip.h"
-#include "SPLayoutSource.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class RichTextImageView : public Layout {
+class ImageView : public material::Layout {
 public:
-	virtual ~RichTextImageView();
-	virtual bool init(layout::Source *, const String &id, const String &src, const String &alt = "");
+	virtual ~ImageView();
+	virtual bool init(CommonSource *, const String &id, const String &src, const String &alt = "");
 
 	virtual void onContentSizeDirty() override;
+	virtual void onEnter() override;
 
 	virtual void close();
 
 protected:
+	virtual void acquireImageAsset(const String &);
+
+	virtual Rc<Tooltip> constructTooltip(CommonSource *, const Vector<String> &) const;
+	virtual bool isSourceValid(CommonSource *, const String & src) const;
+
 	virtual void onExpand();
 	virtual Rc<cocos2d::Texture2D> readImage(const String &);
 	virtual void onImage(cocos2d::Texture2D *);
 	virtual void onAssetCaptured(const String &);
 
-	RichTextTooltip *_tooltip = nullptr;
-	MenuSourceButton *_expandButton = nullptr;
+	String _src;
+	Tooltip *_tooltip = nullptr;
+	material::MenuSourceButton *_expandButton = nullptr;
 	bool _expanded = true;
 
-	ImageLayer *_sprite = nullptr;
-	Rc<layout::Source> _source;
+	material::ImageLayer *_sprite = nullptr;
+	Rc<CommonSource> _source;
 };
 
-NS_MD_END
+NS_RT_END
 
 #endif /* LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTIMAGEVIEW_H_ */

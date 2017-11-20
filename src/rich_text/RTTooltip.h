@@ -20,15 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#ifndef LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTTOOLTIP_H_
-#define LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTTOOLTIP_H_
+#ifndef RICH_TEXT_RTTOOLTIP_H_
+#define RICH_TEXT_RTTOOLTIP_H_
 
 #include "MaterialNode.h"
 #include "RTListenerView.h"
 
-NS_MD_BEGIN
+NS_RT_BEGIN
 
-class RichTextTooltip : public MaterialNode {
+class Tooltip : public material::MaterialNode {
 public:
 	using Result = layout::Result;
 	using CloseCallback = std::function<void()>;
@@ -36,8 +36,8 @@ public:
 
 	static EventHeader onCopy;
 
-	virtual ~RichTextTooltip();
-	virtual bool init(layout::Source *, const Vector<String> &ids);
+	virtual ~Tooltip();
+	virtual bool init(CommonSource *, const Vector<String> &ids);
 	virtual void onContentSizeDirty() override;
 	virtual void onEnter() override;
 
@@ -49,9 +49,9 @@ public:
 	virtual void pushToForeground();
 	virtual void close();
 
-	virtual Toolbar *getToolbar() const { return _toolbar; }
-	virtual MenuSource *getActions() const { return _actions; }
-	virtual ToolbarLayout *getLayout() const { return _layout; }
+	virtual material::Toolbar *getToolbar() const { return _toolbar; }
+	virtual material::MenuSource *getActions() const { return _actions; }
+	virtual material::ToolbarLayout *getLayout() const { return _layout; }
 
 	virtual const cocos2d::Size &getDefaultSize() const { return _defaultSize; }
 
@@ -82,17 +82,17 @@ protected:
 
 	cocos2d::Component *_listener = nullptr;
 
-	Rc<MenuSource> _actions;
-	Rc<MenuSource> _selectionActions;
-	ToolbarLayout *_layout = nullptr;
-	Toolbar *_toolbar = nullptr;
+	Rc<material::MenuSource> _actions;
+	Rc<material::MenuSource> _selectionActions;
+	material::ToolbarLayout *_layout = nullptr;
+	material::Toolbar *_toolbar = nullptr;
 
-	RichTextListenerView *_view = nullptr;
+	ListenerView *_view = nullptr;
 	CloseCallback _closeCallback;
 
 	bool _expanded = true;
 };
 
-NS_MD_END
+NS_RT_END
 
-#endif /* LIBS_MATERIAL_GUI_RICHTEXTVIEW_MATERIALRICHTEXTTOOLTIP_H_ */
+#endif /* RICH_TEXT_RTTOOLTIP_H_ */

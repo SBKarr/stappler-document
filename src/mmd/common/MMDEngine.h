@@ -39,8 +39,8 @@
 
 */
 
-#ifndef MMD_MMDENGINE_H_
-#define MMD_MMDENGINE_H_
+#ifndef MMD_COMMON_MMDENGINE_H_
+#define MMD_COMMON_MMDENGINE_H_
 
 #include "MMDCommon.h"
 #include "SPRef.h"
@@ -73,4 +73,4 @@ protected:
 
 NS_MMD_END
 
-#endif /* MMD_MMDENGINE_H_ */
+#endif /* MMD_COMMON_MMDENGINE_H_ */
