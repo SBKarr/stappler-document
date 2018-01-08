@@ -25,8 +25,9 @@ THE SOFTWARE.
 
 #include "SPDefine.h"
 #include "RTCommonSource.h"
-#include "SPResource.h"
+
 #include "SPFilesystem.h"
+#include "SPResource.h"
 #include "SPThread.h"
 #include "SPString.h"
 #include "SPTextureCache.h"

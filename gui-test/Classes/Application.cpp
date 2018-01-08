@@ -26,9 +26,11 @@ THE SOFTWARE.
 #include "Material.h"
 #include "Application.h"
 
-#include "../../src/rich_text/menu/RTFontSizeMenu.h"
-#include "../../src/rich_text/menu/RTLightLevelMenu.h"
+#include "RTFontSizeMenu.h"
+#include "RTLightLevelMenu.h"
 #include "MaterialIconSprite.h"
+#include "SPFilesystem.h"
+#include "SPUrl.h"
 #include "SPEvent.h"
 #include "SPString.h"
 #include "SPThread.h"
@@ -53,15 +55,12 @@ THE SOFTWARE.
 #include "MaterialToolbar.h"
 #include "MaterialMetrics.h"
 
-#include "SPFilesystem.h"
-
 #include "MaterialImage.h"
 
 #include "FileNavigator.h"
 #include "FileDialog.h"
 
 #include "SLReader.h"
-#include "SPUrl.h"
 
 NS_SP_EXT_BEGIN(app)
 

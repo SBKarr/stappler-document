@@ -23,13 +23,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#include "EpubInfo.h"
 #include "SPLayout.h"
+#include "EpubInfo.h"
+
 #include "SPFilesystem.h"
 #include "SPBitmap.h"
-#include "SPLocale.h"
 #include "SPHtmlParser.h"
-
+#include "SPLocale.h"
 #include "unzip.h"
 
 NS_EPUB_BEGIN

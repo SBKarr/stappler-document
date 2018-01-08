@@ -25,10 +25,8 @@ THE SOFTWARE.
 
 #include "Material.h"
 #include "FileNavigator.h"
-
-#include "../../../src/epub/EpubDocument.h"
+#include "EpubDocument.h"
 #include "FileImageView.h"
-
 #include "RTEpubView.h"
 #include "RTSource.h"
 #include "MaterialToolbar.h"

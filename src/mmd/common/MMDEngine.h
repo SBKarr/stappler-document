@@ -42,8 +42,8 @@
 #ifndef MMD_COMMON_MMDENGINE_H_
 #define MMD_COMMON_MMDENGINE_H_
 
-#include "MMDCommon.h"
 #include "SPRef.h"
+#include "MMDCommon.h"
 
 NS_MMD_BEGIN
 

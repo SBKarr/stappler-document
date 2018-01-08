@@ -26,10 +26,11 @@ THE SOFTWARE.
 #include "SPDefine.h"
 #include "SPScrollViewBase.h"
 
-#include "SPFilesystem.h"
 #include "SPThread.h"
 #include "SPAsset.h"
 #include "SPResource.h"
+#include "SPFilesystem.h"
+#include "SPString.h"
 
 #include "2d/CCNode.h"
 #include "RTRenderer.h"
@@ -37,7 +38,6 @@ THE SOFTWARE.
 
 #include "SLBuilder.h"
 #include "SLResult.h"
-#include "SPString.h"
 
 NS_RT_BEGIN
 
