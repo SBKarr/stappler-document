@@ -20,8 +20,6 @@
 
 STAPPLER_ROOT = ../../..
 
-include ../make.mk
-
 MMD_DIR := ../../libraries/mmd
 
 LOCAL_OUTDIR := bin
@@ -30,6 +28,8 @@ LOCAL_OUTPUT_EXECUTABLE := $(LOCAL_OUTDIR)/mmd-test
 LOCAL_TOOLKIT := common
 
 LOCAL_ROOT = .
+
+include ../make.mk
 
 LOCAL_SRCS_DIRS :=  $(DOCUMENT_SOURCE_DIR_COMMON)
 LOCAL_SRCS_OBJS :=
