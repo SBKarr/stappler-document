@@ -118,7 +118,10 @@ void HtmlProcessor::printLocalizedChar(std::ostream &out, uint16_t type) {
 				case QuotesLanguage::Dutch:
 				case QuotesLanguage::German: out << "&#8222;"; break;
 				case QuotesLanguage::GermanGuill: out << "&#187;"; break;
-				case QuotesLanguage::French: out << "&#171;"; break;
+				case QuotesLanguage::French:
+				case QuotesLanguage::Russian:
+					out << "&#171;";
+					break;
 				case QuotesLanguage::Swedish: out << "&#8221;"; break;
 				default: out << "&#8220;";
 			}
@@ -129,7 +132,10 @@ void HtmlProcessor::printLocalizedChar(std::ostream &out, uint16_t type) {
 			switch (quotes_lang) {
 				case QuotesLanguage::German: out << "&#8220;"; break;
 				case QuotesLanguage::GermanGuill: out << "&#171;"; break;
-				case QuotesLanguage::French: out << "&#187;"; break;
+				case QuotesLanguage::French:
+				case QuotesLanguage::Russian:
+					out << "&#187;";
+					break;
 				case QuotesLanguage::Swedish:
 				case QuotesLanguage::Dutch:
 				default:

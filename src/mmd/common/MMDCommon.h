@@ -103,6 +103,7 @@ enum class QuotesLanguage {
 	German,
 	GermanGuill,
 	Swedish,
+	Russian
 };
 
 NS_MMD_END

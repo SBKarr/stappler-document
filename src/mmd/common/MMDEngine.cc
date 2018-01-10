@@ -121,10 +121,9 @@ Engine::Internal::Internal(memory::pool_t *p, const StringView &v, Extensions ex
 Engine::Internal::~Internal() {
 	if (!debug.empty()) {
 		memory::pool::push(pool);
-		std::cout << debug;
+		std::cout << StringView(debug.weak());
 		memory::pool::pop();
 	}
-	memory::pool::destroy(pool);
 }
 
 using TokenVec = Content::Vector<Token>;
@@ -442,8 +441,10 @@ bool Engine::init(const StringView &source, Extensions ext) {
 
 void Engine::clear() {
 	if (_internal) {
+		auto pool = _internal->pool;
 		_internal->~Internal();
 		_internal = nullptr;
+		memory::pool::destroy(pool);
 	}
 }
 
