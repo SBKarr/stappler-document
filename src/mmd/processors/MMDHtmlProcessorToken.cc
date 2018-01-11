@@ -826,26 +826,70 @@ void HtmlProcessor::exportTokenMath(std::ostream &out, token *t) {
 		return;
 	}
 
-	switch (t->type) {
-		case MATH_BRACKET_OPEN:
-			out << "\\[";
-			break;
+	if (spExt) {
+		switch (t->type) {
+			case MATH_BRACKET_OPEN:
+				out << "\\[";
+				break;
 
-		case MATH_BRACKET_CLOSE:
-			out << "\\]";
-			break;
+			case MATH_BRACKET_CLOSE:
+				out << "\\]";
+				break;
 
-		case MATH_PAREN_OPEN:
-			out << "\\(";
-			break;
+			case MATH_PAREN_OPEN:
+				out << "\\(";
+				break;
 
-		case MATH_PAREN_CLOSE:
-			out << "\\)";
-			break;
+			case MATH_PAREN_CLOSE:
+				out << "\\)";
+				break;
 
-		default:
-			exportTokenRaw(out, t);
-			break;
+			case AMPERSAND:
+				out << "&";
+				break;
+
+			case AMPERSAND_LONG:
+				out << "&&";
+				break;
+
+			case ANGLE_RIGHT:
+				out << ">";
+				break;
+
+			case ANGLE_LEFT:
+				out << "<";
+				break;
+
+			case QUOTE_DOUBLE:
+				out << "\"";
+				break;
+
+			default:
+				exportTokenRaw(out, t);
+				break;
+		}
+	} else {
+		switch (t->type) {
+			case MATH_BRACKET_OPEN:
+				out << "\\[";
+				break;
+
+			case MATH_BRACKET_CLOSE:
+				out << "\\]";
+				break;
+
+			case MATH_PAREN_OPEN:
+				out << "\\(";
+				break;
+
+			case MATH_PAREN_CLOSE:
+				out << "\\)";
+				break;
+
+			default:
+				exportTokenRaw(out, t);
+				break;
+		}
 	}
 }
 
