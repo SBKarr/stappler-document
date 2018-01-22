@@ -641,7 +641,7 @@ void sp_mmd_token_split(token * t, uint32_t start, uint32_t len, unsigned short 
 			// We will end up with t->A->T2
 
 			// Create T2
-			token * T2 = sp_mmd_token_new(t->type, stop, uint32_t(t->start + t->len - stop));
+			token * T2 = sp_mmd_token_new(t->type, uint32_t(stop), uint32_t(t->start + t->len - stop));
 			T2->next = t->next;
 
 			if (t->next) {
@@ -669,7 +669,7 @@ void sp_mmd_token_split(token * t, uint32_t start, uint32_t len, unsigned short 
 			// But we swap the tokens to ensure we don't
 			// cause difficulty pointing to this chain,
 			// resulting in T->A, where T is the new type
-			A = sp_mmd_token_new(t->type, stop, t->start + t->len - stop);
+			A = sp_mmd_token_new(t->type, uint32_t(stop), uint32_t(t->start + t->len - stop));
 			A->prev = t;
 			A->next = t->next;
 			t->next = A;
@@ -678,7 +678,7 @@ void sp_mmd_token_split(token * t, uint32_t start, uint32_t len, unsigned short 
 				A->next->prev = A;
 			}
 
-			t->len = stop - t->start;
+			t->len = uint32_t(stop - t->start);
 			t->type = new_type;
 		} else {
 			// We will end up with A
