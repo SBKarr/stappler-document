@@ -5,6 +5,7 @@
 #include "MMDCore.h"
 #include "MMDToken.h"
 #include "MMDChars.h"
+#include "SPHtmlParser.h"
 
 #define kMaxParseRecursiveDepth 1000		//!< Maximum recursion depth when parsing -- to prevent stack overflow with "pathologic" input
 
@@ -29,6 +30,40 @@ void * ParseAlloc( void *(*mallocProc)(size_t) );
 void Parse(void *yyp, int yymajor, token * yyminor, mmd_engine *engine);
 void ParseFree(void *p, void (*freeProc)(void *, size_t));
 void ParseTrace(FILE *TraceFILE, const char *zTracePrompt);
+
+static void check_html_id(mmd_engine * e, token *t, const char *start) {
+	Content *c = (Content *)e->content;
+
+	StringView current(start, start - e->str);
+	if (current.is('<')) {
+		++ current;
+		if (!current.is<StringView::CharGroup<CharGroupId::Latin>>()) {
+			return;
+		}
+
+		html::Tag_readName(current, true);
+
+		StringView attrName;
+		StringView attrValue;
+		while (!current.empty() && !current.is('>') && !current.is('/')) {
+			attrName.clear();
+			attrValue.clear();
+
+			attrName = html::Tag_readAttrName(current, true);
+			if (attrName.empty()) {
+				continue;
+			}
+
+			attrValue = html::Tag_readAttrValue(current, true);
+			if (attrName == "id") {
+				if (!attrValue.empty()) {
+					c->emplaceHtmlId(t, attrValue);
+				}
+				break;
+			}
+		}
+	}
+}
 
 static bool line_is_empty(token * t) {
 	while (t) {
@@ -996,6 +1031,7 @@ void sp_mmd_strip_line_tokens_from_block(mmd_engine * e, token * block) {
 		case BLOCK_TABLE:
 			// Handle tables
 			return strip_line_tokens_from_table(e, block);
+
 	}
 
 	token * children = NULL;
@@ -1263,6 +1299,14 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 						break;
 				}
 
+				break;
+			case ANGLE_LEFT:
+				// scan for html ids
+				t = sp_mmd_token_new(type, uint32_t(s.start - e->str), uint32_t(s.cur - s.start));
+				if (scan_html(s.start)) {
+					check_html_id(e, t, s.start);
+				}
+				sp_mmd_token_append_child(line, t);
 				break;
 
 			default:

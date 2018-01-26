@@ -107,6 +107,7 @@ void sp_mmd_stack_push( _sp_mmd_stack * s, void * element );
 
 typedef struct {
 	const char *str;
+	uint32_t len;
 	uint32_t extensions;
 	uint16_t recurse_depth;
 	bool allow_meta;

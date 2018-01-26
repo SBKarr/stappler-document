@@ -71,6 +71,8 @@ public:
 	virtual void process(const Content &, const StringView &, const Token &);
 
 protected:
+	StringView localize(const StringView &);
+
 	virtual void processMetaDict(const Dict<Content::String> &);
 	virtual void processMeta(const StringView &, const StringView &);
 

@@ -189,6 +189,13 @@ void sp_mmd_token_chain_append(token * chain_start, token * t) {
 		return;
 	}
 
+	switch (t->type) {
+	case BLOCK_HTML:
+		break;
+	default:
+		break;
+	}
+
 	// Append t
 	chain_start->tail->next = t;
 	t->prev = chain_start->tail;

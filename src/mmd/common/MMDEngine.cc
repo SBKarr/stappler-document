@@ -102,6 +102,7 @@ Engine::Internal::Internal(memory::pool_t *p, const StringView &v, Extensions ex
 
 	source = v;
 	engine.str = v.data();
+	engine.len = v.size();
 	engine.extensions = toInt(ext);
 	engine.recurse_depth = 0;
 	engine.allow_meta = false;

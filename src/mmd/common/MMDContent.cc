@@ -348,6 +348,13 @@ Content::Link::Link(const StringView &source, Token && l, String && u, const Str
 	parseAttributes(attributes, attr);
 }
 
+Content::Link::Link(const StringView &source, Token && l)
+: label(move(l)) {
+	clean_text = source.str<memory::PoolInterface>();
+	label_text = source.str<memory::PoolInterface>();
+	url = String("#") + source.str<memory::PoolInterface>();
+}
+
 void Content::Link::parseAttributes(AttrVec &attr, const StringView &str) {
 	StringView key;
 	StringView value;
@@ -662,6 +669,11 @@ void Content::emplaceMeta(String && key, String && value) {
 	string::trim(key);
 	string::trim(value);
 	meta.emplace(move(key), cleanString(value, false));
+}
+
+void Content::emplaceHtmlId(Token && token, const StringView &v) {
+	Link * l = new Link(v, move(token));
+	links.emplace_back(l);
 }
 
 void Content::processDefinitions(const StringView &str) {

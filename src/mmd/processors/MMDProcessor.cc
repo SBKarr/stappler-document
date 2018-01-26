@@ -557,4 +557,44 @@ bool Processor::isImageFigure(token *t) {
 	}
 }
 
+StringView Processor::localize(const StringView &str) {
+	if (str == "return") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "Вернуться"; break;
+		default: break;
+		}
+	} else if (str == "see citation") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "см. источник"; break;
+		default: break;
+		}
+	} else if (str == "see footnote") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "см. сноску"; break;
+		default: break;
+		}
+	} else if (str == "see glossary") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "см. глоссарий"; break;
+		default: break;
+		}
+	} else if (str == "Footnotes") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "Сноски"; break;
+		default: break;
+		}
+	} else if (str == "Glossary") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "Глоссарий"; break;
+		default: break;
+		}
+	} else if (str == "Citations") {
+		switch (quotes_lang) {
+		case QuotesLanguage::Russian: return "Список источников"; break;
+		default: break;
+		}
+	}
+	return str;
+}
+
 NS_MMD_END

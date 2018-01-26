@@ -74,6 +74,7 @@ public:
 		AttrVec attributes;
 
 		Link(const StringView &source, Token && label, String && url, const StringView & title, const StringView & attributes, bool clearUrl);
+		Link(const StringView &source, Token && label);
 
 		static void parseAttributes(AttrVec &, const StringView &);
 	};
@@ -114,6 +115,7 @@ public:
 	void process(const StringView &);
 
 	void emplaceMeta(String &&, String &&);
+	void emplaceHtmlId(Token &&, const StringView &);
 
 	const Vector<Token> &getHeaders() const;
 	const Vector<Token> &getDefinitions() const;

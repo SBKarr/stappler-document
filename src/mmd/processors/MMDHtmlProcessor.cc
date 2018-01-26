@@ -291,7 +291,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 
 	if (is_figure) {
 		if (spExt) {
-			auto idStr = toString("figure:", figureId);
+			auto idStr = toString("figure_", figureId);
 			pushNode("figure", { pair("class", align), pair("id", idStr), pair("type", type) });
 		} else {
 			pushNode("figure");
@@ -322,7 +322,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 
 	stappler::String idStr;
 	if (spExt) {
-		idStr = toString("#figure:", figureId);
+		idStr = toString("#figure_", figureId);
 		attr.emplace_back("href", idStr);
 		attr.emplace_back("type", type);
 	}
@@ -352,7 +352,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 		if (text) {
 			if (!spExt) { out << "\n"; }
 			if (spExt && !align.empty()) {
-				auto idStr = toString("figcaption:", figureId);
+				auto idStr = toString("figcaption_", figureId);
 				pushNode("figcaption", { pair("class", align), pair("id", idStr) });
 			} else {
 				pushNode("figcaption");

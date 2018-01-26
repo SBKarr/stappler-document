@@ -914,7 +914,14 @@ void HtmlProcessor::exportFootnoteList(std::ostream &out) {
 		if (!spExt) { out << "\n"; }
 		pushInlineNode("hr");
 		if (!spExt) { out << "\n"; }
+
+		pushNode("h6", { pair("class", "footnotes_header") });
+		out << localize("Footnotes");
+		popNode();
+
+		if (!spExt) { out << "\n"; }
 		pushNode("ol");
+
 
 		padded = 0;
 
@@ -923,7 +930,7 @@ void HtmlProcessor::exportFootnoteList(std::ostream &out) {
 			auto & note = it;
 			pad(out, 2);
 
-			String id = Traits::toString("fn:", (i + 1));
+			String id = Traits::toString("fn_", (i + 1));
 			pushNode("li", { pair("id", id) });
 			if (!spExt) { out << "\n"; }
 			padded = 6;
@@ -969,6 +976,12 @@ void HtmlProcessor::exportGlossaryList(std::ostream &out) {
 		if (!spExt) { out << "\n"; }
 		pushInlineNode("hr");
 		if (!spExt) { out << "\n"; }
+
+		pushNode("h6", { pair("class", "glossary_header") });
+		out << localize("Glossary");
+		popNode();
+
+		if (!spExt) { out << "\n"; }
 		pushNode("ol");
 		padded = 0;
 
@@ -978,7 +991,7 @@ void HtmlProcessor::exportGlossaryList(std::ostream &out) {
 			// Export glossary
 			pad(out, 2);
 
-			String id = Traits::toString("gn:", (i + 1));
+			String id = Traits::toString("gn_", (i + 1));
 			pushNode("li", { pair("id", id) });
 			if (!spExt) { out << "\n"; }
 			padded = 6;
@@ -1028,6 +1041,12 @@ void HtmlProcessor::exportCitationList(std::ostream &out) {
 		if (!spExt) { out << "\n"; }
 		pushInlineNode("hr");
 		if (!spExt) { out << "\n"; }
+
+		pushNode("h6", { pair("class", "citations_header") });
+		out << localize("Citations");
+		popNode();
+
+		if (!spExt) { out << "\n"; }
 		pushNode("ol");
 		padded = 0;
 
@@ -1037,7 +1056,7 @@ void HtmlProcessor::exportCitationList(std::ostream &out) {
 			// Export footnote
 			pad(out, 2);
 
-			String id = Traits::toString("cn:", (i + 1));
+			String id = Traits::toString("cn_", (i + 1));
 			pushNode("li", { pair("id", id) });
 			if (!spExt) { out << "\n"; }
 			padded = 6;

@@ -295,11 +295,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 
 		if (footnote_para_counter == 0) {
 			out << " ";
-			String ref = Traits::toString("#cnref:", citation_being_printed);
+			String ref = Traits::toString("#cnref_", citation_being_printed);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversecitation") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversecitation"), pair("target", "_self") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -318,11 +318,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 				temp_short = rand() % 32000 + 1;
 			}
 
-			String ref = Traits::toString("#fnref:", temp_short);
+			String ref = Traits::toString("#fnref_", temp_short);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversefootnote") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reversefootnote"), pair("target", "_self") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -334,11 +334,11 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 
 		if (footnote_para_counter == 0) {
 			out << " ";
-			String ref = Traits::toString("#gnref:", glossary_being_printed);
+			String ref = Traits::toString("#gnref_", glossary_being_printed);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reverseglossary") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", "return"), pair("class", "reverseglossary"), pair("target", "_self") });
+				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -823,20 +823,32 @@ void HtmlProcessor::exportPairBracketCitation(std::ostream &out, token *t) {
 		if (temp_bool) {
 			// This is a regular citation
 
-			String ref = Traits::toString("#cn:", temp_short);
-			String id = Traits::toString("cnref:", temp_short);
+			String ref = Traits::toString("#cn_", temp_short);
+			String id = Traits::toString("cnref_", temp_short);
 
 			if (temp_short2 == used_citations.size()) {
-				pushNode("a", { pair("href", ref), pair("title", "see citation"), pair("class", "citation") });
+				pushNode("a", { pair("href", ref), pair("title", localize("see citation")), pair("class", "citation") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("id", id), pair("title", "see citation"), pair("class", "citation") });
+				pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see citation")), pair("class", "citation") });
 			}
 
-			if (!temp_char.empty()) {
-				// No locator
-				out << "(" << temp_char << ", "  << temp_short << ")";
-			} else {
-				out << "(" << temp_short << ")";
+			switch (quotes_lang) {
+			case QuotesLanguage::Russian:
+				if (!temp_char.empty()) {
+					// No locator
+					out << "[" << temp_char << ", "  << temp_short << "]";
+				} else {
+					out << "[" << temp_short << "]";
+				}
+				break;
+			default:
+				if (!temp_char.empty()) {
+					// No locator
+					out << "(" << temp_char << ", "  << temp_short << ")";
+				} else {
+					out << "(" << temp_short << ")";
+				}
+				break;
 			}
 
 			popNode();
@@ -879,12 +891,12 @@ void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
 			temp_short3 = temp_short;
 		}
 
-		String ref = Traits::toString("#fn:", temp_short3);
+		String ref = Traits::toString("#fn_", temp_short3);
 		if (temp_short2 == used_footnotes.size()) {
-			pushNode("a", { pair("href", ref), pair("title", "see footnote"), pair("class", "footnote") });
+			pushNode("a", { pair("href", ref), pair("title", localize("see footnote")), pair("class", "footnote") });
 		} else {
-			String id = Traits::toString("fnref:", temp_short3);
-			pushNode("a", { pair("href", ref), pair("id", id), pair("title", "see footnote"), pair("class", "footnote") });
+			String id = Traits::toString("fnref_", temp_short3);
+			pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see footnote")), pair("class", "footnote") });
 		}
 		pushNode("sup");
 		out << temp_short;
@@ -918,12 +930,12 @@ void HtmlProcessor::exportPairBracketGlossary(std::ostream &out, token *t) {
 			return;
 		}
 
-		String ref = Traits::toString("#gn:", temp_short);
+		String ref = Traits::toString("#gn_", temp_short);
 		if (temp_short2 == used_glossaries.size()) {
-			pushNode("a", { pair("href", ref), pair("title", "see glossary"), pair("class", "glossary") });
+			pushNode("a", { pair("href", ref), pair("title", localize("see glossary")), pair("class", "glossary") });
 		} else {
-			String id = Traits::toString("gnref:", temp_short);
-			pushNode("a", { pair("href", ref), pair("id", id), pair("title", "see glossary"), pair("class", "glossary") });
+			String id = Traits::toString("gnref_", temp_short);
+			pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see glossary")), pair("class", "glossary") });
 		}
 		printHtml(out, temp_note->clean_text);
 		popNode();
