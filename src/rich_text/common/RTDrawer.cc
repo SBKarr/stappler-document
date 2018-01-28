@@ -1006,8 +1006,8 @@ void Drawer::drawCharsEffects(Font *font, const font::FormatSpec &format, const 
 			auto color = it.range->color;
 			color.a = uint8_t(0.75f * color.a);
 			setColor(color);
-			Arc<font::FontLayout> layout(it.range->layout);
-			Arc<font::FontData> data(layout->getData());
+			Rc<font::FontLayout> layout(it.range->layout);
+			Rc<font::FontData> data(layout->getData());
 			drawRectangleFill(Rect(bbox.origin.x + firstChar.pos, bbox.origin.y + it.line->pos - data->metrics.height / 8.0f,
 					lastChar.pos + lastChar.advance - firstChar.pos, data->metrics.height / 16.0f));
 		}
