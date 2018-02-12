@@ -163,6 +163,59 @@ void HtmlProcessor::exportIndentedCodeBlock(std::ostream &out, token *t) {
 	padded = 0;
 }
 
+static Content::String HtmlProcessor_decodeHeaderIdLabel(const StringView &source, token *t, bool isManual) {
+	StringView r(&source[t->start], t->len);
+
+	if (isManual) {
+		r = r.readUntil<StringView::Chars<'['>>();
+	}
+
+	return Content::labelFromString(r);
+}
+
+static Pair<Content::String, Content::String> HtmlProcessor_decodeHeaderLabel(const StringView &source, token *t) {
+	if (auto temp_token = manual_label_from_header(t, source.data())) {
+		StringView tokenView(&source[temp_token->start], temp_token->len);
+		if (tokenView.is('[')) { ++ tokenView; }
+		if (tokenView.back() == ']') { tokenView = StringView(tokenView.data(), tokenView.size() - 1); }
+
+		StringView r(tokenView);
+		StringView first, second;
+		first = r.readChars<
+				StringView::CharGroup<CharGroupId::Alphanumeric>,
+				StringView::Chars<'.', '_', ':', '-', ' '>,
+				stappler::chars::UniChar>();
+		first.trimChars<StringView::CharGroup<CharGroupId::WhiteSpace>>();
+
+		r.skipChars<StringView::CharGroup<CharGroupId::WhiteSpace>>();
+		if (r.is<StringView::Chars<','>>()) {
+			++ r;
+			r.skipChars<StringView::CharGroup<CharGroupId::WhiteSpace>>();
+
+			second = r;
+		} else {
+			first = tokenView;
+		}
+
+		if (second.empty()) {
+			if (first.front() == '.') {
+				++ first;
+				return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, true), first.str());
+			} else {
+				return pair(Content::labelFromString(first), String());
+			}
+		} else {
+			if (first.front() == '.') {
+				return pair(Content::labelFromString(second), first.str());
+			} else {
+				return pair(Content::labelFromString(first), second.str());
+			}
+		}
+	} else {
+		return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, false), String());
+	}
+}
+
 void HtmlProcessor::exportHeader(std::ostream &out, token *t) {
 	pad(out, 2);
 	auto h_idx = t->type - BLOCK_H1  + base_header_level;
@@ -172,8 +225,12 @@ void HtmlProcessor::exportHeader(std::ostream &out, token *t) {
 	if ((extensions & Extensions::NoLabels) != Extensions::None) {
 		pushNode(head);
 	} else {
-		auto label = labelFromHeader(source, t);
-		pushNode(head, { pair("id", label) });
+		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
+		if (idClassPair.second.empty()) {
+			pushNode(head, { pair("id", StringView(idClassPair.first)) });
+		} else {
+			pushNode(head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
+		}
 	}
 
 	exportTokenTree(out, t->child);
@@ -365,10 +422,12 @@ void HtmlProcessor::exportHeaderText(std::ostream &out, token *t, uint8_t level)
 	if ((extensions & Extensions::NoLabels) != Extensions::None) {
 		pushNode(head);
 	} else {
-		auto temp_token = manual_label_from_header(t, source.data());
-		auto temp_char = (temp_token) ? label_from_token(source, temp_token) : label_from_token(source, t);
-
-		pushNode(head, { pair("id", temp_char) });
+		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
+		if (idClassPair.second.empty()) {
+			pushNode(head, { pair("id", StringView(idClassPair.first)) });
+		} else {
+			pushNode(head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
+		}
 	}
 
 	exportTokenTree(out, t->child);
@@ -551,7 +610,8 @@ void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t 
 
 		if (entry_level >= level) {
 			// This entry is a direct descendant of the parent
-			auto ref = Traits::toString("#", labelFromHeader(source, entry));
+			auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, entry);
+			auto ref = Traits::toString("#", idClassPair.first);
 			pushNode("li");
 			pushNode("a", { pair("href", ref) });
 			exportTokenTree(out, entry->child);

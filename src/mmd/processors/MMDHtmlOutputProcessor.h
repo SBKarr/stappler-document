@@ -39,7 +39,7 @@ protected:
 
 	virtual void flushBuffer() override;
 
-	Vector<StringView> tagStack;
+	Vector<Pair<StringView, size_t>> tagStack;
 };
 
 NS_MMD_END

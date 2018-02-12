@@ -58,7 +58,7 @@ void HtmlOutputProcessor::pushNode(const StringView &name, InitList &&attr, VecL
 		}
 	}
 	*output << ">";
-	tagStack.push_back(name);
+	tagStack.emplace_back(name, 0);
 }
 
 void HtmlOutputProcessor::pushInlineNode(const StringView &name, InitList &&attr, VecList && vec) {
@@ -79,12 +79,17 @@ void HtmlOutputProcessor::pushInlineNode(const StringView &name, InitList &&attr
 
 void HtmlOutputProcessor::popNode() {
 	flushBuffer();
-	*output << "</" << tagStack.back() << ">";
+	*output << "</" << tagStack.back().first << ">";
 	tagStack.pop_back();
 }
 
 void HtmlOutputProcessor::flushBuffer() {
-	output->write(buffer.data(), buffer.size());
+	if (buffer.size() > 0) {
+		output->write(buffer.data(), buffer.size());
+		if (!tagStack.empty()) {
+			++ tagStack.back().second;
+		}
+	}
 	buffer.clear();
 }
 

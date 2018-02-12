@@ -527,7 +527,23 @@ Content::String Processor::labelFromHeader(const StringView & source, token * t)
 	token * temp_token = manual_label_from_header(t, source.data());
 
 	if (temp_token) {
-		return label_from_token(source, temp_token);
+		StringView r(&source[temp_token->start], temp_token->len);
+		String ret; ret.reserve(source.size());
+		while (!r.empty()) {
+			auto tmp = r.readChars<
+					StringView::CharGroup<CharGroupId::Alphanumeric>,
+					StringView::Chars<'.', '_', ':', '-', ','>,
+					stappler::chars::UniChar>();
+
+			ret.append(tmp.data(), tmp.size());
+			r.skipUntil<
+					StringView::CharGroup<CharGroupId::Alphanumeric>,
+					StringView::Chars<'.', '_', ':', '-', ','>,
+					stappler::chars::UniChar>();
+		}
+
+		string::tolower(ret);
+		return ret;
 	} else {
 		return label_from_token(source, t);
 	}
