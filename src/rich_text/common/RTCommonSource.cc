@@ -261,10 +261,25 @@ void CommonSource::onDocumentAssetUpdated(data::Subscription::Flags f) {
 	}
 
 	if (_documentAsset->isDownloadAvailable() && !_documentAsset->isDownloadInProgress()) {
-		if (_enabled) {
-			_documentAsset->download();
+		if (f.hasFlag((uint8_t)Asset::DownloadFailed)) {
+			auto sc = cocos2d::Director::getInstance()->getScheduler();
+			auto tag = toString("CommonSource:", _documentAsset->getUrl());
+			retain();
+			sc->schedule([this, tag] (float dt) {
+				if (tag == toString("CommonSource:", _documentAsset->getUrl()) && getReferenceCount() > 1) {
+					if (_enabled) {
+						_documentAsset->download();
+					}
+					onUpdate(this);
+				}
+				release();
+			}, this, 0.0f, 0, 20.0f, false, tag);
+		} else {
+			if (_enabled) {
+				_documentAsset->download();
+			}
+			onUpdate(this);
 		}
-		onUpdate(this);
 	}
 	if (_loadedAssetMTime < _documentAsset->getMTime()) {
 		tryLoadDocument();

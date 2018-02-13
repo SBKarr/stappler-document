@@ -200,19 +200,19 @@ static Pair<Content::String, Content::String> HtmlProcessor_decodeHeaderLabel(co
 		if (second.empty()) {
 			if (first.front() == '.') {
 				++ first;
-				return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, true), first.str());
+				return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, true), Content::String(first.data(), first.data()));
 			} else {
-				return pair(Content::labelFromString(first), String());
+				return pair(Content::labelFromString(first), Content::String());
 			}
 		} else {
 			if (first.front() == '.') {
-				return pair(Content::labelFromString(second), first.str());
+				return pair(Content::labelFromString(second), Content::String(first.data(), first.data()));
 			} else {
-				return pair(Content::labelFromString(first), second.str());
+				return pair(Content::labelFromString(first), Content::String(second.data(), second.data()));
 			}
 		}
 	} else {
-		return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, false), String());
+		return pair(HtmlProcessor_decodeHeaderIdLabel(source, t, false), Content::String());
 	}
 }
 
