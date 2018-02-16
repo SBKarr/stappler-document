@@ -394,13 +394,15 @@ Rc<View> ArticleLayout::loadView(const ArticleLoader *loader) {
 		onSelection(viewPtr, viewPtr->isSelectionEnabled());
 	});
 	el->onEventWithObject(View::onError, viewPtr, [this] (const Event &ev) {
-		auto err = (rich_text::Source::Error)ev.getIntValue();
-		if (err == rich_text::Source::Error::DocumentError) {
-			material::Scene::getRunningScene()->setSnackbarString("Не удалось загрузить статью: ошибка в документе");
-		} else if (err == rich_text::Source::Error::NetworkError) {
-			material::Scene::getRunningScene()->setSnackbarString("Не удалось загрузить статью: нет соединения с сетью");
-		} else {
-			material::Scene::getRunningScene()->setSnackbarString("Не удалось загрузить статью");
+		if (auto scene = material::Scene::getRunningScene()) {
+			auto err = (rich_text::Source::Error)ev.getIntValue();
+			if (err == rich_text::Source::Error::DocumentError) {
+				scene->setSnackbarString("Не удалось загрузить статью: ошибка в документе");
+			} else if (err == rich_text::Source::Error::NetworkError) {
+				scene->setSnackbarString("Не удалось загрузить статью: нет соединения с сетью");
+			} else {
+				scene->setSnackbarString("Не удалось загрузить статью");
+			}
 		}
 	});
 	view->addComponent(el);
