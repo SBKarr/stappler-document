@@ -380,15 +380,16 @@ static void LayoutDocument_onClass(layout::Style &style, const StringView &name,
 		}
 
 	} else if (name == "img") {
-		style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
-		style.set(Parameter::create<ParameterName::MaxWidth>(Metric(70.0f, Metric::Units::Vw)), true);
-		style.set(Parameter::create<ParameterName::MaxHeight>(Metric(70.0f, Metric::Units::Vh)), true);
-		style.set(Parameter::create<ParameterName::MinWidth>(Metric(100.8f, Metric::Units::Px)), true);
-		style.set(Parameter::create<ParameterName::MinHeight>(Metric(88.8f, Metric::Units::Px)), true);
+		if (classStr == "middle") {
+			style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
+			style.set(Parameter::create<ParameterName::MaxWidth>(Metric(70.0f, Metric::Units::Vw)), true);
+			style.set(Parameter::create<ParameterName::MaxHeight>(Metric(70.0f, Metric::Units::Vh)), true);
+			style.set(Parameter::create<ParameterName::MinWidth>(Metric(100.8f, Metric::Units::Px)), true);
+			style.set(Parameter::create<ParameterName::MinHeight>(Metric(88.8f, Metric::Units::Px)), true);
 
-		style.set(Parameter::create<ParameterName::MarginRight>(Metric(0.0f, Metric::Units::Auto)), true);
-		style.set(Parameter::create<ParameterName::MarginLeft>(Metric(0.0f, Metric::Units::Auto)), true);
-
+			style.set(Parameter::create<ParameterName::MarginRight>(Metric(0.0f, Metric::Units::Auto)), true);
+			style.set(Parameter::create<ParameterName::MarginLeft>(Metric(0.0f, Metric::Units::Auto)), true);
+		}
 	}
 
 	if (classStr == "reversefootnote" && media.hasOption("tooltip")) {
