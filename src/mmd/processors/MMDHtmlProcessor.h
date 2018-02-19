@@ -111,6 +111,8 @@ protected:
 	void exportLink(std::ostream &, token * text, Content::Link * link);
 	void exportImage(std::ostream &, token * text, Content::Link * link, bool is_figure);
 
+	virtual void pushHtmlEntity(std::ostream &, token *t);
+
 	virtual void pushNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
 	virtual void pushInlineNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
 	virtual void popNode() = 0;

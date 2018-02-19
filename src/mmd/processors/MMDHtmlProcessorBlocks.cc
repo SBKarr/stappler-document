@@ -246,7 +246,7 @@ void HtmlProcessor::exportHr(std::ostream &out) {
 
 void HtmlProcessor::exportHtml(std::ostream &out, token *t) {
 	pad(out, 2);
-	printTokenRaw(out, t);
+	pushHtmlEntity(out, t);
 	padded = 1;
 }
 
@@ -734,7 +734,7 @@ void HtmlProcessor::exportPairAngle(std::ostream &out, token *t) {
 		printHtml(out, temp_char);
 		popNode();
 	} else if (scan_html(&source[t->start])) {
-		out << printToken(source, t);
+		pushHtmlEntity(out, t);
 	} else {
 		exportTokenTree(out, t->child);
 	}

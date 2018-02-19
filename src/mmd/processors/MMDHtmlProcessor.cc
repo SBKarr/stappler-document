@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "MMDContent.h"
 #include "MMDCore.h"
 #include "SPString.h"
+#include "SPHtmlParser.h"
 
 NS_MMD_BEGIN
 
@@ -366,6 +367,74 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	}
 
 	++ figureId;
+}
+
+void HtmlProcessor::pushHtmlEntity(std::ostream &out, token *t) {
+	StringView r(&source[t->start], t->len);
+
+	if (r.is('<')) {
+		while (!r.empty()) {
+			if (!r.is('<')) {
+				break;
+			}
+			++ r;
+			if (r.is('/')) {
+				r.skipUntil<StringView::Chars<'>'>>();
+				if (r.is('>')) {
+					++ r;
+					popNode();
+				}
+			} else {
+				auto name = html::Tag_readName(r, true);
+				if (name.empty()) { // found tag without readable name
+					printTokenRaw(out, t);
+					return;
+				}
+
+				Vector<Pair<StringView, StringView>> attrs;
+
+				StringView attrName;
+				StringView attrValue;
+				while (!r.empty() && !r.is('>') && !r.is('/')) {
+					attrName.clear();
+					attrValue.clear();
+
+					attrName = html::Tag_readAttrName(r, true);
+					if (attrName.empty()) {
+						continue;
+					}
+
+					attrValue = html::Tag_readAttrValue(r, true);
+					attrs.emplace_back(attrName, attrValue);
+				}
+
+				bool inlineTag = false;
+				if (r.is('/')) {
+					inlineTag = true;
+				}
+
+				r.skipUntil<StringView::Chars<'>'>>();
+				if (r.is('>')) {
+					++ r;
+				}
+
+				flushBuffer();
+				if (inlineTag) {
+					pushInlineNode(name, { }, move(attrs));
+				} else {
+					pushNode(name, { }, move(attrs));
+				}
+
+				out << r.readUntil<StringView::Chars<'<'>>();
+			}
+		}
+
+		if (!r.empty()) {
+			out << r;
+		}
+	} else {
+		printTokenRaw(out, t);
+	}
 }
 
 NS_MMD_END

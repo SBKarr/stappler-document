@@ -167,10 +167,9 @@ void LayoutProcessor::flushBuffer() {
 				while (s > 0 && (r[s - 1] == '\n' || r[s - 1] == '\r')) {
 					-- s;
 				}
-				_nodeStack.back()->pushValue(StringView(r.data(), s).str());
-			} else {
-				_nodeStack.back()->pushValue(r.str());
+				r = StringView(r.data(), s);
 			}
+			_nodeStack.back()->pushValue(string::toUtf16Html(r));
 		}
 	}
 	buffer.clear();
