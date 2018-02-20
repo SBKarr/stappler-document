@@ -90,6 +90,8 @@ public:
 	Pair<uint16_t, uint16_t> getImageSize(const String &url) const;
 	Bytes getImageData(const String &url) const;
 
+	virtual void update(float dt);
+
 protected:
 	virtual void onDocumentAsset(Asset *);
 	virtual void onDocumentAssetUpdated(data::Subscription::Flags);
@@ -130,6 +132,8 @@ protected:
 
 	Set<AssetData *> _assetRequests;
 	Vector<Function<void()>> _assetWaiters;
+
+	float _retryUpdate = nan();
 };
 
 NS_RT_END

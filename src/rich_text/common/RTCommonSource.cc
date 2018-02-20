@@ -262,18 +262,9 @@ void CommonSource::onDocumentAssetUpdated(data::Subscription::Flags f) {
 
 	if (_documentAsset->isDownloadAvailable() && !_documentAsset->isDownloadInProgress()) {
 		if (f.hasFlag((uint8_t)Asset::DownloadFailed)) {
-			auto sc = cocos2d::Director::getInstance()->getScheduler();
-			auto tag = toString("CommonSource:", _documentAsset->getUrl());
-			retain();
-			sc->schedule([this, tag] (float dt) {
-				if (tag == toString("CommonSource:", _documentAsset->getUrl()) && getReferenceCount() > 1) {
-					if (_enabled) {
-						_documentAsset->download();
-					}
-					onUpdate(this);
-				}
-				release();
-			}, this, 0.0f, 0, 20.0f, false, tag);
+			if (isnan(_retryUpdate)) {
+				_retryUpdate = 20.0f;
+			}
 		} else {
 			if (_enabled) {
 				_documentAsset->download();
@@ -580,6 +571,19 @@ Bytes CommonSource::getImageData(const String &url) const {
 		return _document->getImageData(url);
 	}
 	return Bytes();
+}
+
+void CommonSource::update(float dt) {
+	FontController::update(dt);
+	if (!isnan(_retryUpdate)) {
+		_retryUpdate -= dt;
+		if (_retryUpdate <= 0.0f) {
+			_retryUpdate = nan();
+			if (_enabled && _documentAsset && _documentAsset->isDownloadAvailable() && !_documentAsset->isDownloadInProgress()) {
+				_documentAsset->download();
+			}
+		}
+	}
 }
 
 NS_RT_END
