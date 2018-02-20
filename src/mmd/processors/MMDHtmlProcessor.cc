@@ -305,7 +305,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	String alt;
 	if (text) {
 		flushBuffer();
-		printTokenTreeRaw(buffer, text->child);
+		exportTokenTree(buffer, text->child);
 		alt = buffer.str();
 		buffer.clear();
 		attr.emplace_back("alt", alt);

@@ -344,7 +344,18 @@ Content::Link::Link(const StringView &source, Token && l, String && u, const Str
 	}
 
 	url = clearUrl ? Content::cleanString(StringView(u), false) : move(u);
-	title = t.str<memory::PoolInterface>();
+
+	StringView r(t);
+	StringStream stream;
+	while (!r.empty()) {
+		stream << r.readUntil<StringView::Chars<'"'>>();
+		if (r.is('"')) {
+			stream << "&quot;";
+			++ r;
+		}
+	}
+
+	title = stream.str();
 	parseAttributes(attributes, attr);
 }
 
@@ -454,7 +465,8 @@ auto Content::cleanString(const StringView &str, bool lowercase) -> String {
 
 auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket, token * paren) -> Link * {
 	const char *source = s.data();
-	size_t scan_len;
+	const char *end = &source[paren->start + paren->len];
+	if (*end == ')') { -- end; }
 	size_t pos = paren->child->next->start;
 
 	size_t attr_len;
@@ -476,13 +488,34 @@ auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket,
 		pos++;
 	}
 
-	// Grab title, if present
-	scan_len = scan_title(&source[pos]);
+	StringView r(&source[pos], end - &source[pos]);
+	if (r.is('"')) {
+		size_t d = 0;
+		++ r;
 
-	if (scan_len) {
-		title = StringView(&source[pos + 1], scan_len - 2);
-		pos += scan_len;
+		title = r;
+		while (!r.empty()) {
+			r.skipUntil<StringView::Chars<'"'>>();
+			if (r.is('"')) {
+				++ r;
+				if (r.empty() || chars::isWhitespace(r[0]) || r.is('"')) {
+					if (d == 0) {
+						break;
+					} else {
+						-- d;
+					}
+				} else {
+					++ d;
+				}
+			}
+		}
+
+		title = StringView(title.data(), title.size() - r.size() - 1);
+	} else {
+		title = r.readUntil<StringView::CharGroup<CharGroupId::WhiteSpace>>();
 	}
+
+	pos += title.size() + 2;
 
 	// Skip whitespace
 	while (chars::isWhitespace(source[pos])) {
