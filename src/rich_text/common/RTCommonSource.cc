@@ -135,7 +135,7 @@ bool CommonSource::init(const AssetCallback &cb, bool enabled) {
 	_enabled = enabled;
 
 	retain();
-	cb([this, enabled] (Asset *a) {
+	cb([this] (Asset *a) {
 		onDocumentAsset(a);
 		release();
 	});

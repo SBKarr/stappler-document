@@ -111,7 +111,7 @@ bool EpubContentsScroll::init(const Callback &cb) {
 	getGestureListener()->setSwallowTouches(true);
 	_callback = cb;
 
-	setHandlerCallback([this] (Scroll *s) -> Rc<Handler> {
+	setHandlerCallback([] (Scroll *s) -> Rc<Handler> {
 		class Handler : public material::ScrollHandlerSlice {
 		public:
 			virtual bool init(Scroll *s) override {
@@ -240,7 +240,7 @@ bool EpubBookmarkScroll::init(const Callback &cb) {
 	_callback = cb;
 	getGestureListener()->setSwallowTouches(true);
 
-	setHandlerCallback([this] (Scroll *s) -> Handler * {
+	setHandlerCallback([] (Scroll *s) -> Handler * {
 		return Rc<material::ScrollHandlerSlice>::create(s, [] (material::ScrollHandlerSlice *h, data::Value &&data, const Vec2 &origin) -> Rc<Scroll::Item> {
 			auto width = h->getContentSize().width;
 			Size size = EpubBookmarkNode::compute(data, width);

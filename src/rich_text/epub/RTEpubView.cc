@@ -161,7 +161,7 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	l->onEventWithObject(View::onSelection, _view, [this] (const Event &) {
 		onSelection(_view->isSelectionEnabled());
 	});
-	l->onEventWithObject(View::onContentLink, _view, [this] (const Event &) {
+	l->onEventWithObject(View::onContentLink, _view, [] (const Event &) {
 		//showBackButton(_view->getScrollRelativePosition());
 	});
 	addComponent(l);

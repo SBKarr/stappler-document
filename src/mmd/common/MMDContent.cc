@@ -511,11 +511,8 @@ auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket,
 		}
 
 		title = StringView(title.data(), title.size() - r.size() - 1);
-	} else {
-		title = r.readUntil<StringView::CharGroup<CharGroupId::WhiteSpace>>();
+		pos += title.size() + 2;
 	}
-
-	pos += title.size() + 2;
 
 	// Skip whitespace
 	while (chars::isWhitespace(source[pos])) {

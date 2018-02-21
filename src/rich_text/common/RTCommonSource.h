@@ -90,7 +90,7 @@ public:
 	Pair<uint16_t, uint16_t> getImageSize(const String &url) const;
 	Bytes getImageData(const String &url) const;
 
-	virtual void update(float dt);
+	virtual void update(float dt) override;
 
 protected:
 	virtual void onDocumentAsset(Asset *);

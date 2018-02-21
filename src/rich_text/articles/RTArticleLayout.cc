@@ -393,7 +393,7 @@ Rc<View> ArticleLayout::loadView(const ArticleLoader *loader) {
 	el->onEventWithObject(View::onSelection, view, [this, viewPtr] (const Event &ev) {
 		onSelection(viewPtr, viewPtr->isSelectionEnabled());
 	});
-	el->onEventWithObject(View::onError, viewPtr, [this] (const Event &ev) {
+	el->onEventWithObject(View::onError, viewPtr, [] (const Event &ev) {
 		if (auto scene = material::Scene::getRunningScene()) {
 			auto err = (rich_text::Source::Error)ev.getIntValue();
 			if (err == rich_text::Source::Error::DocumentError) {

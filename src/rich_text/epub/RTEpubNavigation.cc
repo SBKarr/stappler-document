@@ -187,7 +187,7 @@ public:
 			if (idx < _result->getNumPages()) {
 				page->retain();
 
-				drawer->thumbnail(source, _result, data.texRect, _scale, [this, page, sprite] (cocos2d::Texture2D *tex) {
+				drawer->thumbnail(source, _result, data.texRect, _scale, [page, sprite] (cocos2d::Texture2D *tex) {
 					if (page->isRunning()) {
 						sprite->setTexture(tex);
 						sprite->runAction(cocos2d::FadeIn::create(0.1f));
@@ -217,7 +217,7 @@ public:
 			sprite->retain();
 			sprite->setFlippedY(true);
 
-			drawer->thumbnail(source, _result, data.texRect, _scale, [this, sprite] (cocos2d::Texture2D *tex) {
+			drawer->thumbnail(source, _result, data.texRect, _scale, [sprite] (cocos2d::Texture2D *tex) {
 				if (sprite->isRunning()) {
 					sprite->setTexture(tex);
 					sprite->runAction(cocos2d::FadeIn::create(0.1f));

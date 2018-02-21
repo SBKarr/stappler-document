@@ -70,20 +70,20 @@ void Trie::toGraphviz() const {
 	size_t s = 0;
 	for (auto &it : nodes) {
 		if (it.match_type) {
-			fprintf(stderr, "\"%lu\" [shape=doublecircle]\n", s);
+			fprintf(stderr, "\"%zu\" [shape=doublecircle]\n", s);
 		}
 
 		for (int i = 0; i < 256; ++i) {
 			if (it.child[i]) {
 				switch (i) {
 					default:
-						fprintf(stderr, "\"%lu\" -> \"%lu\" [label=\"%c\"]\n", s, it.child[i], (char)i);
+						fprintf(stderr, "\"%zu\" -> \"%zu\" [label=\"%c\"]\n", s, it.child[i], (char)i);
 				}
 			}
 		}
 
 		if (it.ac_fail) {
-			fprintf(stderr, "\"%lu\" -> \"%lu\" [label=\"fail\"]\n", s, it.ac_fail);
+			fprintf(stderr, "\"%zu\" -> \"%zu\" [label=\"fail\"]\n", s, it.ac_fail);
 		}
 		++ s;
 	}
@@ -161,7 +161,7 @@ void Trie::prepareNode(size_t s, char * buffer, unsigned short depth, size_t las
 
 		if (n->ac_fail == s) {
 			// Something went wrong
-			fprintf(stderr, "Recursive trie fallback detected at state %lu('%c') - suffix:'%s'!\n", s, n->c, suffix);
+			fprintf(stderr, "Recursive trie fallback detected at state %zu('%c') - suffix:'%s'!\n", s, n->c, suffix);
 			n->ac_fail = 0;
 		}
 
