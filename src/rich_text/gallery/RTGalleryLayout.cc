@@ -73,9 +73,9 @@ bool GalleryLayout::init(CommonSource *source, const String &name, const String 
 
 	setTitle(_title[selected]);
 
-	_scroll = construct<material::GalleryScroll>(std::bind(&GalleryLayout::onImage, this, std::placeholders::_1, std::placeholders::_2),
+	auto scroll = Rc<material::GalleryScroll>::create(std::bind(&GalleryLayout::onImage, this, std::placeholders::_1, std::placeholders::_2),
 			images, selected);
-	_scroll->setActionCallback([this] (material::GalleryScroll::Action a) {
+	scroll->setActionCallback([this] (material::GalleryScroll::Action a) {
 		if (a == material::GalleryScroll::Tap) {
 			if (getCurrentFlexibleHeight() == 0.0f) {
 				setFlexibleLevelAnimated(1.0f, 0.35f);
@@ -86,10 +86,10 @@ bool GalleryLayout::init(CommonSource *source, const String &name, const String 
 			setFlexibleLevelAnimated(0.0f, progress(0.0f, 0.35f, getFlexibleLevel()));
 		}
 	});
-	_scroll->setPositionCallback([this] (float val) {
+	scroll->setPositionCallback([this] (float val) {
 		onPosition(val);
 	});
-	addChild(_scroll, -1);
+	_scroll = addChildNode(scroll, -1);
 
 	return true;
 }

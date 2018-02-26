@@ -63,27 +63,27 @@ bool EpubContentsNode::init(const data::Value &data, Callback & cb) {
 	_callback = cb;
 	_href = data.getString("href");
 
-	_label = construct<material::Label>(material::FontType::Body_1);
-	_label->setLocaleEnabled(true);
-	_label->setString(data.getString("label"));
-	_label->setAnchorPoint(Vec2(0.0f, 1.0f));
+	auto label = Rc<material::Label>::create(material::FontType::Body_1);
+	label->setLocaleEnabled(true);
+	label->setString(data.getString("label"));
+	label->setAnchorPoint(Vec2(0.0f, 1.0f));
 	if (page != maxOf<int64_t>()) {
-		_label->appendTextWithStyle(toString(" — %Shortcut:Pages%. ", page + 1), material::Label::Style(material::Label::Opacity(100)));
+		label->appendTextWithStyle(toString(" — %Shortcut:Pages%. ", page + 1), material::Label::Style(material::Label::Opacity(100)));
 	}
-	_label->tryUpdateLabel();
-	addChild(_label);
+	label->tryUpdateLabel();
+	_label = addChildNode(label);
 
-	_button = construct<material::Button>([this] {
+	auto button = Rc<material::Button>::create([this] {
 		if (_available && _callback) {
 			_callback(_href);
 		}
 	});
-	_button->setStyle(material::Button::Style::FlatBlack);
-	_button->setAnchorPoint(cocos2d::Vec2(0.0f, 0.0f));
-	_button->setSwallowTouches(false);
-	_button->setOpacity(255);
-	_button->setEnabled(!_href.empty());
-	addChild(_button, 2);
+	button->setStyle(material::Button::Style::FlatBlack);
+	button->setAnchorPoint(cocos2d::Vec2(0.0f, 0.0f));
+	button->setSwallowTouches(false);
+	button->setOpacity(255);
+	button->setEnabled(!_href.empty());
+	_button = addChildNode(button, 2);
 
 	setPadding(Padding(1.0f));
 	setShadowZIndex(0.5f);
@@ -194,24 +194,24 @@ bool EpubBookmarkNode::init(const data::Value &data, const Size &size, const Cal
 	_position = size_t(data.getInteger("position"));
 	_scroll = data.getDouble("scroll");
 
-	_name = construct<material::Label>(material::FontType::Body_2);
-	_name->setString(data.getString("item"));
-	_name->setWidth(size.width - 16.0f);
-	_name->setAnchorPoint(Vec2(0.0f, 1.0f));
-	_name->setPosition(8.0f, size.height - 8.0f);
-	addChild(_name, 1);
+	auto name = Rc<material::Label>::create(material::FontType::Body_2);
+	name->setString(data.getString("item"));
+	name->setWidth(size.width - 16.0f);
+	name->setAnchorPoint(Vec2(0.0f, 1.0f));
+	name->setPosition(8.0f, size.height - 8.0f);
+	_name = addChildNode(name, 1);
 
-	_label = construct<material::Label>(material::FontType::Caption);
-	_label->setString(data.getString("label"));
-	_label->setWidth(size.width - 16.0f);
-	_label->setAnchorPoint(Vec2(0.0f, 0.0f));
-	_label->setPosition(8.0f, 8.0f);
-	addChild(_label, 1);
+	auto label = Rc<material::Label>::create(material::FontType::Caption);
+	label->setString(data.getString("label"));
+	label->setWidth(size.width - 16.0f);
+	label->setAnchorPoint(Vec2(0.0f, 0.0f));
+	label->setPosition(8.0f, 8.0f);
+	_label = addChildNode(label, 1);
 
-	_button = construct<material::Button>(std::bind(&EpubBookmarkNode::onButton, this));
-	_button->setStyle(material::Button::Style::FlatBlack);
-	_button->setSwallowTouches(false);
-	addChild(_button, 2);
+	auto button = Rc<material::Button>::create(std::bind(&EpubBookmarkNode::onButton, this));
+	button->setStyle(material::Button::Style::FlatBlack);
+	button->setSwallowTouches(false);
+	_button = addChildNode(button, 2);
 
 	setPadding(1.0f);
 	setShadowZIndex(1.0f);
@@ -260,42 +260,42 @@ bool EpubContentsView::init(const Callback &cb, const BookmarkCallback &bcb) {
 		return false;
 	}
 
-	_header = construct<MaterialNode>();
-	_header->setShadowZIndex(1.5f);
-	_header->setBackgroundColor(material::Color::Grey_200);
-	_header->setAnchorPoint(Vec2(0.0f, 1.0f));
+	auto header = Rc<MaterialNode>::create();
+	header->setShadowZIndex(1.5f);
+	header->setBackgroundColor(material::Color::Grey_200);
+	header->setAnchorPoint(Vec2(0.0f, 1.0f));
 
 	auto title = Rc<material::Label>::create(material::FontType::Subhead);
 	title->setString("Содержание");
 	title->setAnchorPoint(Anchor::MiddleLeft);
 	title->setVisible(false);
-	_header->addChild(title);
+	header->addChild(title);
 	_title = title;
 
 	auto tabBar = constructTabBar();
 	tabBar->setAnchorPoint(Vec2(0.0f, 0.0f));
 	tabBar->setPosition(Vec2(0.0f, 0.0f));
-	_header->addChild(tabBar);
+	header->addChild(tabBar);
 	_tabBar = tabBar;
 
-	addChild(_header, 2);
+	_header = addChildNode(header, 2);
 
-	_contentNode = construct<StrictNode>();
-	_contentNode->setAnchorPoint(Vec2(0.0f, 0.0f));
+	auto contentNode = Rc<StrictNode>::create();
+	contentNode->setAnchorPoint(Vec2(0.0f, 0.0f));
 
 	if (auto contentsScroll = constructContentsScroll(cb)) {
 		contentsScroll->setAnchorPoint(Vec2(0.0f, 0.0f));
-		_contentNode->addChild(contentsScroll, 1);
+		contentNode->addChild(contentsScroll, 1);
 		_contentsScroll = contentsScroll;
 	}
 
 	if (auto bookmarksScroll = constructBookmarkScroll(bcb)) {
 		bookmarksScroll->setAnchorPoint(Vec2(0.0f, 0.0f));
-		_contentNode->addChild(bookmarksScroll, 2);
+		contentNode->addChild(bookmarksScroll, 2);
 		_bookmarksScroll = bookmarksScroll;
 	}
 
-	addChild(_contentNode, 1);
+	_contentNode = addChildNode(contentNode, 1);
 
 	setShadowZIndex(1.5f);
 
@@ -362,7 +362,7 @@ void EpubContentsView::setBookmarksSource(data::Source *source) {
 }
 
 void EpubContentsView::showBookmarks() {
-	auto a = cocos2d::EaseQuadraticActionInOut::create(construct<ProgressAction>(0.25f, _progress, 1.0f, [this] (ProgressAction *a, float p) {
+	auto a = cocos2d::EaseQuadraticActionInOut::create(Rc<ProgressAction>::create(0.25f, _progress, 1.0f, [this] (ProgressAction *a, float p) {
 		_progress = p;
 		_contentSizeDirty = true;
 	}));
@@ -370,7 +370,7 @@ void EpubContentsView::showBookmarks() {
 }
 
 void EpubContentsView::showContents() {
-	auto a = cocos2d::EaseQuadraticActionInOut::create(construct<ProgressAction>(0.25f, _progress, 0.0f, [this] (ProgressAction *a, float p) {
+	auto a = cocos2d::EaseQuadraticActionInOut::create(Rc<ProgressAction>::create(0.25f, _progress, 0.0f, [this] (ProgressAction *a, float p) {
 		_progress = p;
 		_contentSizeDirty = true;
 	}));

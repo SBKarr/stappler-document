@@ -70,33 +70,33 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	_source = source;
 	_source->setEnabled(true);
 
-	_buttonLeft = construct<Button>(std::bind(&EpubView::onButtonLeft, this), [this] {
+	auto buttonLeft = Rc<Button>::create(std::bind(&EpubView::onButtonLeft, this), [this] {
 		_buttonLeft->cancel();
 	});
-	_buttonLeft->setStyle(Button::Style::FlatBlack);
-	_buttonLeft->setAnchorPoint(Vec2(0, 0));
-	_buttonLeft->setPosition(Vec2(0, 0));
-	_buttonLeft->setSwallowTouches(false);
-	_buttonLeft->setVisible(false);
-	addChild(_buttonLeft, 2);
+	buttonLeft->setStyle(Button::Style::FlatBlack);
+	buttonLeft->setAnchorPoint(Vec2(0, 0));
+	buttonLeft->setPosition(Vec2(0, 0));
+	buttonLeft->setSwallowTouches(false);
+	buttonLeft->setVisible(false);
+	_buttonLeft = addChildNode(buttonLeft, 2);
 
-	_buttonRight = construct<Button>(std::bind(&EpubView::onButtonRight, this), [this] {
+	auto buttonRight = Rc<Button>::create(std::bind(&EpubView::onButtonRight, this), [this] {
 		_buttonRight->cancel();
 	});
-	_buttonRight->setStyle(Button::Style::FlatBlack);
-	_buttonRight->setAnchorPoint(Vec2(1, 0));
-	_buttonRight->setPosition(Vec2(0, 0));
-	_buttonRight->setSwallowTouches(false);
-	_buttonRight->setVisible(false);
-	addChild(_buttonRight, 2);
+	buttonRight->setStyle(Button::Style::FlatBlack);
+	buttonRight->setAnchorPoint(Vec2(1, 0));
+	buttonRight->setPosition(Vec2(0, 0));
+	buttonRight->setSwallowTouches(false);
+	buttonRight->setVisible(false);
+	_buttonRight = addChildNode(buttonRight, 2);
 
-	_backButton = construct<FloatingActionButton>(std::bind(&EpubView::onReaderBackButton, this));
-	_backButton->setIcon(IconName::Content_undo);
-	_backButton->setAnchorPoint(Vec2(0, 0));
-	_backButton->setSwallowTouches(true);
-	_backButton->setVisible(false);
-	_backButton->setBackgroundColor(Color::White);
-	addChild(_backButton, 3);
+	auto backButton = Rc<FloatingActionButton>::create(std::bind(&EpubView::onReaderBackButton, this));
+	backButton->setIcon(IconName::Content_undo);
+	backButton->setAnchorPoint(Vec2(0, 0));
+	backButton->setSwallowTouches(true);
+	backButton->setVisible(false);
+	backButton->setBackgroundColor(Color::White);
+	_backButton = addChildNode(_backButton, 3);
 
 	_viewSource = Rc<MenuSource>::create();
 	_viewSource->addItem(Rc<FontSizeMenuButton>::create());
@@ -129,18 +129,18 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	navigation->setView(view);
 	_navigation = navigation;
 
-	_sidebar = construct<material::SidebarLayout>(material::SidebarLayout::Right);
-	_sidebar->setNodeWidthCallback([] (const Size &size) -> float {
+	auto sidebar = Rc<material::SidebarLayout>::create(material::SidebarLayout::Right);
+	sidebar->setNodeWidthCallback([] (const Size &size) -> float {
 		return MIN(size.width - 56.0f, material::metrics::horizontalIncrement() * 6);
 	});
-	_sidebar->setNodeVisibleCallback([this] (bool value) {
+	sidebar->setNodeVisibleCallback([this] (bool value) {
 		if (value) {
 			setFlexibleLevelAnimated(1.0f, 0.25f);
 			_contents->setSelectedPosition(_view->getViewContentPosition());
 		}
 		_view->setLinksEnabled(!value);
 	});
-	_sidebar->setBackgroundActiveOpacity(0);
+	sidebar->setBackgroundActiveOpacity(0);
 
 	auto contents = constructContentsView();
 	contents->setAnchorPoint(Vec2(1.0f, 0.0f));
@@ -148,8 +148,8 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	_sidebar->setNode(contents);
 	_contents = contents;
 
-	_sidebar->setEdgeSwipeEnabled(false);
-	addChild(_sidebar, 3);
+	sidebar->setEdgeSwipeEnabled(false);
+	_sidebar = addChildNode(sidebar, 3);
 
 	auto l = Rc<EventListener>::create();
 	l->onEventWithObject(Source::onDocument, source, [this] (const Event &) {

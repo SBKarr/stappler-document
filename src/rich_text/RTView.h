@@ -130,7 +130,7 @@ protected:
 
 	virtual void updateProgress();
 
-	virtual Page *onConstructPageNode(const PageData &, float) override;
+	virtual Rc<Page> onConstructPageNode(const PageData &, float) override;
 
 	float _savedFontScale = nan();
 	Size _renderSize;

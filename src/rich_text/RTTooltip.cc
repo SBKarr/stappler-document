@@ -69,17 +69,18 @@ bool Tooltip::init(CommonSource *s, const Vector<String> &ids) {
 	addComponent(l);
 	_listener = l;
 
+	Rc<ListenerView> view;
 	if (!ids.empty()) {
-		_view = construct<ListenerView>(ListenerView::Vertical, s, ids);
-		_view->setAnchorPoint(Vec2(0, 0));
-		_view->setPosition(Vec2(0, 0));
-		_view->setResultCallback(std::bind(&Tooltip::onResult, this, std::placeholders::_1));
-		_view->setUseSelection(true);
-		_view->getGestureListener()->setSwallowTouches(true);
+		view = Rc<ListenerView>::create(ListenerView::Vertical, s, ids);
+		view->setAnchorPoint(Vec2(0, 0));
+		view->setPosition(Vec2(0, 0));
+		view->setResultCallback(std::bind(&Tooltip::onResult, this, std::placeholders::_1));
+		view->setUseSelection(true);
+		view->getGestureListener()->setSwallowTouches(true);
 
 		auto el = Rc<EventListener>::create();
-		el->onEventWithObject(ListenerView::onSelection, _view, std::bind(&Tooltip::onSelection, this));
-		_view->addComponent(el);
+		el->onEventWithObject(ListenerView::onSelection, view, std::bind(&Tooltip::onSelection, this));
+		view->addComponent(el);
 
 		auto r = _view->getRenderer();
 		r->addOption("tooltip");
@@ -88,40 +89,42 @@ bool Tooltip::init(CommonSource *s, const Vector<String> &ids) {
 		r->addFlag(layout::RenderFlag::RenderById);
 	}
 
-	_toolbar = construct<material::Toolbar>();
-	_toolbar->setShadowZIndex(1.0f);
-	_toolbar->setMaxActionIcons(2);
+	auto toolbar = Rc<material::Toolbar>::create();
+	toolbar->setShadowZIndex(1.0f);
+	toolbar->setMaxActionIcons(2);
 
-	_layout = construct<material::ToolbarLayout>(_toolbar);
-	_layout->setFlexibleToolbar(false);
-	_layout->setStatusBarTracked(false);
+	auto layout = Rc<material::ToolbarLayout>::create(toolbar);
+	layout->setFlexibleToolbar(false);
+	layout->setStatusBarTracked(false);
 
-	_actions = Rc<material::MenuSource>::create();;
+	_actions = Rc<material::MenuSource>::create();
 	_actions->addButton("Close", material::IconName::Navigation_close, std::bind(&Tooltip::close, this));
 
 	_selectionActions = Rc<material::MenuSource>::create();
 	_selectionActions->addButton("Copy", material::IconName::Content_content_copy, std::bind(&Tooltip::copySelection, this));
 	_selectionActions->addButton("Close", material::IconName::Content_remove_circle_outline, std::bind(&Tooltip::cancelSelection, this));
 
-	_toolbar->setActionMenuSource(_actions);
-	_toolbar->setNavButtonIcon(material::IconName::None);
-	_toolbar->setTitle("");
-	_toolbar->setMinified(true);
-	_toolbar->setBarCallback([this] {
+	toolbar->setActionMenuSource(_actions);
+	toolbar->setNavButtonIcon(material::IconName::None);
+	toolbar->setTitle("");
+	toolbar->setMinified(true);
+	toolbar->setBarCallback([this] {
 		onFadeIn();
 	});
 
-	if (_view) {
-		_layout->setBaseNode(_view);
-		_layout->setOpacity(0);
+	if (view) {
+		layout->setBaseNode(view);
+		layout->setOpacity(0);
+		_view = view;
 	} else {
-		_layout->setOpacity(255);
-		_toolbar->setShadowZIndex(0.0f);
-		_toolbar->setSwallowTouches(false);
+		layout->setOpacity(255);
+		toolbar->setShadowZIndex(0.0f);
+		toolbar->setSwallowTouches(false);
 	}
-	_layout->setAnchorPoint(Vec2(0, 0));
-	_layout->setPosition(0, 0);
-	addChild(_layout);
+	layout->setAnchorPoint(Vec2(0, 0));
+	layout->setPosition(0, 0);
+	_layout = addChildNode(layout);
+	_toolbar = toolbar;
 
 	_contentSizeDirty = true;
 
@@ -170,7 +173,7 @@ void Tooltip::onResult(rich_text::Result *r) {
 
 	stopAllActions();
 	setShadowZIndexAnimated(3.0f, 0.25f);
-	runAction(action::sequence(construct<material::ResizeTo>(0.25, cs), [this] {
+	runAction(action::sequence(Rc<material::ResizeTo>::create(0.25, cs), [this] {
 		if (_layout->getOpacity() != 255) {
 			_layout->setOpacity(255);
 		}
@@ -199,7 +202,7 @@ void Tooltip::setExpanded(bool value) {
 
 		if (_expanded) {
 			stopAllActions();
-			runAction(action::sequence(construct<material::ResizeTo>(0.25, _defaultSize), [this] {
+			runAction(action::sequence(Rc<material::ResizeTo>::create(0.25, _defaultSize), [this] {
 				_view->setVisible(true);
 				_view->setOpacity(0);
 				_view->runAction(cocos2d::FadeIn::create(0.15f));
@@ -212,7 +215,7 @@ void Tooltip::setExpanded(bool value) {
 			auto newSize = Size(_defaultSize.width, _toolbar->getDefaultToolbarHeight());
 			if (!newSize.equals(_defaultSize)) {
 				stopAllActions();
-				runAction(action::sequence(construct<material::ResizeTo>(0.25, newSize), [this] {
+				runAction(action::sequence(Rc<material::ResizeTo>::create(0.25, newSize), [this] {
 					_toolbar->setShadowZIndex(0.0f);
 					onDelayedFadeOut();
 				}));
@@ -237,7 +240,7 @@ void Tooltip::close() {
 	_layout->setVisible(false);
 	stopAllActions();
 	setShadowZIndexAnimated(0.0f, 0.25f);
-	runAction(action::sequence(construct<material::ResizeTo>(0.25, Size(0, 0)), [this] {
+	runAction(action::sequence(Rc<material::ResizeTo>::create(0.25, Size(0, 0)), [this] {
 		auto foreground = material::Scene::getRunningScene()->getForegroundLayer();
 		foreground->popNode(this);
 	}));

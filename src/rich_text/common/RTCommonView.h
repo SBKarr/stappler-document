@@ -96,7 +96,7 @@ protected:
 	virtual PageData getPageData(size_t) const;
 	virtual cocos2d::Node * onPageNode(size_t);
 
-	virtual Page *onConstructPageNode(const PageData &, float);
+	virtual Rc<Page> onConstructPageNode(const PageData &, float);
 
 	virtual cocos2d::ActionInterval *onSwipeFinalizeAction(float velocity) override;
 

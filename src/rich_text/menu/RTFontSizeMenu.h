@@ -37,7 +37,7 @@ public:
 	virtual bool init();
 
 protected:
-	cocos2d::Node *onLabel();
+	Rc<cocos2d::Node> onLabel();
 	void onMenuButton(uint32_t id);
 	void onTextFontsChanged();
 

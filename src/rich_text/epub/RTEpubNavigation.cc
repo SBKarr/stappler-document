@@ -62,15 +62,15 @@ public:
 		_scrollCallback = scb;
 		setShadowZIndex(0.0f);
 
-		_scissor = construct<StrictNode>();
-		_scissor->setAnchorPoint(Vec2::ZERO);
-		_scissor->setPosition(Vec2::ZERO);
+		auto scissor = Rc<StrictNode>::create();
+		scissor->setAnchorPoint(Vec2::ZERO);
+		scissor->setPosition(Vec2::ZERO);
 
-		_view = construct<ScrollView>(ScrollView::Horizontal);
-		_view->setController(construct<ScrollController>());
-		_view->getGestureListener()->setSwallowTouches(true);
-		_view->setIndicatorVisible(false);
-		_view->setTapCallback([this] (int count, const Vec2 &loc) {
+		auto view = Rc<ScrollView>::create(ScrollView::Horizontal);
+		view->setController(Rc<ScrollController>::create());
+		view->getGestureListener()->setSwallowTouches(true);
+		view->setIndicatorVisible(false);
+		view->setTapCallback([this] (int count, const Vec2 &loc) {
 			const float len = _view->getScrollLength();
 			const auto pos = _view->getRoot()->convertToNodeSpace(loc);
 			const auto val = fabs(_view->getNodeScrollPosition(pos));
@@ -78,9 +78,9 @@ public:
 				_callback(val/len);
 			}
 		});
-		_view->setScrollCallback(std::bind(&EpubNavigation::Scroll::onScroll, this));
-		_scissor->addChild(_view);
-		addChild(_scissor);
+		view->setScrollCallback(std::bind(&EpubNavigation::Scroll::onScroll, this));
+		_view = scissor->addChildNode(view);
+		_scissor = addChildNode(scissor);
 
 		return true;
 	}
@@ -159,13 +159,13 @@ public:
 		return _renderer;
 	}
 
-	cocos2d::Node *onPageNode(size_t idx) {
+	Rc<cocos2d::Node> onPageNode(size_t idx) {
 		auto source = _renderer->getSource();
 		auto drawer = _renderer->getDrawer();
 		rich_text::Result::PageData data = _result->getPageData(idx, 0.0f);
 
 		if (_result->getMedia().flags & layout::RenderFlag::PaginatedLayout) {
-			auto page = construct<cocos2d::Node>();
+			auto page = Rc<cocos2d::Node>::create();
 			if (data.isSplit) {
 				if (data.num % 2 == 1) {
 					data.margin.left -= data.margin.right / 3.0f;
@@ -177,7 +177,7 @@ public:
 
 			data.margin *= _scale;
 
-			auto sprite = construct<DynamicSprite>(nullptr, Rect::ZERO, _result->getMedia().density);
+			auto sprite = Rc<DynamicSprite>::create(nullptr, Rect::ZERO, _result->getMedia().density);
 			sprite->setNormalized(true);
 			sprite->setFlippedY(true);
 			sprite->setOpacity(0);
@@ -196,14 +196,14 @@ public:
 				}, this);
 			}
 
-			auto label = construct<material::Label>(material::FontType::Caption);
+			auto label = Rc<material::Label>::create(material::FontType::Caption);
 			label->setNormalizedPosition(Vec2(0.5f, 0.0f));
 			label->setAnchorPoint(Anchor::MiddleBottom);
 			label->setString(toString(data.num + 1));
 			label->tryUpdateLabel();
 			page->addChild(label, 2);
 
-			auto layer = construct<Layer>(material::Color::White);
+			auto layer = Rc<Layer>::create(material::Color::White);
 			layer->setNormalizedPosition(Vec2(0.5f, 0.0f));
 			layer->setAnchorPoint(Anchor::MiddleBottom);
 			layer->setContentSize(label->getContentSize() + Size(8.0f, 2.0f));
@@ -211,7 +211,7 @@ public:
 
 			return page;
 		} else {
-			auto sprite = construct<DynamicSprite>(nullptr, Rect::ZERO, _result->getMedia().density);
+			auto sprite = Rc<DynamicSprite>::create(nullptr, Rect::ZERO, _result->getMedia().density);
 			sprite->setNormalized(true);
 			sprite->setOpacity(0);
 			sprite->retain();
@@ -337,7 +337,7 @@ bool EpubNavigation::init(const Callback &cb) {
 
 	_callback = cb;
 
-	auto gl = construct<gesture::Listener>();
+	auto gl = Rc<gesture::Listener>::create();
 	gl->setSwallowTouches(true);
 	gl->setTouchCallback([this] (gesture::Event ev, const gesture::Touch &p) -> bool {
 		if (ev == gesture::Event::Began) {
@@ -383,27 +383,27 @@ bool EpubNavigation::init(const Callback &cb) {
 	_listener = gl;
 	addComponent(gl);
 
-	_progress = construct<material::RoundedProgress>();
-	_progress->setBorderRadius(6);
-	_progress->setBarColor(material::Color::Grey_500);
-	_progress->setLineColor(material::Color::Grey_300);
-	addChild(_progress, 6);
+	auto progress = Rc<material::RoundedProgress>::create();
+	progress->setBorderRadius(6);
+	progress->setBarColor(material::Color::Grey_500);
+	progress->setLineColor(material::Color::Grey_300);
+	_progress = addChildNode(progress, 6);
 
-	_bookmarks = construct<Bookmarks>();
-	_bookmarks->setBorderRadius(6);
-	_bookmarks->setColor(material::Color::LightGreen_500);
-	_bookmarks->setOpacity(168);
-	addChild(_bookmarks, 7);
+	auto bookmarks = Rc<Bookmarks>::create();
+	bookmarks->setBorderRadius(6);
+	bookmarks->setColor(material::Color::LightGreen_500);
+	bookmarks->setOpacity(168);
+	_bookmarks = addChildNode(bookmarks, 7);
 
-	_icon = construct<material::ButtonIcon>(material::IconName::Navigation_expand_less, std::bind(&EpubNavigation::onButton, this));
-	_icon->setIconColor(material::Color::Black);
-	_icon->setSwallowTouches(true);
-	_icon->setBackgroundVisible(false);
-	_icon->setAnimationOpacity(0);
+	auto icon = Rc<material::ButtonIcon>::create(material::IconName::Navigation_expand_less, std::bind(&EpubNavigation::onButton, this));
+	icon->setIconColor(material::Color::Black);
+	icon->setSwallowTouches(true);
+	icon->setBackgroundVisible(false);
+	icon->setAnimationOpacity(0);
 	//_icon->setTouchPadding(24.0f);
-	addChild(_icon, 5);
+	_icon = addChildNode(icon, 5);
 
-	_scroll = construct<Scroll>([this] (float v) {
+	auto scroll = Rc<Scroll>::create([this] (float v) {
 		if (_callback) {
 			_progress->setProgress(v);
 			_callback(v);
@@ -412,7 +412,7 @@ bool EpubNavigation::init(const Callback &cb) {
 	}, [this] (float v) {
 		_progress->setProgress(v);
 	});
-	addChild(_scroll, 4);
+	_scroll = addChildNode(scroll, 4);
 
 	return true;
 }

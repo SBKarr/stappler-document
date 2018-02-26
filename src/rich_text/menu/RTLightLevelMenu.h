@@ -34,7 +34,7 @@ public:
 	virtual bool init() override;
 
 protected:
-	cocos2d::Node *onLabel();
+	Rc<cocos2d::Node> onLabel();
 	void onMenuButton(uint32_t id);
 	void onLightLevelChanged();
 

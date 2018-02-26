@@ -99,15 +99,15 @@ bool ImageView::init(CommonSource *source, const String &id, const String &src, 
 	toolbar->setNavCallback(std::bind(&ImageView::close, this));
 	toolbar->setSwallowTouches(true);
 
-	_sprite = construct<material::ImageLayer>();
-	_sprite->setPosition(0, 0);
-	_sprite->setAnchorPoint(Vec2(0, 0));
-	_sprite->setActionCallback([this] {
+	auto sprite = Rc<material::ImageLayer>::create();
+	sprite->setPosition(0, 0);
+	sprite->setAnchorPoint(Vec2(0, 0));
+	sprite->setActionCallback([this] {
 		if (!_expanded) {
 			_tooltip->onFadeOut();
 		}
 	});
-	addChild(_sprite, 1);
+	_sprite = addChildNode(sprite, 1);
 
 	return true;
 }

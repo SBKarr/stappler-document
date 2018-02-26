@@ -56,20 +56,21 @@ bool CommonView::Page::init(const PageData &data, float d) {
 		}
 	}
 
-	_background = construct<Layer>();
-	_background->setColor(Color3B(128, 128, 128));
-	_background->setAnchorPoint(Vec2(0, 0));
-	_background->setPosition(Vec2(0, 0));
-	_background->setVisible(false);
-	addChild(_background, -1);
+	auto background = Rc<Layer>::create(Color4B(128, 128, 128, 255));
+	background->setAnchorPoint(Vec2(0, 0));
+	background->setPosition(Vec2(0, 0));
+	background->setVisible(false);
+	addChild(background, -1);
+	_background = background;
 
-	_sprite = construct<DynamicSprite>(nullptr, Rect::ZERO, d);
-	_sprite->setNormalized(true);
-	_sprite->setFlippedY(true);
-	_sprite->setOpacity(0);
-	_sprite->setContentSize(_data.texRect.size);
-	_sprite->setPosition(Vec2(_data.margin.left, _data.margin.bottom));
-	addChild(_sprite);
+	auto sprite = Rc<DynamicSprite>::create(nullptr, Rect::ZERO, d);
+	sprite->setNormalized(true);
+	sprite->setFlippedY(true);
+	sprite->setOpacity(0);
+	sprite->setContentSize(_data.texRect.size);
+	sprite->setPosition(Vec2(_data.margin.left, _data.margin.bottom));
+	addChild(sprite);
+	_sprite = sprite;
 
 	setContentSize(_data.viewRect.size);
 	return true;
@@ -100,18 +101,19 @@ bool CommonView::init(Layout l, CommonSource *source, const Vector<String> &ids)
 		return false;
 	}
 
-	setController(construct<ScrollController>());
+	setController(Rc<ScrollController>::create());
 
-	_renderer = construct<Renderer>(ids);
-	_renderer->setRenderingCallback(std::bind(&CommonView::onRenderer, this,
+	auto renderer = Rc<Renderer>::create(ids);
+	renderer->setRenderingCallback(std::bind(&CommonView::onRenderer, this,
 			std::placeholders::_1, std::placeholders::_2));
-	addComponent(_renderer);
+	addComponent(renderer);
+	_renderer = renderer;
 
-	_background = construct<Layer>();
-	_background->setColor(Color3B(238, 238, 238));
-	_background->setAnchorPoint(Vec2(0, 0));
-	_background->setPosition(Vec2(0, 0));
-	addChild(_background, -1);
+	auto background = Rc<Layer>::create(Color4B(238, 238, 238, 255));
+	background->setAnchorPoint(Vec2(0, 0));
+	background->setPosition(Vec2(0, 0));
+	addChild(background, -1);
+	_background = background;
 
 	_pageMargin = Margin(8.0f, 8.0f);
 
@@ -378,26 +380,24 @@ cocos2d::Node * CommonView::onPageNode(size_t idx) {
 
 		return page;
 	} else {
-		auto sprite = construct<DynamicSprite>(nullptr, Rect::ZERO, result->getMedia().density);
+		auto sprite = Rc<DynamicSprite>::create(nullptr, Rect::ZERO, result->getMedia().density);
 		sprite->setNormalized(true);
 		sprite->setFlippedY(true);
 		sprite->setOpacity(0);
-		sprite->retain();
 
 		drawer->draw(source, result, data.texRect, [sprite] (cocos2d::Texture2D *tex) {
 			if (sprite->isRunning()) {
 				sprite->setTexture(tex);
 				sprite->runAction(cocos2d::FadeIn::create(0.1f));
 			}
-			sprite->release();
 		}, this);
 
 		return sprite;
 	}
 }
 
-CommonView::Page *CommonView::onConstructPageNode(const PageData &data, float density) {
-	return construct<Page>(data, density);
+Rc<CommonView::Page> CommonView::onConstructPageNode(const PageData &data, float density) {
+	return Rc<Page>::create(data, density);
 }
 
 cocos2d::ActionInterval *CommonView::onSwipeFinalizeAction(float velocity) {

@@ -38,10 +38,10 @@ bool View::PageWithLabel::init(const PageData &data, float density) {
 		return false;
 	}
 
-	_label = construct<material::Label>(material::FontType::Caption);
-	_label->setString(toString(data.num + 1));
-	_label->setPosition(Vec2(4.0f, 0.0f));
-	addChild(_label, 1);
+	auto label = Rc<material::Label>::create(material::FontType::Caption);
+	label->setString(toString(data.num + 1));
+	label->setPosition(Vec2(4.0f, 0.0f));
+	_label = addChildNode(label, 1);
 
 	return true;
 }

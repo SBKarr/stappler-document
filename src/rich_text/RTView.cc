@@ -61,21 +61,21 @@ bool View::init(Layout l, Source *source) {
 		_pageMargin = Margin(2.0f, 6.0f, 12.0f);
 	}
 
-	_progress = construct<material::LinearProgress>();
-	_progress->setAnchorPoint(cocos2d::Vec2(0.0f, 1.0f));
-	_progress->setPosition(0.0f, 0.0f);
-	_progress->setLineColor(material::Color::Blue_500);
-	_progress->setLineOpacity(56);
-	_progress->setBarColor(material::Color::Blue_500);
-	_progress->setBarOpacity(255);
-	_progress->setVisible(false);
-	_progress->setAnimated(false);
-	addChild(_progress, 2);
+	auto progress = Rc<material::LinearProgress>::create();
+	progress->setAnchorPoint(cocos2d::Vec2(0.0f, 1.0f));
+	progress->setPosition(0.0f, 0.0f);
+	progress->setLineColor(material::Color::Blue_500);
+	progress->setLineOpacity(56);
+	progress->setBarColor(material::Color::Blue_500);
+	progress->setBarOpacity(255);
+	progress->setVisible(false);
+	progress->setAnimated(false);
+	_progress = addChildNode(progress, 2);
 
 	_savedPosition = ViewPosition{maxOf<size_t>(), 0.0f};
 
-	_highlight = construct<Highlight>(this);
-	addChild(_highlight, 1);
+	auto highlight = Rc<Highlight>::create(this);
+	_highlight = addChildNode(highlight, 1);
 
 	updateProgress();
 
@@ -272,15 +272,16 @@ void View::onId(const String &ref, const String &target, const Vec2 &vec) {
 	}
 
 	if (!_tooltip) {
-		_tooltip = construct<Tooltip>(_source, ids);
-		_tooltip->setPosition(pos);
-		_tooltip->setAnchorPoint(Vec2(0, 1));
-		_tooltip->setMaxContentSize(Size(width, _contentSize.height - material::metrics::horizontalIncrement() ));
-		_tooltip->setOriginPosition(pos, _contentSize, convertToWorldSpace(pos));
-		_tooltip->setCloseCallback([this] {
+		auto tooltip = Rc<Tooltip>::create(_source, ids);
+		tooltip->setPosition(pos);
+		tooltip->setAnchorPoint(Vec2(0, 1));
+		tooltip->setMaxContentSize(Size(width, _contentSize.height - material::metrics::horizontalIncrement() ));
+		tooltip->setOriginPosition(pos, _contentSize, convertToWorldSpace(pos));
+		tooltip->setCloseCallback([this] {
 			_tooltip = nullptr;
 		});
-		_tooltip->pushToForeground();
+		tooltip->pushToForeground();
+		_tooltip = tooltip;
 	}
 }
 
@@ -332,9 +333,9 @@ void View::onImage(const String &id, const Vec2 &) {
 
 	if (!src.empty()) {
 		if (node.second->getNodes().empty()) {
-			construct<ImageView>(_source, String(), src, alt);
+			Rc<ImageView>::create(_source, String(), src, alt);
 		} else {
-			construct<ImageView>(_source, id, src, alt);
+			Rc<ImageView>::create(_source, id, src, alt);
 		}
 	}
 }
@@ -583,8 +584,8 @@ View::ViewPosition View::getViewObjectPosition(float pos) const {
 	return ret;
 }
 
-View::Page *View::onConstructPageNode(const PageData &data, float density) {
-	return construct<PageWithLabel>(data, density);
+Rc<View::Page> View::onConstructPageNode(const PageData &data, float density) {
+	return Rc<PageWithLabel>::create(data, density);
 }
 
 float View::getViewContentPosition(float pos) const {

@@ -43,31 +43,31 @@ bool ListenerView::Selection::init(ListenerView *view) {
 		return false;
 	}
 
-	_markerStart = construct<draw::PathNode>(48, 48);
-	_markerStart->addPath(draw::Path()
+	auto markerStart = Rc<draw::PathNode>::create(48, 48);
+	markerStart->addPath(draw::Path()
 		.moveTo(48, 0)
 		.lineTo(24, 0)
 		.arcTo(24, 24, 0, true, false, 48, 24)
 		.closePath());
-	_markerStart->setContentSize(Size(24.0f, 24.0f));
-	_markerStart->setAnchorPoint(Vec2(1.0f, 1.0f));
-	_markerStart->setColor(material::Color::Blue_500);
-	_markerStart->setOpacity(192);
-	_markerStart->setVisible(false);
-	addChild(_markerStart, 1);
+	markerStart->setContentSize(Size(24.0f, 24.0f));
+	markerStart->setAnchorPoint(Vec2(1.0f, 1.0f));
+	markerStart->setColor(material::Color::Blue_500);
+	markerStart->setOpacity(192);
+	markerStart->setVisible(false);
+	_markerStart = addChildNode(markerStart, 1);
 
-	_markerEnd = construct<draw::PathNode>(48, 48);
-	_markerEnd->addPath(draw::Path()
+	auto markerEnd = Rc<draw::PathNode>::create(48, 48);
+	markerEnd->addPath(draw::Path()
 		.moveTo(0, 0)
 		.lineTo(0, 24)
 		.arcTo(24, 24, 0, true, false, 24, 0)
 		.closePath());
-	_markerEnd->setContentSize(Size(24.0f, 24.0f));
-	_markerEnd->setAnchorPoint(Vec2(0.0f, 1.0f));
-	_markerEnd->setColor(material::Color::Blue_500);
-	_markerEnd->setOpacity(192);
-	_markerEnd->setVisible(false);
-	addChild(_markerEnd, 2);
+	markerEnd->setContentSize(Size(24.0f, 24.0f));
+	markerEnd->setAnchorPoint(Vec2(0.0f, 1.0f));
+	markerEnd->setColor(material::Color::Blue_500);
+	markerEnd->setOpacity(192);
+	markerEnd->setVisible(false);
+	_markerEnd = addChildNode(markerEnd, 2);
 
 	_view = view;
 
@@ -496,17 +496,18 @@ const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::R
 ListenerView::~ListenerView() { }
 
 bool ListenerView::init(Layout l, CommonSource *source, const Vector<String> &ids) {
-	_eventListener = construct<EventListener>();
+	auto eventListener = Rc<EventListener>::create();
+	_eventListener = eventListener;
 
 	if (!CommonView::init(l, source, ids)) {
 		return false;
 	}
 
-	_eventListener->onEvent(material::ResourceManager::onLightLevel, std::bind(&ListenerView::onLightLevelChanged, this));
-	addComponent(_eventListener);
+	eventListener->onEvent(material::ResourceManager::onLightLevel, std::bind(&ListenerView::onLightLevelChanged, this));
+	_eventListener = addComponentItem(eventListener);
 
-	_selection = construct<Selection>(this);
-	addChild(_selection, 10);
+	auto selection = Rc<Selection>::create(this);
+	_selection = addChildNode(selection, 10);
 
 	onLightLevelChanged();
 

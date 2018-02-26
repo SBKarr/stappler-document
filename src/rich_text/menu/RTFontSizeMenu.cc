@@ -66,10 +66,10 @@ bool FontSizeMenuButton::init() {
 	return true;
 }
 
-cocos2d::Node *FontSizeMenuButton::onLabel() {
-	cocos2d::Node *n = cocos2d::Node::create();
+Rc<cocos2d::Node> FontSizeMenuButton::onLabel() {
+	auto n = Rc<cocos2d::Node>::create();
 
-	material::Label *l = construct<material::Label>(material::FontType::Caption);
+	auto l = Rc<material::Label>::create(material::FontType::Caption);
 	l->setLocaleEnabled(true);
 	l->setAutoLightLevel(true);
 	l->setString("SystemFontSize"_locale);

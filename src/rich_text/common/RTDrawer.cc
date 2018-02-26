@@ -538,12 +538,12 @@ void Drawer::free() {
 
 // draw normal texture
 bool Drawer::draw(CommonSource *s, Result *res, const Rect &r, const Callback &cb, cocos2d::Ref *ref) {
-	return construct<Request>(this, s, res, r, cb, ref);
+	return Rc<Request>::create(this, s, res, r, cb, ref);
 }
 
 // draw thumbnail texture, where scale < 1.0f - resample coef
 bool Drawer::thumbnail(CommonSource *s, Result *res, const Rect &r, float scale, const Callback &cb, cocos2d::Ref *ref) {
-	return construct<Request>(this, s, res, r, scale, cb, ref);
+	return Rc<Request>::create(this, s, res, r, scale, cb, ref);
 }
 
 bool Drawer::begin(cocos2d::Texture2D * tex, const Color4B &clearColor) {
