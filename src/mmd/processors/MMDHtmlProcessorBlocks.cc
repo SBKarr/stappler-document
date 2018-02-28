@@ -273,21 +273,83 @@ void HtmlProcessor::exportListBulleted(std::ostream &out, token *t) {
 	list_is_tight = temp_short;
 }
 
+static token * HtmlProcessor_findBullet(token *t) {
+	switch (t->type) {
+	case BLOCK_LIST_BULLETED_LOOSE:
+	case BLOCK_LIST_BULLETED:
+	case BLOCK_LIST_ENUMERATED_LOOSE:
+	case BLOCK_LIST_ENUMERATED:
+		if (t->child) {
+			t = t->child;
+		} else {
+			return nullptr;
+		}
+		break;
+	default:
+		break;
+	}
+
+	switch (t->type) {
+	case BLOCK_LIST_ITEM:
+	case BLOCK_LIST_ITEM_TIGHT:
+		if (t->child) {
+			t = t->child;
+			if (t->type == BLOCK_PARA) {
+				if (t->child) {
+					t = t->child;
+				} else {
+					return nullptr;
+				}
+			}
+		} else {
+			return nullptr;
+		}
+		break;
+	default:
+		return nullptr;
+		break;
+	}
+
+	if (t) {
+		switch (t->type) {
+		case MARKER_LIST_BULLET:
+		case MARKER_LIST_ENUMERATOR:
+			return t;
+			break;
+		}
+	}
+
+	return nullptr;
+}
+
 void HtmlProcessor::exportListEnumerated(std::ostream &out, token *t) {
 	auto temp_short = list_is_tight;
 
 	switch (t->type) {
-		case BLOCK_LIST_ENUMERATED_LOOSE:
-			list_is_tight = false;
-			break;
+	case BLOCK_LIST_ENUMERATED_LOOSE:
+		list_is_tight = false;
+		break;
 
-		case BLOCK_LIST_ENUMERATED:
-			list_is_tight = true;
-			break;
+	case BLOCK_LIST_ENUMERATED:
+		list_is_tight = true;
+		break;
 	}
 
 	pad(out, 2);
-	pushNode("ol");
+
+	bool customBullet = false;
+	if (auto bullet = HtmlProcessor_findBullet(t)) {
+		if (bullet->type == MARKER_LIST_ENUMERATOR) {
+			auto num = StringView(source.data() + bullet->start, bullet->len).readChars<StringView::CharGroup<CharGroupId::Numbers>>();
+			if (!num.empty() && num != "1") {
+				pushNode("ol", { pair("start", num) });
+				customBullet = true;
+			}
+		}
+	}
+	if (!customBullet) {
+		pushNode("ol");
+	}
 	padded = 0;
 	exportTokenTree(out, t->child);
 	pad(out, 1);
