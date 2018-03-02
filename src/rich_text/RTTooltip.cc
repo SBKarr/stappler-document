@@ -82,7 +82,7 @@ bool Tooltip::init(CommonSource *s, const Vector<String> &ids) {
 		el->onEventWithObject(ListenerView::onSelection, view, std::bind(&Tooltip::onSelection, this));
 		view->addComponent(el);
 
-		auto r = _view->getRenderer();
+		auto r = view->getRenderer();
 		r->addOption("tooltip");
 		r->addFlag(layout::RenderFlag::NoImages);
 		r->addFlag(layout::RenderFlag::NoHeightCheck);
