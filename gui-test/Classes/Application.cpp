@@ -91,14 +91,14 @@ void Application::init() {
 	rebuildMenu();
 
 	storage::get("applicaton_layout", [this] (const std::string &key, data::Value &&val) {
-		auto scene = construct<material::Scene>();
+		auto scene = Rc<material::Scene>::create();
 		scene->getNavigationLayer()->setNavigationMenuSource(_appMenu);
 		//scene->setDisplayStats(true);
 		if (val) {
 			_assetsDir = val.getString("assetsDir");
 		}
 
-		scene->pushContentNode(construct<FileNavigator>());
+		scene->pushContentNode(Rc<FileNavigator>::create());
 
 		material::Scene::run(scene);
 
@@ -114,7 +114,7 @@ void Application::rebuildMenu() {
 	_appMenu->clear();
 
 	_appMenu->addCustom(120, [this] () -> cocos2d::Node * {
-		auto img = construct<material::MaterialImage>(_banner);
+		auto img = Rc<material::MaterialImage>::create(_banner);
 		img->setAutofit(material::MaterialImage::Autofit::Contain);
 		return img;
 	});
@@ -122,7 +122,7 @@ void Application::rebuildMenu() {
 	_appMenu->addButton("Файлы", material::IconName::Action_description,
 			[this] (material::Button *b, material::MenuSourceButton *i) {
 		auto scene = material::Scene::getRunningScene();
-		scene->replaceContentNode( construct<FileNavigator>() );
+		scene->replaceContentNode( Rc<FileNavigator>::create() );
 
 		_data.setString("files", "layout");
 		saveData();

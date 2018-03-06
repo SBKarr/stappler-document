@@ -111,8 +111,8 @@ bool FileNavigator::init() {
 	actions->addButton("open", material::IconName::File_folder, std::bind(&FileNavigator::openDirectory, this));
 	_switchHiddenButton = actions->addButton("Показывать скрытые", material::IconName::Empty, std::bind(&FileNavigator::switchHidden, this));
 
-	_scroll = construct<material::Scroll>();
-	_scroll->setHandlerCallback([] (material::Scroll *s) -> material::Scroll::Handler * {
+	auto scroll = Rc<material::Scroll>::create();
+	scroll->setHandlerCallback([] (material::Scroll *s) -> Rc<material::Scroll::Handler> {
 		class Handler : public material::ScrollHandlerSlice {
 		public:
 			virtual bool init(material::Scroll *s) override {
@@ -135,10 +135,10 @@ bool FileNavigator::init() {
 			}
 		};
 
-		return construct<Handler>(s);
+		return Rc<Handler>::create(s);
 	});
 
-	_scroll->setItemCallback([this] (material::Scroll::Item *item) -> material::MaterialNode * {
+	scroll->setItemCallback([this] (material::Scroll::Item *item) -> Rc<material::MaterialNode> {
 		auto &d = item->getData();
 		auto &size = item->getContentSize();
 
@@ -153,7 +153,7 @@ bool FileNavigator::init() {
 				fsize += toString("  ", w, "x", h);
 			}
 		}
-		auto label = construct<material::Label>(material::FontType::System_Subhead);
+		auto label = Rc<material::Label>::create(material::FontType::System_Subhead);
 		label->setColor(material::Color::Black);
 		label->setString(name);
 		label->appendTextWithStyle(fsize, DynamicLabel::Style(DynamicLabel::Opacity(127)));
@@ -161,21 +161,21 @@ bool FileNavigator::init() {
 		label->setPosition(18.0f + 64.0f, 18.0f);
 		label->tryUpdateLabel();
 
-		auto node = construct<material::MaterialNode>();
+		auto node = Rc<material::MaterialNode>::create();
 		node->setContentSize(size);
 		node->setPadding(Padding().set(2, 2));
 		node->setShadowZIndex(1.5f);
 		node->addChild(label, 1);
 
 		if (d.getBool("isDir")) {
-			auto icon = construct<material::IconSprite>(
+			auto icon = Rc<material::IconSprite>::create(
 					(d.getString("path") == _path) ? material::IconName::Navigation_arrow_back : material::IconName::File_folder);
 			icon->setPosition(18.0f, node->getContentSize().height / 2.0f);
 			icon->setAnchorPoint(cocos2d::Vec2(0.0f, 0.5f));
 			icon->setColor(material::Color::Black);
 			node->addChild(icon, 1);
 
-			auto btn = construct<material::Button>(std::bind(&FileNavigator::onDirButton, this, d.getString("path")));
+			auto btn = Rc<material::Button>::create(std::bind(&FileNavigator::onDirButton, this, d.getString("path")));
 			btn->setStyle(material::Button::Style::FlatBlack);
 			btn->setAnchorPoint(cocos2d::Vec2(0, 0));
 			btn->setContentSize(node->getContentSizeWithPadding());
@@ -183,7 +183,7 @@ bool FileNavigator::init() {
 			btn->setSwallowTouches(false);
 			node->addChild(btn, 2);
 		} else {
-			auto btn = construct<material::Button>(std::bind(&FileNavigator::onButton, this, d.getString("path")));
+			auto btn = Rc<material::Button>::create(std::bind(&FileNavigator::onButton, this, d.getString("path")));
 			btn->setStyle(material::Button::Style::FlatBlack);
 			btn->setAnchorPoint(cocos2d::Vec2(0, 0));
 			btn->setContentSize(node->getContentSizeWithPadding());
@@ -194,8 +194,9 @@ bool FileNavigator::init() {
 
 		return node;
 	});
-	_scroll->setMinLoadTime(TimeInterval::milliseconds(100));
-	setBaseNode(_scroll);
+	scroll->setMinLoadTime(TimeInterval::milliseconds(100));
+	setBaseNode(scroll);
+	_scroll = scroll;
 
 	retain();
 	storage::get("FileNavigator.Path", [this] (const std::string &, data::Value &&val) {
