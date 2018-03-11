@@ -311,7 +311,9 @@ void CommonView::onRenderer(Result *res, bool) {
 			_callback(res);
 		}
 
-		_controller->onScrollPosition();
+		if (_running) {
+			_controller->onScrollPosition();
+		}
 	}
 }
 

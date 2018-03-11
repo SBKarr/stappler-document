@@ -269,14 +269,16 @@ void LayoutDocument::onTag(layout::Style &style, const StringView &tag, const St
 	} else if (tag == "li") {
 		style.set(Parameter::create<ParameterName::Display>(Display::ListItem), true);
 		style.set(Parameter::create<ParameterName::LineHeight>(Metric(1.2f, Metric::Units::Em)), true);
+		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.25f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.25f, Metric::Units::Rem)), true);
 
 	} else if (tag == "ol") {
 		style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
 		style.set(Parameter::create<ParameterName::ListStyleType>(ListStyleType::Decimal), true);
-		style.set(Parameter::create<ParameterName::PaddingLeft>(Metric(2.5f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.25f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.25f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::XListStyleOffset>(Metric(0.6f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::PaddingLeft>(Metric(1.5f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.4f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.4f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::XListStyleOffset>(Metric(0.7f, Metric::Units::Rem)), true);
 
 	} else if (tag == "ul") {
 		style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
@@ -285,10 +287,10 @@ void LayoutDocument::onTag(layout::Style &style, const StringView &tag, const St
 		} else {
 			style.set(Parameter::create<ParameterName::ListStyleType>(ListStyleType::Disc), true);
 		}
-		style.set(Parameter::create<ParameterName::PaddingLeft>(Metric(2.5f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.25f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.25f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::XListStyleOffset>(Metric(0.6f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::PaddingLeft>(Metric(1.5f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.4f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.4f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::XListStyleOffset>(Metric(0.7f, Metric::Units::Rem)), true);
 
 	} else if (tag == "img") {
 		style.set(Parameter::create<ParameterName::BackgroundSizeWidth>(Metric(1.0, Metric::Units::Contain)), true);

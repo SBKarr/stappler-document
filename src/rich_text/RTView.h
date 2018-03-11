@@ -24,6 +24,7 @@ THE SOFTWARE.
 #define RICH_TEXT_RTVIEW_H_
 
 #include "RTListenerView.h"
+#include "MaterialLabel.h"
 #include "SPEventHeader.h"
 
 NS_RT_BEGIN
