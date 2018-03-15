@@ -331,12 +331,17 @@ void View::onImage(const String &id, const Vec2 &) {
 		}
 	}
 
+	Rc<ImageView> view;
 	if (!src.empty()) {
 		if (node.second->getNodes().empty()) {
-			Rc<ImageView>::create(_source, String(), src, alt);
+			view = Rc<ImageView>::create(_source, String(), src, alt);
 		} else {
-			Rc<ImageView>::create(_source, id, src, alt);
+			view = Rc<ImageView>::create(_source, id, src, alt);
 		}
+	}
+
+	if (view) {
+		material::Scene::getRunningScene()->pushContentNode(view);
 	}
 }
 
