@@ -397,11 +397,11 @@ Rc<View> ArticleLayout::loadView(const ArticleLoader *loader) {
 		if (auto scene = material::Scene::getRunningScene()) {
 			auto err = (rich_text::Source::Error)ev.getIntValue();
 			if (err == rich_text::Source::Error::DocumentError) {
-				scene->setSnackbarString("Не удалось загрузить статью: ошибка в документе");
+				scene->showSnackbar("Не удалось загрузить статью: ошибка в документе");
 			} else if (err == rich_text::Source::Error::NetworkError) {
-				scene->setSnackbarString("Не удалось загрузить статью: нет соединения с сетью");
+				scene->showSnackbar("Не удалось загрузить статью: нет соединения с сетью");
 			} else {
-				scene->setSnackbarString("Не удалось загрузить статью");
+				scene->showSnackbar("Не удалось загрузить статью");
 			}
 		}
 	});
