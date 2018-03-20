@@ -518,6 +518,13 @@ void ListenerView::setUseSelection(bool value) {
 	_useSelection = value;
 }
 
+void ListenerView::onExit() {
+	if (isSelectionEnabled()) {
+		disableSelection();
+	}
+	CommonView::onExit();
+}
+
 void ListenerView::setLayout(Layout l) {
 	_selection->clearSelection();
 	CommonView::setLayout(l);
