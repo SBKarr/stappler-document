@@ -999,7 +999,7 @@ void Drawer::drawCharsQuads(cocos2d::Texture2D *tex, DynamicQuadArray *quads, co
 
 void Drawer::drawCharsEffects(Font *font, const font::FormatSpec &format, const Rect &bbox) {
 	for (auto it = format.begin(); it != format.end(); ++ it) {
-		if (it.count() > 0 && it.range->underline > 0) {
+		if (it.count() > 0 && it.range->decoration != layout::style::TextDecoration::None) {
 			const font::CharSpec &firstChar = format.chars[it.start()];
 			const font::CharSpec &lastChar = format.chars[it.start() + it.count() - 1];
 
@@ -1008,7 +1008,22 @@ void Drawer::drawCharsEffects(Font *font, const font::FormatSpec &format, const 
 			setColor(color);
 			Rc<font::FontLayout> layout(it.range->layout);
 			Rc<font::FontData> data(layout->getData());
-			drawRectangleFill(Rect(bbox.origin.x + firstChar.pos, bbox.origin.y + it.line->pos - data->metrics.height / 8.0f,
+
+			float offset = 0.0f;
+			switch (it.range->decoration) {
+			case layout::style::TextDecoration::None: break;
+			case layout::style::TextDecoration::Overline:
+				offset = data->metrics.height;
+				break;
+			case layout::style::TextDecoration::LineThrough:
+				offset = data->metrics.height / 2.0f;
+				break;
+			case layout::style::TextDecoration::Underline:
+				offset = data->metrics.height / 8.0f;
+				break;
+			}
+
+			drawRectangleFill(Rect(bbox.origin.x + firstChar.pos, bbox.origin.y + it.line->pos - offset,
 					lastChar.pos + lastChar.advance - firstChar.pos, data->metrics.height / 16.0f));
 		}
 	}

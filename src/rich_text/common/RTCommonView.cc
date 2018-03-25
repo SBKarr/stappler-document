@@ -336,6 +336,10 @@ void CommonView::onPageData(Result *res, float contentOffset) {
 		}
 		_objectsOffset = 0;
 	} else {
+		if (isnan(contentOffset)) {
+			contentOffset = _controller->getNextItemPosition();
+		}
+
 		size_t idx = 0;
 		auto size = res->getContentSize();
 		float origin = 0;
