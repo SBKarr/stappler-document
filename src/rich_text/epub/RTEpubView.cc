@@ -96,7 +96,7 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	backButton->setSwallowTouches(true);
 	backButton->setVisible(false);
 	backButton->setBackgroundColor(Color::White);
-	_backButton = addChildNode(_backButton, 3);
+	_backButton = addChildNode(backButton, 3);
 
 	_viewSource = Rc<MenuSource>::create();
 	_viewSource->addItem(Rc<FontSizeMenuButton>::create());
@@ -145,7 +145,7 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	auto contents = constructContentsView();
 	contents->setAnchorPoint(Vec2(1.0f, 0.0f));
 	contents->setVisible(false);
-	_sidebar->setNode(contents);
+	sidebar->setNode(contents);
 	_contents = contents;
 
 	sidebar->setEdgeSwipeEnabled(false);
