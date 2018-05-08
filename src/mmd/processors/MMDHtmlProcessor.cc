@@ -206,7 +206,7 @@ void HtmlProcessor::startCompleteHtml(const Content &c) {
 	}
 
 	buffer << "</head>\n";
-	pushNode("body");
+	pushNode(nullptr, "body");
 	buffer << "\n\n";
 }
 
@@ -249,7 +249,7 @@ void HtmlProcessor::exportLink(std::ostream &out, token * text, Content::Link * 
 		}
 	}
 
-	pushNode("a", { }, move(attr));
+	pushNode(nullptr, "a", { }, move(attr));
 
 	// If we're printing contents of bracket as text, then ensure we include it all
 	if (text && text->child && text->child->len > 1) {
@@ -293,9 +293,9 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	if (is_figure) {
 		if (spExt) {
 			auto idStr = toString("figure_", figureId);
-			pushNode("figure", { pair("class", align), pair("id", idStr), pair("type", type) });
+			pushNode(nullptr, "figure", { pair("class", align), pair("id", idStr), pair("type", type) });
 		} else {
-			pushNode("figure");
+			pushNode(nullptr, "figure");
 		}
 		if (!spExt) { out << "\n"; }
 	}
@@ -344,9 +344,9 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	}
 
 	if (spExt && !align.empty()) {
-		pushInlineNode("img", { pair("class", align) }, move(attr));
+		pushInlineNode(nullptr, "img", { pair("class", align) }, move(attr));
 	} else {
-		pushInlineNode("img", { }, move(attr));
+		pushInlineNode(nullptr, "img", { }, move(attr));
 	}
 
 	if (is_figure) {
@@ -354,9 +354,9 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 			if (!spExt) { out << "\n"; }
 			if (spExt && !align.empty()) {
 				auto idStr = toString("figcaption_", figureId);
-				pushNode("figcaption", { pair("class", align), pair("id", idStr) });
+				pushNode(text, "figcaption", { pair("class", align), pair("id", idStr) });
 			} else {
-				pushNode("figcaption");
+				pushNode(text, "figcaption");
 			}
 			exportTokenTree(out, text->child);
 			popNode();
@@ -420,9 +420,9 @@ void HtmlProcessor::pushHtmlEntity(std::ostream &out, token *t) {
 
 				flushBuffer();
 				if (inlineTag) {
-					pushInlineNode(name, { }, move(attrs));
+					pushInlineNode(nullptr, name, { }, move(attrs));
 				} else {
-					pushNode(name, { }, move(attrs));
+					pushNode(nullptr, name, { }, move(attrs));
 				}
 
 				out << r.readUntil<StringView::Chars<'<'>>();

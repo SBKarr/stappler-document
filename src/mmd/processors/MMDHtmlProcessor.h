@@ -57,6 +57,9 @@ protected:
 	void exportTokenRaw(std::ostream &, token *t);
 	void exportTokenTreeRaw(std::ostream &, token *t);
 
+	void makeTokenHash(const Function<void(const StringView &)> &, token *t);
+	void makeTokenTreeHash(const Function<void(const StringView &)> &, token *t);
+
 	void exportTokenMath(std::ostream &, token *t);
 	void exportTokenTreeMath(std::ostream &, token *t);
 
@@ -113,8 +116,8 @@ protected:
 
 	virtual void pushHtmlEntity(std::ostream &, token *t);
 
-	virtual void pushNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
-	virtual void pushInlineNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
+	virtual void pushNode(token *t, const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
+	virtual void pushInlineNode(token *t, const StringView &name, InitList &&attr = InitList(), VecList && = VecList()) = 0;
 	virtual void popNode() = 0;
 	virtual void flushBuffer() = 0;
 

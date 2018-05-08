@@ -53,7 +53,7 @@ using Traits = string::ToStringTraits<memory::PoolInterface>;
 
 void HtmlProcessor::exportBlockquote(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("blockquote");
+	pushNode(t, "blockquote");
 	if (!spExt) { out << "\n"; }
 	padded = 2;
 	exportTokenTree(out, t->child);
@@ -64,7 +64,7 @@ void HtmlProcessor::exportBlockquote(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportDefinition(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("dd");
+	pushNode(t, "dd");
 
 	auto temp_short = list_is_tight;
 	if (t->child) {
@@ -87,7 +87,7 @@ void HtmlProcessor::exportDefList(std::ostream &out, token *t) {
 	// lemon's LALR(1) parser can't properly handle this (to my understanding).
 
 	if (!(t->prev && (t->prev->type == BLOCK_DEFLIST))) {
-		pushNode("dl");
+		pushNode(t, "dl");
 		if (!spExt) { out << "\n"; }
 	}
 
@@ -104,7 +104,7 @@ void HtmlProcessor::exportDefList(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportDefTerm(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("dt");
+	pushNode(t, "dt");
 	exportTokenTree(out, t->child);
 	popNode();
 	if (!spExt) { out << "\n"; }
@@ -143,10 +143,10 @@ void HtmlProcessor::exportFencedCodeBlock(std::ostream &out, token *t) {
 			return;
 		}
 
-		pushNode("pre");
-		pushNode("code", { pair("class", temp_char) });
+		pushNode(t, "pre");
+		pushNode(nullptr, "code", { pair("class", temp_char) });
 	} else {
-		pushNode("pre"); pushNode("code");
+		pushNode(t, "pre"); pushNode(nullptr, "code");
 	}
 
 	exportTokenTreeRaw(out, t->child->next);
@@ -156,7 +156,7 @@ void HtmlProcessor::exportFencedCodeBlock(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportIndentedCodeBlock(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("pre"); pushNode("code");
+	pushNode(t, "pre"); pushNode(nullptr, "code");
 
 	exportTokenTreeRaw(out, t->child);
 	popNode(); popNode();
@@ -223,13 +223,13 @@ void HtmlProcessor::exportHeader(std::ostream &out, token *t) {
 	String head = Traits::toString("h", h_idx);
 
 	if ((extensions & Extensions::NoLabels) != Extensions::None) {
-		pushNode(head);
+		pushNode(t, head);
 	} else {
 		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
 		if (idClassPair.second.empty()) {
-			pushNode(head, { pair("id", StringView(idClassPair.first)) });
+			pushNode(t, head, { pair("id", StringView(idClassPair.first)) });
 		} else {
-			pushNode(head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
+			pushNode(t, head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
 		}
 	}
 
@@ -240,7 +240,7 @@ void HtmlProcessor::exportHeader(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportHr(std::ostream &out) {
 	pad(out, 2);
-	pushInlineNode("hr");
+	pushInlineNode(nullptr, "hr");
 	padded = 0;
 }
 
@@ -264,7 +264,7 @@ void HtmlProcessor::exportListBulleted(std::ostream &out, token *t) {
 	}
 
 	pad(out, 2);
-	pushNode("ul");
+	pushNode(t, "ul");
 	padded = 0;
 	exportTokenTree(out, t->child);
 	pad(out, 1);
@@ -342,13 +342,13 @@ void HtmlProcessor::exportListEnumerated(std::ostream &out, token *t) {
 		if (bullet->type == MARKER_LIST_ENUMERATOR) {
 			auto num = StringView(source.data() + bullet->start, bullet->len).readChars<StringView::CharGroup<CharGroupId::Numbers>>();
 			if (!num.empty() && num != "1") {
-				pushNode("ol", { pair("start", num) });
+				pushNode(t, "ol", { pair("start", num) });
 				customBullet = true;
 			}
 		}
 	}
 	if (!customBullet) {
-		pushNode("ol");
+		pushNode(t, "ol");
 	}
 	padded = 0;
 	exportTokenTree(out, t->child);
@@ -360,10 +360,10 @@ void HtmlProcessor::exportListEnumerated(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportListItem(std::ostream &out, token *t, bool tight) {
 	pad(out, 1);
-	pushNode("li");
+	pushNode(t, "li");
 	if (tight) {
 		if (!list_is_tight) {
-			pushNode("p");
+			pushNode(t, "p");
 		}
 
 		padded = 2;
@@ -404,7 +404,7 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 	}
 
 	if (open_para) {
-		pushNode("p");
+		pushNode(t, "p");
 	}
 
 	exportTokenTree(out, t->child);
@@ -416,9 +416,9 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 			out << " ";
 			String ref = Traits::toString("#cnref_", citation_being_printed);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation"), pair("target", "_self") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversecitation"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -439,9 +439,9 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 
 			String ref = Traits::toString("#fnref_", temp_short);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote"), pair("target", "_self") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reversefootnote"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -455,9 +455,9 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 			out << " ";
 			String ref = Traits::toString("#gnref_", glossary_being_printed);
 			if (!spExt) {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary"), pair("target", "_self") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("return")), pair("class", "reverseglossary"), pair("target", "_self") });
 			}
 			out << "&#160;&#8617;";
 			popNode();
@@ -482,13 +482,13 @@ void HtmlProcessor::exportHeaderText(std::ostream &out, token *t, uint8_t level)
 	String head = Traits::toString("h", (temp_short + base_header_level - 1));
 
 	if ((extensions & Extensions::NoLabels) != Extensions::None) {
-		pushNode(head);
+		pushNode(t, head);
 	} else {
 		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
 		if (idClassPair.second.empty()) {
-			pushNode(head, { pair("id", StringView(idClassPair.first)) });
+			pushNode(t, head, { pair("id", StringView(idClassPair.first)) });
 		} else {
-			pushNode(head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
+			pushNode(t, head, { pair("id", StringView(idClassPair.first)), pair("class", StringView(idClassPair.second)) });
 		}
 	}
 
@@ -500,7 +500,7 @@ void HtmlProcessor::exportHeaderText(std::ostream &out, token *t, uint8_t level)
 void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 	pad(out, 2);
 
-	pushNode("table");
+	pushNode(t, "table");
 	if (!spExt) { out << "\n"; }
 
 	int16_t temp_short;
@@ -512,7 +512,7 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 			temp_token = temp_token->next;
 		}
 		auto id = label_from_token(source, temp_token);
-		pushNode("caption", { pair("style", "caption-side: bottom;"), pair("id", id) });
+		pushNode(temp_token, "caption", { pair("style", "caption-side: bottom;"), pair("id", id) });
 		t->next->child->child->type = TEXT_EMPTY;
 		t->next->child->child->mate->type = TEXT_EMPTY;
 		exportTokenTree(out, t->next->child->child);
@@ -526,19 +526,19 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 	padded = 2;
 	readTableColumnAlignments(t);
 
-	pushNode("colgroup");
+	pushNode(nullptr, "colgroup");
 	if (!spExt) { out << "\n"; }
 
 	for (int i = 0; i < table_column_count; ++i) {
 		switch (table_alignment[i]) {
-			case 'l': pushInlineNode("col", { pair("style", "text-align:left;") }); if (!spExt) { out << "\n"; } break;
+			case 'l': pushInlineNode(nullptr, "col", { pair("style", "text-align:left;") }); if (!spExt) { out << "\n"; } break;
 			case 'N':
-			case 'L': pushInlineNode("col", { pair("style", "text-align:left;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
-			case 'r': pushInlineNode("col", { pair("style", "text-align:right;") }); if (!spExt) { out << "\n"; } break;
-			case 'R': pushInlineNode("col", { pair("style", "text-align:right;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
-			case 'c': pushInlineNode("col", { pair("style", "text-align:center;") }); if (!spExt) { out << "\n"; } break;
-			case 'C': pushInlineNode("col", { pair("style", "text-align:center;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
-			default: pushInlineNode("col"); if (!spExt) { out << "\n"; } break;
+			case 'L': pushInlineNode(nullptr, "col", { pair("style", "text-align:left;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			case 'r': pushInlineNode(nullptr, "col", { pair("style", "text-align:right;") }); if (!spExt) { out << "\n"; } break;
+			case 'R': pushInlineNode(nullptr, "col", { pair("style", "text-align:right;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			case 'c': pushInlineNode(nullptr, "col", { pair("style", "text-align:center;") }); if (!spExt) { out << "\n"; } break;
+			case 'C': pushInlineNode(nullptr, "col", { pair("style", "text-align:center;"), pair("class", "extended") }); if (!spExt) { out << "\n"; } break;
+			default: pushInlineNode(nullptr, "col"); if (!spExt) { out << "\n"; } break;
 		}
 	}
 
@@ -554,7 +554,7 @@ void HtmlProcessor::exportTable(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportTableHeader(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("thead");
+	pushNode(t, "thead");
 	if (!spExt) { out << "\n"; }
 	in_table_header = 1;
 	exportTokenTree(out, t->child);
@@ -566,7 +566,7 @@ void HtmlProcessor::exportTableHeader(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportTableSection(std::ostream &out, token *t) {
 	pad(out, 2);
-	pushNode("tbody");
+	pushNode(t, "tbody");
 	if (!spExt) { out << "\n"; }
 	padded = 2;
 	exportTokenTree(out, t->child);
@@ -600,13 +600,13 @@ void HtmlProcessor::exportTableCell(std::ostream &out, token *t) {
 		String colspan = Traits::toString(t->next->len);
 		switch (table_alignment[table_cell_count]) {
 		case 'l': case 'L': case 'r': case 'R': case 'c': case 'C':
-			pushNode(in_table_header ? "th" : "td", {
+			pushNode(t, in_table_header ? "th" : "td", {
 				pair("style", getTableAlignmentStyle(table_alignment[table_cell_count])),
 				pair("colspan", colspan)
 			});
 			break;
 		default:
-			pushNode(in_table_header ? "th" : "td", {
+			pushNode(t, in_table_header ? "th" : "td", {
 				pair("colspan", colspan)
 			});
 			break;
@@ -614,12 +614,12 @@ void HtmlProcessor::exportTableCell(std::ostream &out, token *t) {
 	} else {
 		switch (table_alignment[table_cell_count]) {
 		case 'l': case 'L': case 'r': case 'R': case 'c': case 'C':
-			pushNode(in_table_header ? "th" : "td", {
+			pushNode(t, in_table_header ? "th" : "td", {
 				pair("style", getTableAlignmentStyle(table_alignment[table_cell_count]))
 			});
 			break;
 		default:
-			pushNode(in_table_header ? "th" : "td");
+			pushNode(t, in_table_header ? "th" : "td");
 			break;
 		}
 	}
@@ -637,7 +637,7 @@ void HtmlProcessor::exportTableCell(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportTableRow(std::ostream &out, token *t) {
-	pushNode("tr");
+	pushNode(t, "tr");
 	if (!spExt) { out << "\n"; }
 	table_cell_count = 0;
 	exportTokenTree(out, t->child);
@@ -648,7 +648,7 @@ void HtmlProcessor::exportTableRow(std::ostream &out, token *t) {
 void HtmlProcessor::exportToc(std::ostream &out, token *t) {
 	if (!spExt) {
 		pad(out, 2);
-		pushNode("div", { pair("class", "TOC") });
+		pushNode(t, "div", { pair("class", "TOC") });
 		if (!spExt) { out << "\n"; }
 		size_t counter = 0;
 		exportTocEntry(out, counter, 0);
@@ -662,7 +662,7 @@ void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t 
 	short entry_level, next_level;
 
 	if (!spExt) { out << "\n"; }
-	pushNode("ul");
+	pushNode(nullptr, "ul");
 	if (!spExt) { out << "\n"; }
 
 	auto &header_stack = content->getHeaders();
@@ -674,8 +674,8 @@ void HtmlProcessor::exportTocEntry(std::ostream &out, size_t &counter, uint16_t 
 			// This entry is a direct descendant of the parent
 			auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, entry);
 			auto ref = Traits::toString("#", idClassPair.first);
-			pushNode("li");
-			pushNode("a", { pair("href", ref) });
+			pushNode(nullptr, "li");
+			pushNode(nullptr, "a", { pair("href", ref) });
 			exportTokenTree(out, entry->child);
 			popNode();
 
@@ -716,7 +716,7 @@ void HtmlProcessor::exportBacktick(std::ostream &out, token *t) {
 		} else {
 			printLocalizedChar(out, QUOTE_LEFT_DOUBLE);
 		} else if (t->start < t->mate->start) {
-			pushNode("code");
+			pushNode(nullptr, "code");
 	} else {
 		popNode();
 	}
@@ -772,7 +772,7 @@ void HtmlProcessor::exportPairBacktick(std::ostream &out, token *t) {
 		return;
 	}
 
-	pushNode("code");
+	pushNode(nullptr, "code");
 	exportTokenTreeRaw(out, t->child);
 	popNode();
 }
@@ -792,7 +792,7 @@ void HtmlProcessor::exportPairAngle(std::ostream &out, token *t) {
 		printHtml(buffer, temp_char);
 		auto ref = buffer.str();
 		buffer.clear();
-		pushNode("a", { pair("href", ref) });
+		pushNode(t, "a", { pair("href", ref) });
 		printHtml(out, temp_char);
 		popNode();
 	} else if (scan_html(&source[t->start])) {
@@ -853,7 +853,7 @@ void HtmlProcessor::exportPairBracketAbbreviation(std::ostream &out, token *t) {
 				printHtml(buffer, temp_note->clean_text);
 				auto title = buffer.str();
 				buffer.clear();
-				pushNode("abbr", { pair("title", title) });
+				pushNode(nullptr, "abbr", { pair("title", title) });
 
 				if (t->child) {
 					exportTokenTree(out, t->child);
@@ -871,7 +871,7 @@ void HtmlProcessor::exportPairBracketAbbreviation(std::ostream &out, token *t) {
 				printHtml(buffer, temp_note->clean_text);
 				auto title = buffer.str();
 				buffer.clear();
-				pushNode("abbr", { pair("title", title) });
+				pushNode(nullptr, "abbr", { pair("title", title) });
 
 				if (t->child) {
 					exportTokenTree(out, t->child);
@@ -891,7 +891,7 @@ void HtmlProcessor::exportPairBracketAbbreviation(std::ostream &out, token *t) {
 			printHtml(buffer, temp_note->clean_text);
 			auto title = buffer.str();
 			buffer.clear();
-			pushNode("abbr", { pair("title", title) });
+			pushNode(nullptr, "abbr", { pair("title", title) });
 
 			printHtml(out, temp_note->label_text);
 			popNode();
@@ -949,9 +949,9 @@ void HtmlProcessor::exportPairBracketCitation(std::ostream &out, token *t) {
 			String id = Traits::toString("cnref_", temp_short);
 
 			if (temp_short2 == used_citations.size()) {
-				pushNode("a", { pair("href", ref), pair("title", localize("see citation")), pair("class", "citation") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("see citation")), pair("class", "citation") });
 			} else {
-				pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see citation")), pair("class", "citation") });
+				pushNode(nullptr, "a", { pair("href", ref), pair("id", id), pair("title", localize("see citation")), pair("class", "citation") });
 			}
 
 			switch (quotes_lang) {
@@ -1015,12 +1015,12 @@ void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
 
 		String ref = Traits::toString("#fn_", temp_short3);
 		if (temp_short2 == used_footnotes.size()) {
-			pushNode("a", { pair("href", ref), pair("title", localize("see footnote")), pair("class", "footnote") });
+			pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("see footnote")), pair("class", "footnote") });
 		} else {
 			String id = Traits::toString("fnref_", temp_short3);
-			pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see footnote")), pair("class", "footnote") });
+			pushNode(nullptr, "a", { pair("href", ref), pair("id", id), pair("title", localize("see footnote")), pair("class", "footnote") });
 		}
-		pushNode("sup");
+		pushNode(nullptr, "sup");
 		out << temp_short;
 		popNode();
 		popNode();
@@ -1054,10 +1054,10 @@ void HtmlProcessor::exportPairBracketGlossary(std::ostream &out, token *t) {
 
 		String ref = Traits::toString("#gn_", temp_short);
 		if (temp_short2 == used_glossaries.size()) {
-			pushNode("a", { pair("href", ref), pair("title", localize("see glossary")), pair("class", "glossary") });
+			pushNode(nullptr, "a", { pair("href", ref), pair("title", localize("see glossary")), pair("class", "glossary") });
 		} else {
 			String id = Traits::toString("gnref_", temp_short);
-			pushNode("a", { pair("href", ref), pair("id", id), pair("title", localize("see glossary")), pair("class", "glossary") });
+			pushNode(nullptr, "a", { pair("href", ref), pair("id", id), pair("title", localize("see glossary")), pair("class", "glossary") });
 		}
 		printHtml(out, temp_note->clean_text);
 		popNode();
@@ -1102,7 +1102,7 @@ void HtmlProcessor::exportCriticAdd(std::ostream &out, token *t) {
 		if ((extensions & Extensions::CriticAccept) != Extensions::None) {
 			exportTokenTree(out, t->child);
 		} else {
-			pushNode("ins");
+			pushNode(t, "ins");
 			exportTokenTree(out, t->child);
 			popNode();
 		}
@@ -1124,7 +1124,7 @@ void HtmlProcessor::exportCriticDel(std::ostream &out, token *t) {
 		if ((extensions & Extensions::CriticReject) != Extensions::None) {
 			exportTokenTree(out, t->child);
 		} else {
-			pushNode("del");
+			pushNode(t, "del");
 			exportTokenTree(out, t->child);
 			popNode();
 		}
@@ -1144,7 +1144,7 @@ void HtmlProcessor::exportCriticCom(std::ostream &out, token *t) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
-		pushNode("span", { pair("class", "critic comment") });
+		pushNode(t, "span", { pair("class", "critic comment") });
 		exportTokenTree(out, t->child);
 		popNode();
 	} else {
@@ -1162,7 +1162,7 @@ void HtmlProcessor::exportCriticHi(std::ostream &out, token *t) {
 	if ((extensions & Extensions::Critic) != Extensions::None) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
-		pushNode("mark");
+		pushNode(t, "mark");
 		exportTokenTree(out, t->child);
 		popNode();
 	} else {
@@ -1181,7 +1181,7 @@ void HtmlProcessor::exportCriticPairSubDel(std::ostream &out, token *t) {
 		} else if ((extensions & Extensions::CriticReject) != Extensions::None) {
 			exportTokenTree(out, t->child);
 		} else {
-			pushNode("del");
+			pushNode(t, "del");
 			exportTokenTree(out, t->child);
 			popNode();
 		}
@@ -1201,7 +1201,7 @@ void HtmlProcessor::exportCriticPairSubAdd(std::ostream &out, token *t) {
 		} else if ((extensions & Extensions::CriticAccept) != Extensions::None) {
 			exportTokenTree(out, t->child);
 		} else {
-			pushNode("ins");
+			pushNode(t, "ins");
 			exportTokenTree(out, t->child);
 			popNode();
 		}
@@ -1211,16 +1211,16 @@ void HtmlProcessor::exportCriticPairSubAdd(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportMath(std::ostream &out, token *t) {
-	pushNode("span", { pair("class", "math") });
+	pushNode(t, "span", { pair("class", "math") });
 	exportTokenTreeMath(out, t->child);
 	popNode();
 }
 
 void HtmlProcessor::exportSubscript(std::ostream &out, token *t) {
 	if (t->mate) {
-		((t->start < t->mate->start) ? pushNode("sub") : popNode());
+		((t->start < t->mate->start) ? pushNode(nullptr, "sub") : popNode());
 	} else if (t->len != 1) {
-		pushNode("sub");
+		pushNode(t, "sub");
 		exportTokenTree(out, t->child);
 		popNode();
 	} else {
@@ -1230,9 +1230,9 @@ void HtmlProcessor::exportSubscript(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportSuperscript(std::ostream &out, token *t) {
 	if (t->mate) {
-		((t->start < t->mate->start) ? pushNode("sup") : popNode());
+		((t->start < t->mate->start) ? pushNode(nullptr, "sup") : popNode());
 	} else if (t->len != 1) {
-		pushNode("sup");
+		pushNode(t, "sup");
 		exportTokenTree(out, t->child);
 		popNode();
 	} else {
@@ -1242,7 +1242,7 @@ void HtmlProcessor::exportSuperscript(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportLineBreak(std::ostream &out, token *t) {
 	if (t->next) {
-		pushInlineNode("br");
+		pushInlineNode(t, "br");
 		if (!spExt) { out << "\n"; }
 		padded = 1;
 	}

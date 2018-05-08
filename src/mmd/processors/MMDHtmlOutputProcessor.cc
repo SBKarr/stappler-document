@@ -44,7 +44,7 @@ void HtmlOutputProcessor::run(std::ostream *stream, memory::pool_t *pool, const 
 	});
 }
 
-void HtmlOutputProcessor::pushNode(const StringView &name, InitList &&attr, VecList && vec) {
+void HtmlOutputProcessor::pushNode(token *t, const StringView &name, InitList &&attr, VecList && vec) {
 	flushBuffer();
 	*output << "<" << name;
 	if (attr.size() > 0) {
@@ -61,7 +61,7 @@ void HtmlOutputProcessor::pushNode(const StringView &name, InitList &&attr, VecL
 	tagStack.emplace_back(name, 0);
 }
 
-void HtmlOutputProcessor::pushInlineNode(const StringView &name, InitList &&attr, VecList && vec) {
+void HtmlOutputProcessor::pushInlineNode(token *t, const StringView &name, InitList &&attr, VecList && vec) {
 	flushBuffer();
 	*output << "<" << name;
 	if (attr.size() > 0) {

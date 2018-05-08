@@ -33,8 +33,8 @@ public:
 	static void run(std::ostream *, memory::pool_t *, const StringView &, Extensions = DefaultExtensions);
 
 protected:
-	virtual void pushNode(const StringView &name, InitList &&attr, VecList &&) override;
-	virtual void pushInlineNode(const StringView &name, InitList &&attr, VecList &&) override;
+	virtual void pushNode(token *t, const StringView &name, InitList &&attr, VecList &&) override;
+	virtual void pushInlineNode(token *t, const StringView &name, InitList &&attr, VecList &&) override;
 	virtual void popNode() override;
 
 	virtual void flushBuffer() override;
