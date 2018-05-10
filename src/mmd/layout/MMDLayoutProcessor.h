@@ -50,8 +50,8 @@ protected:
 
 	layout::Node *makeNode(const StringView &name, InitList &&attr, VecList &&);
 
-	virtual void pushNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList());
-	virtual void pushInlineNode(const StringView &name, InitList &&attr = InitList(), VecList && = VecList());
+	virtual void pushNode(token *, const StringView &name, InitList &&attr = InitList(), VecList && = VecList());
+	virtual void pushInlineNode(token *, const StringView &name, InitList &&attr = InitList(), VecList && = VecList());
 	virtual void popNode();
 	virtual void flushBuffer();
 

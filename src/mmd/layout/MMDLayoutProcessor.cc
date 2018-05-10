@@ -134,13 +134,13 @@ layout::Node *LayoutProcessor::makeNode(const StringView &name, InitList &&attr,
 	return &node;
 }
 
-void LayoutProcessor::pushNode(const StringView &name, InitList &&attr, VecList &&vec) {
+void LayoutProcessor::pushNode(token *, const StringView &name, InitList &&attr, VecList &&vec) {
 	flushBuffer();
 	auto node = makeNode(name, move(attr), move(vec));
 	_nodeStack.push_back(node);
 }
 
-void LayoutProcessor::pushInlineNode(const StringView &name, InitList &&attr, VecList &&vec) {
+void LayoutProcessor::pushInlineNode(token *, const StringView &name, InitList &&attr, VecList &&vec) {
 	flushBuffer();
 	makeNode(name, move(attr), move(vec));
 }
