@@ -18,14 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-STAPPLER_ROOT = ../../../..
+STAPPLER_ROOT = ../../..
 
-LOCAL_OUTDIR := build
-LOCAL_OUTPUT_EXECUTABLE := $(LOCAL_OUTDIR)/gui-test
+LOCAL_OUTDIR := stappler-build
+LOCAL_EXECUTABLE := testapp
 
 LOCAL_TOOLKIT := material
 
-LOCAL_ROOT = ..
+LOCAL_ROOT = .
 
 include $(LOCAL_ROOT)/../make.mk
 
@@ -35,9 +35,16 @@ LOCAL_SRCS_OBJS :=
 LOCAL_INCLUDES_DIRS := Classes
 LOCAL_INCLUDES_OBJS := $(DOCUMENT_INCLUDE_MATERIAL)
 
-$(LOCAL_OUTDIR)/common:
-	cp -f -r $(LOCAL_ROOT)/common $(LOCAL_OUTDIR)/common
+$(LOCAL_OUTDIR)/host/common:
+	mkdir -p $(LOCAL_OUTDIR)/host
+	cp -f -r $(LOCAL_ROOT)/common $(LOCAL_OUTDIR)/host/common
 
-.local_prebuild: $(LOCAL_OUTDIR)/common
+include $(STAPPLER_ROOT)/make/universal.mk
 
-include $(STAPPLER_ROOT)/make/local.mk
+prepare-linux: $(LOCAL_OUTDIR)/host/common
+
+host-install: prepare-linux
+host-debug: prepare-linux
+host-release: prepare-linux
+
+.PHONY: prepare-linux

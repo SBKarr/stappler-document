@@ -39,7 +39,7 @@ NS_RT_BEGIN
 
 Thread s_galleryRendererThread("RichTextGalleryLayout");
 
-bool GalleryLayout::init(CommonSource *source, const String &name, const String &sel) {
+bool GalleryLayout::init(CommonSource *source, const StringView &name, const StringView &sel) {
 	if (!ToolbarLayout::init()) {
 		return false;
 	}
@@ -66,7 +66,7 @@ bool GalleryLayout::init(CommonSource *source, const String &name, const String 
 			_title.emplace_back(std::string());
 		}
 		images[i] = image;
-		if (images[i] == sel) {
+		if (sel == images[i]) {
 			selected = i;
 		}
 	}

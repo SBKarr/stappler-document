@@ -27,4 +27,5 @@ THE SOFTWARE.
 #include "RTCommonSource.cc"
 #include "RTCommonView.cc"
 #include "RTDrawer.cc"
+#include "RTDrawerRequest.cc"
 #include "RTRenderer.cc"

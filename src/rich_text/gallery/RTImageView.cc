@@ -42,7 +42,7 @@ NS_RT_BEGIN
 
 ImageView::~ImageView() { }
 
-bool ImageView::init(CommonSource *source, const String &id, const String &src, const String &alt) {
+bool ImageView::init(CommonSource *source, const StringView &id, const StringView &src, const StringView &alt) {
 	if (!Layout::init() || !source) {
 		return false;
 	}
@@ -51,7 +51,7 @@ bool ImageView::init(CommonSource *source, const String &id, const String &src, 
 		return false;
 	}
 
-	_src = src;
+	_src = src.str();
 	_source = source;
 
 	auto contentLayer = material::Scene::getRunningScene()->getContentLayer();
@@ -60,7 +60,7 @@ bool ImageView::init(CommonSource *source, const String &id, const String &src, 
 	auto size = contentLayer->getContentSize();
 	auto pos = Vec2(incr / 4.0f, incr / 2.0f);
 
-	auto tooltip = constructTooltip(source, id.empty()?Vector<String>():Vector<String>{id});
+	auto tooltip = constructTooltip(source, id.empty()?Vector<String>():Vector<String>{id.str()});
 
 	Size maxSize;
 	maxSize.width = size.width - material::metrics::horizontalIncrement();
@@ -81,8 +81,7 @@ bool ImageView::init(CommonSource *source, const String &id, const String &src, 
 	if (auto r = tooltip->getRenderer()) {
 		r->addOption("image-view");
 	}
-	addChild(tooltip, 2);
-	_tooltip = tooltip;
+	_tooltip = addChildNode(tooltip, 2);
 
 	auto actions = _tooltip->getActions();
 	actions->clear();
@@ -112,7 +111,7 @@ bool ImageView::init(CommonSource *source, const String &id, const String &src, 
 	return true;
 }
 
-Rc<cocos2d::Texture2D> ImageView::readImage(const std::string &src) {
+Rc<cocos2d::Texture2D> ImageView::readImage(const StringView &src) {
 	return TextureCache::uploadTexture(_source->getImageData(src));
 }
 
@@ -120,7 +119,7 @@ void ImageView::onImage(cocos2d::Texture2D *img) {
 	_sprite->setTexture(img);
 }
 
-void ImageView::onAssetCaptured(const String &src) {
+void ImageView::onAssetCaptured(const StringView &src) {
 	Rc<cocos2d::Texture2D> *img = new Rc<cocos2d::Texture2D>(nullptr);
 	rich_text::Drawer::thread().perform([this, img, src] (const Task &) -> bool {
 		*img = readImage(src);
@@ -171,7 +170,7 @@ void ImageView::close() {
 	contentLayer->popNode(this);
 }
 
-void ImageView::acquireImageAsset(const String &src) {
+void ImageView::acquireImageAsset(const StringView &src) {
 	if (!_sprite->getTexture() && _source->tryReadLock(this)) {
 		onAssetCaptured(src);
 	}
@@ -181,7 +180,7 @@ Rc<Tooltip> ImageView::constructTooltip(CommonSource *source, const Vector<Strin
 	return Rc<Tooltip>::create(source, ids);
 }
 
-bool ImageView::isSourceValid(CommonSource *source, const String & src) const {
+bool ImageView::isSourceValid(CommonSource *source, const StringView & src) const {
 	if (!source->isActual()) {
 		return false;
 	}

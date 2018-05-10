@@ -129,9 +129,12 @@ layout::Node *LayoutProcessor::makeNode(const StringView &name, InitList &&attr,
 	LayoutProcessor_processAttr(*this, attr, name, attributes, style, id);
 	LayoutProcessor_processAttr(*this, vec, name, attributes, style, id);
 
-	auto &node = _nodeStack.back()->pushNode(name.str(), id.str(), style, std::move(attributes));
-
-	return &node;
+	if (name == "table" && id.empty()) {
+		++ _tableIdx;
+		return &_nodeStack.back()->pushNode(name.str(), toString("__table:", _tableIdx), style, std::move(attributes));
+	} else {
+		return &_nodeStack.back()->pushNode(name.str(), id.str(), style, std::move(attributes));
+	}
 }
 
 void LayoutProcessor::pushNode(token *, const StringView &name, InitList &&attr, VecList &&vec) {

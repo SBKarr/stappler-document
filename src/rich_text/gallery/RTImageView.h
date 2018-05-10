@@ -32,7 +32,7 @@ NS_RT_BEGIN
 class ImageView : public material::Layout {
 public:
 	virtual ~ImageView();
-	virtual bool init(CommonSource *, const String &id, const String &src, const String &alt = "");
+	virtual bool init(CommonSource *, const StringView &id, const StringView &src, const StringView &alt = StringView());
 
 	virtual void onContentSizeDirty() override;
 	virtual void onEnter() override;
@@ -40,15 +40,15 @@ public:
 	virtual void close();
 
 protected:
-	virtual void acquireImageAsset(const String &);
+	virtual void acquireImageAsset(const StringView &);
 
 	virtual Rc<Tooltip> constructTooltip(CommonSource *, const Vector<String> &) const;
-	virtual bool isSourceValid(CommonSource *, const String & src) const;
+	virtual bool isSourceValid(CommonSource *, const StringView & src) const;
 
 	virtual void onExpand();
-	virtual Rc<cocos2d::Texture2D> readImage(const String &);
+	virtual Rc<cocos2d::Texture2D> readImage(const StringView &);
 	virtual void onImage(cocos2d::Texture2D *);
-	virtual void onAssetCaptured(const String &);
+	virtual void onAssetCaptured(const StringView &);
 
 	String _src;
 	Tooltip *_tooltip = nullptr;

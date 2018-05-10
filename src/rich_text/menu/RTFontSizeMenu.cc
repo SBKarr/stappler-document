@@ -72,7 +72,7 @@ Rc<cocos2d::Node> FontSizeMenuButton::onLabel() {
 	auto l = Rc<material::Label>::create(material::FontType::Caption);
 	l->setLocaleEnabled(true);
 	l->setAutoLightLevel(true);
-	l->setString("SystemFontSize"_locale);
+	l->setString("SystemFontSize"_locale.to_string());
 	l->setPosition(16, 12);
 	l->setAnchorPoint(cocos2d::Vec2(0, 0.5f));
 

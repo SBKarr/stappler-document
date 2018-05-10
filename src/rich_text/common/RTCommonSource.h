@@ -67,6 +67,9 @@ public:
 	virtual void setAsset(Asset *a);
 	virtual void setAsset(const AssetCallback &cb);
 
+	void setHyphens(layout::HyphenMap *);
+	layout::HyphenMap *getHyphens() const;
+
 	Document *getDocument() const;
 	Asset *getAsset() const;
 
@@ -86,9 +89,9 @@ public:
 	void setEnabled(bool val);
 	bool isEnabled() const;
 
-	bool isFileExists(const String &url) const;
-	Pair<uint16_t, uint16_t> getImageSize(const String &url) const;
-	Bytes getImageData(const String &url) const;
+	bool isFileExists(const StringView &url) const;
+	Pair<uint16_t, uint16_t> getImageSize(const StringView &url) const;
+	Bytes getImageData(const StringView &url) const;
 
 	virtual void update(float dt) override;
 
@@ -110,7 +113,7 @@ protected:
 
 	virtual Rc<font::FontSource> makeSource(AssetMap &&, bool schedule = false) override;
 
-	virtual Rc<Document> openDocument(const String &path, const String &ct);
+	virtual Rc<Document> openDocument(const StringView &path, const StringView &ct);
 
 	bool hasAssetRequests() const;
 	void addAssetRequest(AssetData *);
@@ -134,6 +137,8 @@ protected:
 	Vector<Function<void()>> _assetWaiters;
 
 	float _retryUpdate = nan();
+
+	Rc<font::HyphenMap> _hyphens;
 };
 
 NS_RT_END

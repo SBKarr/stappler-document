@@ -53,7 +53,7 @@ NS_RT_BEGIN
 
 USING_NS_MD;
 
-bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) {
+bool EpubView::init(Source *source, const StringView &title) {
 	if (!ToolbarLayout::init()) {
 		return false;
 	}
@@ -62,10 +62,9 @@ bool EpubView::init(Source *source, const String &title, font::HyphenMap *hmap) 
 	setMaxActions(4);
 	setFlexibleToolbar(false);
 
-	_savedTitle = title;
+	_savedTitle = title.str();
 	_toolbar->setTitle(title);
 	_toolbar->setLocalZOrder(4);
-	_hyphens = hmap;
 
 	_source = source;
 	_source->setEnabled(true);
@@ -179,9 +178,6 @@ void EpubView::onContentSizeDirty() {
 	ToolbarLayout::onContentSizeDirty();
 	if (_extendedNavigation) {
 		if (_view->getLayout() == View::Horizontal) {
-			_baseNode->setContentSize(_baseNode->getContentSize() - Size(0.0f, 20.0f));
-			_baseNode->setPosition(0.0f, 20.0f);
-
 			_navigation->setContentSize(Size(_contentSize.width, 20.0f));
 			_navigation->setPosition(0.0f, 0.0f);
 			_navigation->setAnchorPoint(Vec2(0.0f, 0.0f));
@@ -189,7 +185,6 @@ void EpubView::onContentSizeDirty() {
 			_buttonLeft->setVisible(true);
 			_buttonRight->setVisible(true);
 		} else {
-			_baseNode->setContentSize(_baseNode->getContentSize() - Size(20.0f, 0.0f));
 			_navigation->setContentSize(Size(20.0f, _contentSize.height));
 			_navigation->setPosition(_contentSize.width, 0.0f);
 			_navigation->setAnchorPoint(Vec2(1.0f, 0.0f));
@@ -208,6 +203,22 @@ void EpubView::onContentSizeDirty() {
 	_buttonRight->setContentSize(cocos2d::Size(48.0f, _contentSize.height - 20.0f - getCurrentFlexibleMax()));
 
 	_backButton->setPosition(16.0f, 24.0f + 8.0f);
+}
+
+void EpubView::onBaseNode(const node::Params &p, const Padding &padding, float offset) {
+
+	if (_extendedNavigation) {
+		node::Params np(p);
+		if (_view->getLayout() == View::Horizontal) {
+			np.contentSize.height -= 20.0f;
+			np.position.y += 20.0f;
+		} else {
+			np.contentSize.width -= 20.0f;
+		}
+		ToolbarLayout::onBaseNode(np, padding, offset);
+	} else {
+		ToolbarLayout::onBaseNode(p, padding, offset);
+	}
 }
 
 void EpubView::visit(cocos2d::Renderer *r, const Mat4 &t, uint32_t f, ZPath &z) {
@@ -260,11 +271,11 @@ void EpubView::onExit() {
 	ToolbarLayout::onExit();
 }
 
-void EpubView::setTitle(const String &value) {
-	_savedTitle = value;
+void EpubView::setTitle(const StringView &value) {
+	_savedTitle = value.str();
 	updateTitle();
 }
-const String &EpubView::getTitle() const {
+StringView EpubView::getTitle() const {
 	return _savedTitle;
 }
 
@@ -422,7 +433,7 @@ void EpubView::onBookmarkData(size_t object, size_t pos, float scroll) {
 	if (res) {
 		const rich_text::Object * obj = res->getObject(object);
 		if (obj && obj->type == rich_text::Object::Type::Label) {
-			float objPos = float(pos) / float(obj->value.label.format.chars.size());
+			float objPos = float(pos) / float(obj->asLabel()->format.chars.size());
 			_view->setViewPosition(View::ViewPosition{object, objPos, scroll}, true);
 		}
 	}
@@ -487,7 +498,6 @@ void EpubView::hideSelectionToolbar() {
 
 Rc<View> EpubView::constructTextView(Source *source) {
 	Rc<View> view = Rc<View>::create(_source);
-	view->setHyphens(_hyphens);
 	view->setIndicatorVisible(false);
 	view->setTapCallback([this] (int count, const Vec2 &loc) {
 		onTextViewTapCallback(count, loc);

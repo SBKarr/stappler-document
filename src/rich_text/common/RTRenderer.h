@@ -44,9 +44,10 @@ public:
 	virtual void setSource(CommonSource *source);
 	virtual CommonSource *getSource() const;
 
-	virtual Document *getDocument() const;
-	virtual layout::Result *getResult() const;
-	virtual Drawer *getDrawer() const;
+	Document *getDocument() const;
+	layout::Result *getResult() const;
+	Drawer *getDrawer() const;
+	MediaParameters getMedia() const;
 
 public: /* media type resolver */
 	void setSurfaceSize(const Size &size);
@@ -65,7 +66,6 @@ public: /* media type resolver */
 	void setHoverValue(layout::style::Hover value);
 	void setLightLevelValue(layout::style::LightLevel value);
 	void setScriptingValue(layout::style::Scripting value);
-	void setHyphens(layout::HyphenMap *);
 
 	void setPageMargin(const Margin &);
 
@@ -77,7 +77,7 @@ public: /* media type resolver */
 	void removeFlag(layout::RenderFlag::Flag flag);
 	bool hasFlag(layout::RenderFlag::Flag flag) const;
 
-	String getLegacyBackground(const layout::Node &, const StringView &opt) const;
+	StringView getLegacyBackground(const layout::Node &, const StringView &opt) const;
 
 public: /* font routines */
 	virtual void setRenderingCallback(const RenderingCallback &);
@@ -99,7 +99,6 @@ protected:
 	MediaParameters _media;
 	Rc<layout::Result> _result;
 	Rc<Drawer> _drawer;
-	Rc<layout::HyphenMap> _hyphens;
 	RenderingCallback _renderingCallback = nullptr;
 };
 

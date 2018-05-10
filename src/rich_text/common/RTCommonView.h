@@ -53,8 +53,6 @@ public:
 
     virtual void onContentSizeDirty() override;
 
-    virtual void setHyphens(layout::HyphenMap *);
-
 	virtual void setSource(CommonSource *);
 	virtual CommonSource *getSource() const;
 

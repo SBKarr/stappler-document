@@ -41,6 +41,7 @@ THE SOFTWARE.
 #include "SPDevice.h"
 #include "SPStorage.h"
 #include "FileDialog.h"
+#include "MMDHtmlOutputProcessor.h"
 
 NS_SP_EXT_BEGIN(app)
 
@@ -221,7 +222,7 @@ void FileNavigator::refreshData() {
 void FileNavigator::updateData(const std::string &path) {
 	data::Value dirs;
 	data::Value files;
-	filesystem::ftw(path, [this, &dirs, &files, path] (const std::string &p, bool isFile) {
+	filesystem::ftw(path, [this, &dirs, &files, path] (const StringView &p, bool isFile) {
 		data::Value d;
 		d.setString(p, "path");
 		d.setString(filepath::replace(p, path, filepath::lastComponent(path)), "name");
@@ -232,7 +233,8 @@ void FileNavigator::updateData(const std::string &path) {
 				d.setString(formatFileSize(filesystem::size(p)), "size");
 
 				size_t w = 0, h = 0;
-				if (Bitmap::getImageSize(p, w, h)) {
+				CoderSource source(p);
+				if (Bitmap::getImageSize(source, w, h)) {
 					d.setInteger(w, "width");
 					d.setInteger(h, "height");
 				}
@@ -267,7 +269,7 @@ void FileNavigator::updateData(const std::string &path) {
 		}
 	}
 
-	_toolbar->setTitle(filepath::lastComponent(path, 2));
+	_toolbar->setTitle(filepath::lastComponent(path, 2).str());
 
 	data::Value val;
 	val.setString(path, "path");
@@ -333,11 +335,16 @@ void FileNavigator::openFile(const std::string &file) {
 		auto view = Rc<FileImageView>::create(file);
 		material::Scene::getRunningScene()->getContentLayer()->pushNode(view);
 	} else {
-		if (layout::Document::canOpenDocumnt(FilePath(file))) {
+		if (layout::Document::canOpenDocumnt(file)) {
+			auto data = filesystem::readTextFile(file);
+			//mmd::HtmlOutputProcessor::run(&std::cout, data);
+
 			auto source = Rc<rich_text::Source>::create(FilePath(file));
-			auto view = Rc<rich_text::EpubView>::create(source, filepath::name(file), _hyphens);
+			source->setHyphens(_hyphens.get());
+
+			auto view = Rc<rich_text::EpubView>::create(source, filepath::name(file));
 			view->setLayout(ScrollView::Vertical);
-			view->setTitle(filepath::name(file));
+			view->setTitle(filepath::name(file).str());
 			rich_text::Source *s = source;
 
 			view->getToolbar()->getActionMenuSource()->addButton("refresh", material::IconName::Navigation_refresh,

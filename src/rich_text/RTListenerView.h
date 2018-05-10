@@ -104,7 +104,7 @@ protected:
 	virtual void onLightLevelChanged();
 
 	virtual void onObjectPressEnd(const Vec2 &, const rich_text::Object &) override;
-	virtual void onLink(const String &ref, const String &target, const Vec2 &);
+	virtual void onLink(const StringView &ref, const StringView &target, const Vec2 &);
 
 	virtual bool onSwipeEventBegin(const Vec2 &loc, const Vec2 &d, const Vec2 &v) override;
 	virtual bool onSwipeEvent(const Vec2 &loc, const Vec2 &d, const Vec2 &v) override;

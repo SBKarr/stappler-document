@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "RTView.h"
 #include "RTGalleryLayout.h"
 #include "RTImageView.h"
+#include "RTTableView.h"
 
 #include "SPDevice.h"
 #include "SPEventListener.h"
@@ -196,10 +197,12 @@ void View::onLightLevelChanged() {
 	updateProgress();
 }
 
-void View::onLink(const String &ref, const String &target, const Vec2 &vec) {
+void View::onLink(const StringView &ref, const StringView &target, const Vec2 &vec) {
 	if (ref.front() == '#') {
 		if (target == "_self") {
 			onPositionRef(StringView(ref.data() + 1, ref.size() - 1), false);
+		} else if (target == "table") {
+			onTable(ref);
 		} else {
 			onId(ref, target, vec);
 		}
@@ -224,7 +227,7 @@ void View::onLink(const String &ref, const String &target, const Vec2 &vec) {
 	}
 }
 
-void View::onId(const String &ref, const String &target, const Vec2 &vec) {
+void View::onId(const StringView &ref, const StringView &target, const Vec2 &vec) {
 	auto doc = _renderer->getDocument();
 	if (!doc) {
 		return;
@@ -285,14 +288,14 @@ void View::onId(const String &ref, const String &target, const Vec2 &vec) {
 	}
 }
 
-void View::onImage(const String &id, const Vec2 &) {
+void View::onImage(const StringView &id, const Vec2 &) {
 	auto node = _source->getDocument()->getNodeByIdGlobal(id);
 
 	if (!node.first || !node.second) {
 		return;
 	}
 
-	String src = _renderer->getLegacyBackground(*node.second, "image-view"), alt;
+	StringView src = _renderer->getLegacyBackground(*node.second, "image-view"), alt;
 	if (src.empty() && node.second->getHtmlName() == "img") {
 		auto &attr = node.second->getAttributes();
 		auto srcIt = attr.find("src");
@@ -304,7 +307,7 @@ void View::onImage(const String &id, const Vec2 &) {
 	if (src.empty()) {
 		auto &nodes = node.second->getNodes();
 		for (auto &it : nodes) {
-			String legacyImage = _renderer->getLegacyBackground(it, "image-view");
+			StringView legacyImage = _renderer->getLegacyBackground(it, "image-view");
 			auto &attr = it.getAttributes();
 			if (!legacyImage.empty()) {
 				src = legacyImage;
@@ -345,7 +348,7 @@ void View::onImage(const String &id, const Vec2 &) {
 	}
 }
 
-void View::onGallery(const String &name, const String &image, const Vec2 &) {
+void View::onGallery(const StringView &name, const StringView &image, const Vec2 &) {
 	if (_source) {
 		auto l = Rc<GalleryLayout>::create(_source, name, image);
 		if (l) {
@@ -354,7 +357,7 @@ void View::onGallery(const String &name, const String &image, const Vec2 &) {
 	}
 }
 
-void View::onContentFile(const String &str) {
+void View::onContentFile(const StringView &str) {
 	onFile(str, Vec2(0.0f, 0.0f));
 }
 
@@ -385,8 +388,8 @@ float View::getBookmarkScrollPosition(size_t objIdx, uint32_t pos, bool inView) 
 	auto res = _renderer->getResult();
 	if (res) {
 		if (auto obj = res->getObject(objIdx)) {
-			if (obj->type == layout::Object::Type::Label) {
-				auto line = obj->value.label.format.getLine(pos);
+			if (auto label = obj->asLabel()) {
+				auto line = label->format.getLine(pos);
 				if (line) {
 					ret = ((obj->bbox.origin.y + (line->pos - line->height) / res->getMedia().density));
 				}
@@ -414,8 +417,8 @@ float View::getBookmarkScrollRelativePosition(size_t objIdx, uint32_t pos, bool 
 	auto res = _renderer->getResult();
 	if (res) {
 		if (auto obj = res->getObject(objIdx)) {
-			if (obj->type == layout::Object::Type::Label) {
-				auto line = obj->value.label.format.getLine(pos);
+			if (auto label = obj->asLabel()) {
+				auto line = label->format.getLine(pos);
 				if (line) {
 					ret = ((obj->bbox.origin.y + (line->pos - line->height) / res->getMedia().density))
 							/ res->getContentSize().height;
@@ -431,7 +434,7 @@ float View::getBookmarkScrollRelativePosition(size_t objIdx, uint32_t pos, bool 
 	return ret;
 }
 
-void View::onFile(const String &str, const Vec2 &pos) {
+void View::onFile(const StringView &str, const Vec2 &pos) {
 	onPositionRef(str, false);
 }
 
@@ -514,7 +517,7 @@ void View::onFigure(const layout::Node *node) {
 	}
 }
 
-void View::onImageFigure(const String &src, const String &alt, const layout::Node *node) {
+void View::onImageFigure(const StringView &src, const StringView &alt, const layout::Node *node) {
 	auto scene = material::Scene::getRunningScene();
 	Rc<ImageView> image;
 	if (!node || node->getHtmlId().empty()) {
@@ -523,12 +526,21 @@ void View::onImageFigure(const String &src, const String &alt, const layout::Nod
 		image = Rc<ImageView>::create(_source, node->getHtmlId(), src, alt);
 	}
 	if (image) {
-		scene->pushContentNode(image);
+		scene->pushContentNode(image.get());
 	}
 }
 
-void View::onVideoFigure(const String &src) {
+void View::onVideoFigure(const StringView &src) {
 	Device::getInstance()->goToUrl(src, true);
+}
+
+void View::onTable(const StringView &src) {
+	if (!src.empty()) {
+		Rc<TableView> view = Rc<TableView>::create(_source, _renderer->getMedia(), src);
+		if (view) {
+			material::Scene::getRunningScene()->pushContentNode(view);
+		}
+	}
 }
 
 void View::onSourceError(rich_text::Source::Error err) {
@@ -572,14 +584,14 @@ View::ViewPosition View::getViewObjectPosition(float pos) const {
 		size_t objectId = 0;
 		auto &objs = res->getObjects();
 		for (auto &it : objs) {
-			if (it.bbox.origin.y > pos) {
+			if (it->bbox.origin.y > pos) {
 				ret.object = objectId;
 				break;
 			}
 
-			if (it.bbox.origin.y <= pos && it.bbox.origin.y + it.bbox.size.height >= pos) {
+			if (it->bbox.origin.y <= pos && it->bbox.origin.y + it->bbox.size.height >= pos) {
 				ret.object = objectId;
-				ret.position = (it.bbox.origin.y + it.bbox.size.height - pos) / it.bbox.size.height;
+				ret.position = (it->bbox.origin.y + it->bbox.size.height - pos) / it->bbox.size.height;
 				break;
 			}
 
@@ -632,7 +644,7 @@ void View::setViewPosition(const ViewPosition &pos, bool offseted) {
 			if (objs.size() > pos.object) {
 				auto &obj = objs.at(pos.object);
 				if (res->getMedia().flags & layout::RenderFlag::PaginatedLayout) {
-					float scrollPos = obj.bbox.origin.y + obj.bbox.size.height * pos.position;
+					float scrollPos = obj->bbox.origin.y + obj->bbox.size.height * pos.position;
 					int num = roundf(scrollPos / res->getSurfaceSize().height);
 					if (res->getMedia().flags & layout::RenderFlag::SplitPages) {
 						setScrollPosition((num / 2) * _renderSize.width);
@@ -640,7 +652,7 @@ void View::setViewPosition(const ViewPosition &pos, bool offseted) {
 						setScrollPosition(num * _renderSize.width);
 					}
 				} else {
-					float scrollPos = (obj.bbox.origin.y + obj.bbox.size.height * pos.position) - (!offseted?(getScrollSize() / 2.0f):0.0f);
+					float scrollPos = (obj->bbox.origin.y + obj->bbox.size.height * pos.position) - (!offseted?(getScrollSize() / 2.0f):0.0f);
 					if (scrollPos < getScrollMinPosition()) {
 						scrollPos = getScrollMinPosition();
 					} else if (scrollPos > getScrollMaxPosition()) {

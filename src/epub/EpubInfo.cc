@@ -39,7 +39,7 @@ struct EpubFileApi {
 	cocos2d::zlib_filefunc64_def fileFunc;
 
 	static void *api_open(void *, const void *filename, int mode) {
-		return new filesystem::ifile(filesystem::openForReading(*(const String *)filename));
+		return new filesystem::ifile(filesystem::openForReading(*(const StringView *)filename));
 	}
 
 	static void *api_open_file(void *, const void *filename, int mode) {
@@ -113,7 +113,7 @@ struct EpubFileApi {
 
 static EpubFileApi s_fileApi;
 
-bool Info::isEpub(const String &path) {
+bool Info::isEpub(const StringView &path) {
 	bool ret = false;
 	auto file = filesystem::openForReading(path);
 	if (!file) {
@@ -189,7 +189,7 @@ Info & Info::operator=(Info && doc) {
 	return *this;
 }
 
-bool Info::init(const String &path) {
+bool Info::init(const StringView &path) {
 	_file = cocos2d::unzOpen2_64((void *)&path, &s_fileApi.pathFunc);
 	if (_file) {
 		_manifest = getFileList(_file);

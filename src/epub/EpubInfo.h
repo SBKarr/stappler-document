@@ -124,7 +124,7 @@ public:
 	using FilePtr = void *;
 
 public:
-	static bool isEpub(const String &path);
+	static bool isEpub(const StringView &path);
 
 	Info();
 	~Info();
@@ -135,7 +135,7 @@ public:
 	Info(const Info & doc) = delete;
 	Info & operator=(const Info & doc) = delete;
 
-	bool init(const String &path);
+	bool init(const StringView &path);
 
 	bool valid() const;
 

@@ -98,22 +98,20 @@ void ListenerView::Selection::clearSelection() {
 	setEnabled(false);
 }
 void ListenerView::Selection::selectLabel(const rich_text::Object *obj, const Vec2 &loc) {
-	if (obj->type == layout::Object::Type::Label) {
+	if (auto label = obj->asLabel()) {
 		_index = obj->index;
 		_object = obj;
-
-		const auto &label = _object->value.label;
 
 		const float d = screen::density();
 		Vec2 locInLabel((loc - obj->bbox.origin));
 
-		uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
+		uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
 		if (charNumber == maxOf<uint32_t>()) {
 			clearSelection();
 			return;
 		}
 
-		auto b = label.format.selectWord(charNumber);
+		auto b = label->format.selectWord(charNumber);
 		_selectionBounds = pair(SelectionPosition{obj->index, b.first}, SelectionPosition{obj->index, b.second});
 
 		updateRects();
@@ -123,12 +121,12 @@ void ListenerView::Selection::selectLabel(const rich_text::Object *obj, const Ve
 
 void ListenerView::Selection::selectWholeLabel() {
 	if (_object) {
-		const auto &label = _object->value.label;
+		if (auto label = _object->asLabel()) {
+			_selectionBounds.first = SelectionPosition{_object->index, 0};
+			_selectionBounds.second = SelectionPosition{_object->index, uint32_t(label->format.chars.size() - 1)};
 
-		_selectionBounds.first = SelectionPosition{_object->index, 0};
-		_selectionBounds.second = SelectionPosition{_object->index, uint32_t(label.format.chars.size() - 1)};
-
-		updateRects();
+			updateRects();
+		}
 	}
 }
 
@@ -170,26 +168,26 @@ void ListenerView::Selection::updateRects() {
 		if (_selectionBounds.first.object == _selectionBounds.second.object) {
 			auto obj = res->getObject(_selectionBounds.first.object);
 			if (obj && obj->isLabel()) {
-				obj->value.label.getLabelRects(rects, _selectionBounds.first.position, _selectionBounds.second.position, screen::density(), obj->bbox.origin, Padding());
+				obj->asLabel()->getLabelRects(rects, _selectionBounds.first.position, _selectionBounds.second.position, screen::density(), obj->bbox.origin, Padding());
 			}
 		} else {
 			auto firstObj = res->getObject(_selectionBounds.first.object);
 			auto secondObj = res->getObject(_selectionBounds.second.object);
 
 			if (firstObj && firstObj->isLabel()) {
-				const rich_text::Label &label = firstObj->value.label;
-				label.getLabelRects(rects, _selectionBounds.first.position, uint32_t(label.format.chars.size() - 1), screen::density(), firstObj->bbox.origin, Padding());
+				auto label = firstObj->asLabel();
+				label->getLabelRects(rects, _selectionBounds.first.position, uint32_t(label->format.chars.size() - 1), screen::density(), firstObj->bbox.origin, Padding());
 			}
 			for (size_t i = _selectionBounds.first.object + 1; i < _selectionBounds.second.object; ++i) {
 				auto obj = res->getObject(i);
 				if (obj && obj->isLabel()) {
-					const rich_text::Label &label = obj->value.label;
-					label.getLabelRects(rects, 0, uint32_t(label.format.chars.size() - 1), screen::density(), obj->bbox.origin, Padding());
+					auto label = obj->asLabel();
+					label->getLabelRects(rects, 0, uint32_t(label->format.chars.size() - 1), screen::density(), obj->bbox.origin, Padding());
 				}
 			}
 			if (secondObj && secondObj->isLabel()) {
-				const rich_text::Label &label = secondObj->value.label;
-				label.getLabelRects(rects, 0, _selectionBounds.second.position, screen::density(), secondObj->bbox.origin, Padding());
+				auto label = secondObj->asLabel();
+				label->getLabelRects(rects, 0, _selectionBounds.second.position, screen::density(), secondObj->bbox.origin, Padding());
 			}
 		}
 
@@ -239,9 +237,9 @@ bool ListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInterval &ti
 			return true;
 		}
 
-		const auto &label = obj->value.label;
+		auto label = obj->asLabel();
 		Vec2 locInLabel((loc - obj->bbox.origin));
-		uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
+		uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
 
 		if (charNumber == maxOf<uint32_t>()) {
 			clearSelection();
@@ -331,11 +329,11 @@ bool ListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
 	}
 
 	if (_object && _object->type == layout::Object::Type::Label) {
-		const auto &label = _object->value.label;
+		auto label = _object->asLabel();
 		Vec2 locInLabel((loc - _object->bbox.origin));
 
 		if (_markerTarget == _markerStart) {
-			uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Prefix);
+			uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Prefix);
 			if (charNumber != maxOf<uint32_t>()) {
 				if (_object->index != _selectionBounds.second.object ||
 						(charNumber != _selectionBounds.first.position && charNumber <= _selectionBounds.second.position)) {
@@ -345,7 +343,7 @@ bool ListenerView::Selection::onSwipe(const Vec2 &vec, const Vec2 &d) {
 				}
 			}
 		} else {
-			uint32_t charNumber = label.format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Suffix);
+			uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * density)), int32_t(roundf(locInLabel.y * density)), font::FormatSpec::Suffix);
 			if (charNumber != maxOf<uint32_t>()) {
 				if (_object->index != _selectionBounds.first.object ||
 						(charNumber != _selectionBounds.second.position && charNumber >= _selectionBounds.first.position)) {
@@ -400,13 +398,13 @@ String ListenerView::Selection::getSelectedString(size_t maxWords) const {
 			if (_selectionBounds.first.object == _selectionBounds.second.object) {
 				auto obj = res->getObject(_selectionBounds.first.object);
 				if (obj && obj->isLabel()) {
-					return string::toUtf8(obj->value.label.format.str(_selectionBounds.first.position, _selectionBounds.second.position, maxWords, true));
+					return string::toUtf8(obj->asLabel()->format.str(_selectionBounds.first.position, _selectionBounds.second.position, maxWords, true));
 				}
 			} else if (maxWords != maxOf<size_t>()) {
 				auto obj = res->getObject(_selectionBounds.first.object);
 				if (obj && obj->isLabel()) {
-					const rich_text::Label &l = obj->value.label;
-					return string::toUtf8(l.format.str(_selectionBounds.first.position, uint32_t(l.format.chars.size() - 1), maxWords, true));
+					auto l = obj->asLabel();
+					return string::toUtf8(l->format.str(_selectionBounds.first.position, uint32_t(l->format.chars.size() - 1), maxWords, true));
 				}
 			} else {
 				StringStream ret;
@@ -415,21 +413,21 @@ String ListenerView::Selection::getSelectedString(size_t maxWords) const {
 
 				String str;
 				if (firstObj && firstObj->isLabel()) {
-					const rich_text::Label &l = firstObj->value.label;
-					pushString(ret, l.format.str(_selectionBounds.first.position, uint32_t(l.format.chars.size() - 1), maxWords, true));
+					auto l = firstObj->asLabel();
+					pushString(ret, l->format.str(_selectionBounds.first.position, uint32_t(l->format.chars.size() - 1), maxWords, true));
 				}
 
 				for (size_t i = _selectionBounds.first.object + 1; i < _selectionBounds.second.object; ++i) {
 					auto obj = res->getObject(i);
 					if (obj && obj->isLabel()) {
-						const rich_text::Label &l = obj->value.label;
-						pushString(ret, l.format.str(0, uint32_t(l.format.chars.size() - 1), maxWords, true));
+						auto l = obj->asLabel();
+						pushString(ret, l->format.str(0, uint32_t(l->format.chars.size() - 1), maxWords, true));
 					}
 				}
 
 				if (lastObj && lastObj->isLabel()) {
-					const rich_text::Label &l = lastObj->value.label;
-					pushString(ret, l.format.str(0, _selectionBounds.second.position, maxWords, true));
+					auto l = lastObj->asLabel();
+					pushString(ret, l->format.str(0, _selectionBounds.second.position, maxWords, true));
 				}
 
 				return ret.str();
@@ -444,12 +442,12 @@ Pair<ListenerView::SelectionPosition, ListenerView::SelectionPosition> ListenerV
 }
 
 const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc) const {
-	const Vector<rich_text::Object> &objs = res->getObjects();
+	auto &objs = res->getObjects();
 	for (auto &it : objs) {
-		if (it.isLabel()) {
-			if (loc.x >= it.bbox.getMinX() - 8.0f && loc.x <= it.bbox.getMaxX() + 8.0f
-					&& loc.y >= it.bbox.getMinY() - 8.0f && loc.y <= it.bbox.getMaxY() + 8.0f) {
-				return &it;
+		if (it->isLabel()) {
+			if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
+					&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
+				return it;
 			}
 		}
 	}
@@ -457,7 +455,7 @@ const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::R
 }
 
 const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc, size_t pos, int32_t offset) const {
-	const Vector<rich_text::Object> &objs = res->getObjects();
+	auto &objs = res->getObjects();
 	if (offset < 0 && pos > 0) {
 		if (-offset > int32_t(pos)) {
 			offset = int32_t(-pos);
@@ -466,10 +464,10 @@ const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::R
 		auto end = objs.begin() + pos + 1;
 		auto start = objs.begin() + (pos + offset);
 		for (auto it = start; it != end; ++ it) {
-			if (it->isLabel()) {
-				if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
-						&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
-					return &(*it);
+			if ((*it)->isLabel()) {
+				if (loc.x >= (*it)->bbox.getMinX() - 8.0f && loc.x <= (*it)->bbox.getMaxX() + 8.0f
+						&& loc.y >= (*it)->bbox.getMinY() - 8.0f && loc.y <= (*it)->bbox.getMaxY() + 8.0f) {
+					return (*it);
 				}
 			}
 		}
@@ -482,10 +480,10 @@ const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::R
 		auto start = objs.begin() + pos;
 		auto end = objs.begin() + (pos + 1 + offset);
 		for (auto it = start; it != end; ++ it) {
-			if (it->isLabel()) {
-				if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
-						&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
-					return &(*it);
+			if ((*it)->isLabel()) {
+				if (loc.x >= (*it)->bbox.getMinX() - 8.0f && loc.x <= (*it)->bbox.getMaxX() + 8.0f
+						&& loc.y >= (*it)->bbox.getMinY() - 8.0f && loc.y <= (*it)->bbox.getMaxY() + 8.0f) {
+					return (*it);
 				}
 			}
 		}
@@ -554,7 +552,7 @@ void ListenerView::onTap(int count, const Vec2 &vec) {
 				auto loc = convertToObjectSpace(vec);
 				auto &objs = res->getRefs();
 				for (auto &it : objs) {
-					if (isObjectTapped(loc, it)) {
+					if (isObjectTapped(loc, *it)) {
 						return;
 					}
 				}
@@ -566,19 +564,19 @@ void ListenerView::onTap(int count, const Vec2 &vec) {
 }
 
 void ListenerView::onObjectPressEnd(const Vec2 &vec, const rich_text::Object &obj) {
-	if (obj.type == rich_text::Object::Type::Ref) {
-		onLink(obj.value.ref.target, obj.value.ref.mode, vec);
+	if (auto ref = obj.asLink()) {
+		onLink(ref->target, ref->mode, vec);
 	}
 }
 
-void ListenerView::onLink(const String &ref, const String &target, const Vec2 &pos) {
-	if (ref.compare(0, 7, "http://") == 0 || ref.compare(0, 8, "https://") == 0) {
+void ListenerView::onLink(const StringView &ref, const StringView &target, const Vec2 &pos) {
+	if (ref.starts_with("http://") || ref.starts_with( "https://")) {
 		stappler::Device::getInstance()->goToUrl(ref);
 		onExternalLink(this, ref);
-	} else if (ref.compare(0, 7, "mailto:") == 0) {
+	} else if (ref.starts_with("mailto:") == 0) {
 		stappler::Device::getInstance()->mailTo(ref);
 		onExternalLink(this, ref);
-	} else if (ref.compare(0, 4, "tel:") == 0) {
+	} else if (ref.starts_with("tel:") == 0) {
 		stappler::Device::getInstance()->makePhoneCall(ref);
 		onExternalLink(this, ref);
 	}

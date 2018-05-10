@@ -58,6 +58,7 @@ protected:
 	Vector<layout::Node *> _nodeStack;
 	LayoutDocument *_document = nullptr;
 	Page *_page;
+	uint32_t _tableIdx = 0;
 };
 
 NS_MMD_END

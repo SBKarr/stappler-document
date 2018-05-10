@@ -134,28 +134,29 @@ void View::Highlight::updateRects() {
 			if (it.first.object == it.second.object) {
 				auto obj = res->getObject(it.first.object);
 				if (obj && obj->isLabel()) {
-					uint32_t size = uint32_t(obj->value.label.format.chars.size() - 1);
-					obj->value.label.getLabelRects(rects,std::min(it.first.position,size),std::min(it.second.position,size), screen::density(), obj->bbox.origin, Padding());
+					auto l = obj->asLabel();
+					uint32_t size = uint32_t(l->format.chars.size() - 1);
+					l->getLabelRects(rects,std::min(it.first.position,size),std::min(it.second.position,size), screen::density(), obj->bbox.origin, Padding());
 				}
 			} else {
 				auto firstObj = res->getObject(it.first.object);
 				auto secondObj = res->getObject(it.second.object);
 				if (firstObj && firstObj->isLabel()) {
-					const rich_text::Label &label = firstObj->value.label;
-					uint32_t size = uint32_t(label.format.chars.size() - 1);
-					label.getLabelRects(rects, std::min(it.first.position,size), size, screen::density(), firstObj->bbox.origin, Padding());
+					auto label = firstObj->asLabel();
+					uint32_t size = uint32_t(label->format.chars.size() - 1);
+					label->getLabelRects(rects, std::min(it.first.position,size), size, screen::density(), firstObj->bbox.origin, Padding());
 				}
 				for (size_t i = it.first.object + 1; i < it.second.object; ++i) {
 					auto obj = res->getObject(i);
 					if (obj && obj->isLabel()) {
-						const rich_text::Label &label = obj->value.label;
-						label.getLabelRects(rects, 0, uint32_t(label.format.chars.size() - 1), screen::density(), obj->bbox.origin, Padding());
+						auto label = obj->asLabel();
+						label->getLabelRects(rects, 0, uint32_t(label->format.chars.size() - 1), screen::density(), obj->bbox.origin, Padding());
 					}
 				}
 				if (secondObj && secondObj->isLabel()) {
-					const rich_text::Label &label = secondObj->value.label;
-					uint32_t size = uint32_t(label.format.chars.size() - 1);
-					label.getLabelRects(rects, 0, std::min(it.second.position,size), screen::density(), secondObj->bbox.origin, Padding());
+					auto label = secondObj->asLabel();
+					uint32_t size = uint32_t(label->format.chars.size() - 1);
+					label->getLabelRects(rects, 0, std::min(it.second.position,size), screen::density(), secondObj->bbox.origin, Padding());
 				}
 			}
 		}

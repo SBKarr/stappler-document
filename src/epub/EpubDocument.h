@@ -36,16 +36,17 @@ public:
 	using Style = layout::Style;
 	using Node = layout::Node;
 	using MediaParameters = layout::MediaParameters;
+	using FilePath = layout::FilePath;
 
-	static bool isEpub(const String &path);
+	static bool isEpub(const StringView &path);
 
 	Document();
 
 	virtual bool init(const FilePath &);
-	virtual bool isFileExists(const String &) const override;
-	virtual Bytes getFileData(const String &) override;
-	virtual Bytes getImageData(const String &) override;
-	virtual Pair<uint16_t, uint16_t> getImageSize(const String &) override;
+	virtual bool isFileExists(const StringView &) const override;
+	virtual Bytes getFileData(const StringView &) override;
+	virtual Bytes getImageData(const StringView &) override;
+	virtual Pair<uint16_t, uint16_t> getImageSize(const StringView &) override;
 
 	bool valid() const;
 	operator bool () const;

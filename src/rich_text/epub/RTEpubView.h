@@ -37,15 +37,15 @@ NS_RT_BEGIN
 
 class EpubView : public material::ToolbarLayout {
 public:
-	virtual bool init(Source *, const String &title, font::HyphenMap *);
+	virtual bool init(Source *, const StringView &title);
 	virtual void onContentSizeDirty() override;
     virtual void visit(cocos2d::Renderer *, const Mat4 &, uint32_t, ZPath &) override;
 
 	virtual void onEnter() override;
 	virtual void onExit() override;
 
-	virtual void setTitle(const String &) override;
-	virtual const String &getTitle() const override;
+	virtual void setTitle(const StringView &) override;
+	virtual StringView getTitle() const override;
 
 	virtual void setLocalHeader(bool value);
 	virtual bool isLocalHeader() const;
@@ -62,6 +62,8 @@ public:
 	virtual bool isExtendedNavigationEnabled() const;
 
 protected:
+	virtual void onBaseNode(const node::Params &, const Padding &, float offset) override;
+
 	virtual void onRefreshButton();
 	virtual void onLayoutButton();
 
@@ -112,7 +114,6 @@ protected:
 	} _backButtonStatus = None;
 
 	Rc<Source> _source;
-	Rc<font::HyphenMap> _hyphens;
 
 	Rc<material::MenuSource> _viewSource;
 	Rc<material::MenuSource> _selectionSource;

@@ -65,7 +65,7 @@ Rc<cocos2d::Node> LightLevelMenuButton::onLabel() {
 	auto l = Rc<material::Label>::create(material::FontType::Caption);
 	l->setLocaleEnabled(true);
 	l->setAutoLightLevel(true);
-	l->setString("SystemTheme"_locale);
+	l->setString("SystemTheme"_locale.to_string());
 	l->setPosition(16, 12);
 	l->setAnchorPoint(cocos2d::Vec2(0, 0.5f));
 	n->addChild(l);

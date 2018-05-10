@@ -98,7 +98,7 @@ bool CommonSource::init(const FilePath &file) {
 		return false;
 	}
 
-	_file = file.get();
+	_file = file.get().str();
 	updateDocument();
 	return true;
 }
@@ -154,6 +154,14 @@ void CommonSource::setAsset(const AssetCallback &cb) {
 		onDocumentAsset(a);
 		release();
 	});
+}
+
+void CommonSource::setHyphens(layout::HyphenMap *map) {
+	_hyphens = map;
+}
+
+layout::HyphenMap *CommonSource::getHyphens() const {
+	return _hyphens;
 }
 
 Document *CommonSource::getDocument() const {
@@ -478,12 +486,12 @@ Rc<font::FontSource> CommonSource::makeSource(AssetMap && map, bool schedule) {
 	return Rc<font::FontSource>::create(FontFaceMap(_fontFaces), _callback, _scale, SearchDirs(_searchDir), std::move(map), false);
 }
 
-Rc<Document> CommonSource::openDocument(const String &path, const String &ct) {
+Rc<Document> CommonSource::openDocument(const StringView &path, const StringView &ct) {
 	Rc<Document> ret;
 	if (!_data.empty()) {
 		ret = Document::openDocument(_data, ct);
 	} else {
-		ret = Document::openDocument(FilePath(path), ct);
+		ret = Document::openDocument(path, ct);
 	}
 
 	if (ret) {
@@ -533,7 +541,7 @@ Vector<SyncRWLock *> CommonSource::getAssetsVec() const {
 	return ret;
 }
 
-bool CommonSource::isFileExists(const String &url) const {
+bool CommonSource::isFileExists(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end() && it->second.asset) {
 		return true;
@@ -545,7 +553,7 @@ bool CommonSource::isFileExists(const String &url) const {
 	return false;
 }
 
-Pair<uint16_t, uint16_t> CommonSource::getImageSize(const String &url) const {
+Pair<uint16_t, uint16_t> CommonSource::getImageSize(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end()) {
 		if (StringView(it->second.meta.type).is("image/") && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
@@ -559,7 +567,7 @@ Pair<uint16_t, uint16_t> CommonSource::getImageSize(const String &url) const {
 	return Pair<uint16_t, uint16_t>(0, 0);
 }
 
-Bytes CommonSource::getImageData(const String &url) const {
+Bytes CommonSource::getImageData(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end()) {
 		if (StringView(it->second.meta.type).is("image/") && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {

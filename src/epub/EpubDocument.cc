@@ -32,17 +32,17 @@ THE SOFTWARE.
 
 NS_EPUB_BEGIN
 
-static bool checkEpub(const String &path, const String &ct) {
+static bool checkEpub(const StringView &path, const StringView &ct) {
 	return (ct == "application/epub+zip") || Document::isEpub(path);
 }
 
-static Rc<layout::Document> loadEpub(const String &path, const String &ct) {
+static Rc<layout::Document> loadEpub(const StringView &path, const StringView &ct) {
 	return Rc<epub::Document>::create(FilePath(path));
 }
 
 Document::DocumentFormat Document::EpubFormat(&checkEpub, &loadEpub, nullptr, nullptr);
 
-bool Document::isEpub(const String &path) {
+bool Document::isEpub(const StringView &path) {
 	return Info::isEpub(path);
 }
 
@@ -84,8 +84,8 @@ bool Document::init(const FilePath &path) {
 	}
 	return false;
 }
-bool Document::isFileExists(const String &ipath) const {
-	String path(resolveName(ipath));
+bool Document::isFileExists(const StringView &ipath) const {
+	StringView path(resolveName(ipath));
 	auto &manifest = _info->getManifest();
 	auto fileIt = manifest.find(path);
 	if (fileIt != manifest.end()) {
@@ -93,8 +93,8 @@ bool Document::isFileExists(const String &ipath) const {
 	}
 	return false;
 }
-Bytes Document::getFileData(const String &ipath) {
-	String path(resolveName(ipath));
+Bytes Document::getFileData(const StringView &ipath) {
+	StringView path(resolveName(ipath));
 	auto &manifest = _info->getManifest();
 	auto fileIt = manifest.find(path);
 	if (fileIt != manifest.end()) {
@@ -103,12 +103,12 @@ Bytes Document::getFileData(const String &ipath) {
 	}
 	return Bytes();
 }
-Bytes Document::getImageData(const String &ipath) {
+Bytes Document::getImageData(const StringView &ipath) {
 	return getFileData(ipath);
 }
 
-Pair<uint16_t, uint16_t> Document::getImageSize(const String &ipath) {
-	String path(resolveName(ipath));
+Pair<uint16_t, uint16_t> Document::getImageSize(const StringView &ipath) {
+	StringView path(resolveName(ipath));
 	auto &manifest = _info->getManifest();
 	auto fileIt = manifest.find(path);
 	if (fileIt != manifest.end()) {

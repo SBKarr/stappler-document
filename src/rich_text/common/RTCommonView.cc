@@ -132,10 +132,6 @@ void CommonView::setLayout(Layout l) {
 	}
 }
 
-void CommonView::setHyphens(font::HyphenMap *map) {
-	_renderer->setHyphens(map);
-}
-
 Vec2 CommonView::convertToObjectSpace(const Vec2 &vec) const {
 	if (_layout == Vertical) {
 		auto loc = _root->convertToNodeSpace(vec);
@@ -192,8 +188,8 @@ bool CommonView::onPressBegin(const Vec2 &vec) {
 	if (_linksEnabled) {
 		auto loc = convertToObjectSpace(vec);
 		for (auto &it : refs) {
-			if (isObjectTapped(loc, it)) {
-				onObjectPressBegin(vec, it);
+			if (isObjectTapped(loc, *it)) {
+				onObjectPressBegin(vec, *it);
 				return true;
 			}
 		}
@@ -213,17 +209,17 @@ bool CommonView::onPressEnd(const Vec2 &vec, const TimeInterval &r) {
 	if (!res) {
 		return false;
 	}
-	auto &objs = res->getRefs();
-	if (objs.empty()) {
+	auto &refs = res->getRefs();
+	if (refs.empty()) {
 		return false;
 	}
 
 	if (_linksEnabled) {
 		auto loc = convertToObjectSpace(vec);
-		for (auto &it : objs) {
-			if (isObjectActive(it)) {
-				if (isObjectTapped(loc, it)) {
-					onObjectPressEnd(vec, it);
+		for (auto &it : refs) {
+			if (isObjectActive(*it)) {
+				if (isObjectTapped(loc, *it)) {
+					onObjectPressEnd(vec, *it);
 					return true;
 				}
 			}

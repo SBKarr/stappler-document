@@ -49,7 +49,7 @@ bool LayoutDocument::isMmdData(const DataReader<ByteOrder::Network> &data) {
 	return false;
 }
 
-bool LayoutDocument::isMmdFile(const String &path) {
+bool LayoutDocument::isMmdFile(const StringView &path) {
 	auto ext = filepath::lastExtension(path);
 	if (ext == "md" || ext == "markdown") {
 		return true;
@@ -67,41 +67,41 @@ bool LayoutDocument::isMmdFile(const String &path) {
 	return false;
 }
 
-static bool checkMmdFile(const String &path, const String &ct) {
+static bool checkMmdFile(const StringView &path, const StringView &ct) {
 	StringView ctView(ct);
 
 	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || LayoutDocument::isMmdFile(path);
 }
 
-static Rc<layout::Document> loadMmdFile(const String &path, const String &ct) {
-	return Rc<LayoutDocument>::create(FilePath(path), ct);
+static Rc<layout::Document> loadMmdFile(const StringView &path, const StringView &ct) {
+	return Rc<LayoutDocument>::create(layout::FilePath(path), ct);
 }
 
-static bool checkMmdData(const DataReader<ByteOrder::Network> &data, const String &ct) {
+static bool checkMmdData(const DataReader<ByteOrder::Network> &data, const StringView &ct) {
 	StringView ctView(ct);
 
 	return ctView.is("text/markdown") || ctView.is("text/x-markdown") || LayoutDocument::isMmdData(data);
 }
 
-static Rc<layout::Document> loadMmdData(const DataReader<ByteOrder::Network> &data, const String &ct) {
+static Rc<layout::Document> loadMmdData(const DataReader<ByteOrder::Network> &data, const StringView &ct) {
 	return Rc<LayoutDocument>::create(data, ct);
 }
 
 LayoutDocument::DocumentFormat LayoutDocument::MmdFormat(&checkMmdFile, &loadMmdFile, &checkMmdData, &loadMmdData);
 
-bool LayoutDocument::init(const FilePath &path, const String &ct) {
+bool LayoutDocument::init(const FilePath &path, const StringView &ct) {
 	if (path.get().empty()) {
 		return false;
 	}
 
-	_filePath = path.get();
+	_filePath = path.get().str();
 
 	auto data = filesystem::readFile(path.get());
 
 	return init(data, ct);
 }
 
-bool LayoutDocument::init(const DataReader<ByteOrder::Network> &data, const String &ct) {
+bool LayoutDocument::init(const DataReader<ByteOrder::Network> &data, const StringView &ct) {
 	if (data.empty()) {
 		return false;
 	}
@@ -299,12 +299,61 @@ void LayoutDocument::onTag(layout::Style &style, const StringView &tag, const St
 		style.set(Parameter::create<ParameterName::Display>(Display::InlineBlock), true);
 
 	} else if (tag == "table") {
-		style.set(Parameter::create<ParameterName::Display>(Display::None), true);
+		style.data.reserve(16);
+		style.data.push_back(Parameter::create<ParameterName::MarginTop>(Metric(0.5f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::MarginBottom>(Metric(0.5f, Metric::Units::Rem)));
+
+		style.data.push_back(Parameter::create<ParameterName::BorderTopStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderTopWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderTopColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftColor>(Color4B(168, 168, 168,255)));
+
+		style.set(Parameter::create<ParameterName::Display>(Display::Table), true);
+
+	} else if (tag == "td" || tag == "th") {
+		style.data.reserve(18);
+		style.data.push_back(Parameter::create<ParameterName::PaddingTop>(Metric(0.3f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingLeft>(Metric(0.3f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingBottom>(Metric(0.3f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingRight>(Metric(0.3f, Metric::Units::Rem)));
+
+		style.data.push_back(Parameter::create<ParameterName::BorderTopStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderTopWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderTopColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderRightColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderBottomColor>(Color4B(168, 168, 168,255)));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftStyle>(BorderStyle::Solid));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftWidth>(Metric(1.0f, Metric::Units::Px)));
+		style.data.push_back(Parameter::create<ParameterName::BorderLeftColor>(Color4B(168, 168, 168,255)));
+
+		if (tag == "th") {
+			style.set(Parameter::create<ParameterName::FontWeight>(FontWeight::Bold), true);
+		}
+
+	} else if (tag == "caption") {
+		style.data.push_back(Parameter::create<ParameterName::TextAlign>(TextAlign::Center));
+
+		style.data.push_back(Parameter::create<ParameterName::PaddingTop>(Metric(0.4f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingBottom>(Metric(0.4f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingLeft>(Metric(0.4f, Metric::Units::Rem)));
+		style.data.push_back(Parameter::create<ParameterName::PaddingRight>(Metric(0.4f, Metric::Units::Rem)));
 
 	} else if (tag == "blockquote") {
 		style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
-		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.5f, Metric::Units::Em)), true);
-		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.5f, Metric::Units::Em)), true);
+		style.set(Parameter::create<ParameterName::MarginTop>(Metric(0.5f, Metric::Units::Rem)), true);
+		style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.5f, Metric::Units::Rem)), true);
 
 		if (parent == "blockquote") {
 			style.set(Parameter::create<ParameterName::PaddingLeft>(Metric(0.8f, Metric::Units::Rem)), true);
@@ -401,6 +450,9 @@ static void LayoutDocument_onClass(layout::Style &style, const StringView &name,
 
 // Default style, that can be redefined with css
 layout::Style LayoutDocument::beginStyle(const Node &node, const Vector<const Node *> &stack, const MediaParameters &media) const {
+	using namespace layout;
+	using namespace layout::style;
+
 	const Node *parent = nullptr;
 	if (stack.size() > 1) {
 		parent = stack.at(stack.size() - 2);
@@ -408,6 +460,18 @@ layout::Style LayoutDocument::beginStyle(const Node &node, const Vector<const No
 
 	Style style;
 	onTag(style, node.getHtmlName(), parent ? StringView(parent->getHtmlName()) : StringView(), media);
+
+	if (parent && node.getHtmlName() == "tr") {
+		if (parent->getHtmlName() == "tbody") {
+			if (parent->getChildIndex(node) % 2 == 1) {
+				style.set(Parameter::create<ParameterName::BackgroundColor>(Color4B::WHITE), true);
+			} else {
+				style.set(Parameter::create<ParameterName::BackgroundColor>(Color4B(232, 232, 232, 255)), true);
+			}
+		} else {
+			style.set(Parameter::create<ParameterName::BackgroundColor>(Color4B::WHITE), true);
+		}
+	}
 
 	auto &attr = node.getAttributes();
 	for (auto &it : attr) {

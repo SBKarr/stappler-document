@@ -42,7 +42,7 @@ bool FileImageView::init(const String &src) {
 
 	auto incr = material::metrics::horizontalIncrement();
 	auto toolbar = Rc<material::Toolbar>::create();
-	toolbar->setTitle(filepath::lastComponent(src));
+	toolbar->setTitle(filepath::lastComponent(src).str());
 	toolbar->setMinified(true);
 	toolbar->setPosition(Vec2(incr / 4.0f, incr / 2.0f));
 	toolbar->setShadowZIndex(1.5f);

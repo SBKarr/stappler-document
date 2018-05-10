@@ -30,7 +30,7 @@ NS_RT_BEGIN
 
 class GalleryLayout : public material::ToolbarLayout {
 public:
-	virtual bool init(CommonSource *source, const std::string &name, const std::string &sel);
+	virtual bool init(CommonSource *source, const StringView &name, const StringView &sel);
 	virtual void onContentSizeDirty() override;
 
 	virtual void onEnter() override;

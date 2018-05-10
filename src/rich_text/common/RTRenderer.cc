@@ -113,6 +113,10 @@ Drawer *Renderer::getDrawer() const {
 	return _drawer;
 }
 
+MediaParameters Renderer::getMedia() const {
+	return _media;
+}
+
 void Renderer::onContentSizeDirty() {
 	_isPageSplitted = false;
 	auto size = _owner->getContentSize();
@@ -209,9 +213,6 @@ void Renderer::setScriptingValue(layout::style::Scripting value) {
 		_renderingDirty = true;
 	}
 }
-void Renderer::setHyphens(font::HyphenMap *map) {
-	_hyphens = map;
-}
 
 void Renderer::setPageMargin(const Margin &margin) {
 	if (_pageMargin != margin) {
@@ -278,7 +279,7 @@ bool Renderer::requestRendering() {
 
 		layout::Builder * impl = new layout::Builder(document, media, fontSet, _ids);
 		impl->setExternalAssetsMeta(s->getExternalAssetMeta());
-		impl->setHyphens(_hyphens);
+		impl->setHyphens(s->getHyphens());
 		_renderingInProgress = true;
 		if (_renderingCallback) {
 			_renderingCallback(nullptr, true);
@@ -320,7 +321,7 @@ void Renderer::setRenderingCallback(const RenderingCallback &cb) {
 	_renderingCallback = cb;
 }
 
-String Renderer::getLegacyBackground(const layout::Node &node, const StringView &opt) const {
+StringView Renderer::getLegacyBackground(const layout::Node &node, const StringView &opt) const {
 	if (auto doc = _source->getDocument()) {
 		auto root = doc->getRoot();
 
@@ -336,7 +337,7 @@ String Renderer::getLegacyBackground(const layout::Node &node, const StringView 
 
 		return bg.backgroundImage;
 	}
-	return String();
+	return StringView();
 }
 
 void Renderer::pushVersionOptions() {

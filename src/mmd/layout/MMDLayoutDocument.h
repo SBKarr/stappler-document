@@ -35,14 +35,15 @@ public:
 	using Style = layout::Style;
 	using Node = layout::Node;
 	using MediaParameters = layout::MediaParameters;
+	using FilePath = layout::FilePath;
 
 	static bool isMmdData(const DataReader<ByteOrder::Network> &data);
-	static bool isMmdFile(const String &path);
+	static bool isMmdFile(const StringView &path);
 
 	virtual ~LayoutDocument() { }
 
-	virtual bool init(const FilePath &, const String &ct = String()) override;
-	virtual bool init(const DataReader<ByteOrder::Network> &, const String &ct = String()) override;
+	virtual bool init(const FilePath &, const StringView &ct = StringView()) override;
+	virtual bool init(const DataReader<ByteOrder::Network> &, const StringView &ct = StringView()) override;
 
 	// Default style, that can be redefined with css
 	virtual Style beginStyle(const Node &, const Vector<const Node *> &, const MediaParameters &) const override;

@@ -61,6 +61,7 @@ THE SOFTWARE.
 #include "FileDialog.h"
 
 #include "SLReader.h"
+#include "SLImage.h"
 
 NS_SP_EXT_BEGIN(app)
 
@@ -98,6 +99,21 @@ void Application::init() {
 			_assetsDir = val.getString("assetsDir");
 		}
 
+		/*auto l = Rc<material::Layout>::create();
+
+		auto vg = Rc<draw::PathNode>::create(draw::Format::RGBA8888);
+		vg->setAutofit(draw::PathNode::Autofit::Contain);
+		vg->setPosition(0, 0);
+		vg->setAnchorPoint(Vec2(0, 0));
+		vg->setImage(Rc<layout::Image>::create(FilePath("/home/sbkarr/android/StapplerNext/stappler/extensions/document/gui-test/tests/border.svg")));
+		auto vgPtr = l->addChildNode(vg, 1);
+
+		auto lPtr = l.get();
+		l->setOnContentSizeDirtyCallback([lPtr, vgPtr] {
+			vgPtr->setContentSize(lPtr->getContentSize());
+		});
+
+		scene->pushContentNode(l);*/
 		scene->pushContentNode(Rc<FileNavigator>::create());
 
 		material::Scene::run(scene);
@@ -113,11 +129,11 @@ void Application::openFile(const std::string &name) {
 void Application::rebuildMenu() {
 	_appMenu->clear();
 
-	_appMenu->addCustom(120, [this] () -> cocos2d::Node * {
+	/*_appMenu->addCustom(120, [this] () -> cocos2d::Node * {
 		auto img = Rc<material::MaterialImage>::create(_banner);
 		img->setAutofit(material::MaterialImage::Autofit::Contain);
 		return img;
-	});
+	});*/
 
 	_appMenu->addButton("Файлы", material::IconName::Action_description,
 			[this] (material::Button *b, material::MenuSourceButton *i) {

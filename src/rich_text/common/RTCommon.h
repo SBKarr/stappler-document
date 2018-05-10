@@ -42,7 +42,6 @@ using Object = layout::Object;
 using Layout = layout::Layout;
 using Document = layout::Document;
 
-using Outline = layout::Outline;
 using Background = layout::BackgroundStyle;
 using Label = layout::Label;
 using Link = layout::Link;

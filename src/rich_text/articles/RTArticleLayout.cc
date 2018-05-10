@@ -368,7 +368,7 @@ Rc<ArticleLayout::ArticleLoader> ArticleLayout::constructLoader(size_t number) {
 
 Rc<View> ArticleLayout::loadView(const ArticleLoader *loader) {
 	Rc<View> view = loader->constructView();
-	view->setHyphens(_hyphens);
+	view->getSource()->setHyphens(_hyphens);
 	view->setTapCallback([this] (int, const Vec2 &) {
 		onTap();
 	});

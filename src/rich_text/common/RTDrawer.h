@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2016-2017 Roman Katuntsev <sbkarr@stappler.org>
+Copyright (c) 2016-2018 Roman Katuntsev <sbkarr@stappler.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,12 @@ THE SOFTWARE.
 #include "RTCommon.h"
 #include "SLDraw.h"
 #include "SPThread.h"
-#include "SPDrawGLCacheNode.h"
+#include "SPDrawGLRenderSurface.h"
+#include "SPDrawCanvas.h"
 
 NS_RT_BEGIN
 
-class Drawer : public Ref, public draw::GLCacheNode {
+class Drawer : public Ref, protected draw::GLRenderSurface {
 public:
 	using ObjectVec = std::vector<Object>;
 	using Callback = std::function<void(cocos2d::Texture2D *)>;
@@ -40,7 +41,7 @@ public:
 
 	~Drawer() { }
 
-	bool init();
+	bool init(StencilDepthFormat fmt = StencilDepthFormat::Stencil8);
 	void free();
 
 	// draw normal texture
@@ -53,23 +54,19 @@ public:
 	void clearCache();
 
 public:
-	cocos2d::Texture2D *getBitmap(const String &);
-	cocos2d::Texture2D *getBitmap(const String &, const Size &);
-	void addBitmap(const String &str, cocos2d::Texture2D *bmp);
-	void addBitmap(const String &str, cocos2d::Texture2D *bmp, const Size &);
+	cocos2d::Texture2D *getBitmap(const StringView &);
+	cocos2d::Texture2D *getBitmap(const StringView &, const Size &);
+	void addBitmap(const StringView &str, cocos2d::Texture2D *bmp);
+	void addBitmap(const StringView &str, cocos2d::Texture2D *bmp, const Size &);
 	void performUpdate();
 
-	bool begin(cocos2d::Texture2D *, const Color4B &);
+	bool begin(cocos2d::Texture2D *, const Color4B &, float density);
 	void end();
 
 	void setColor(const Color4B &);
 	void setLineWidth(float);
 
-	void drawRectangle(const Rect &, layout::DrawStyle);
-	void drawRectangleFill(const Rect &);
-	void drawRectangleOutline(const Rect &);
-	void drawRectangleOutline(const Rect &, bool top, bool right, bool bottom, bool left);
-
+	void drawPath(const Rect &, const layout::Path &);
 	void drawTexture(const Rect &bbox, cocos2d::Texture2D *, const Rect &texRect);
 
 	void drawCharRects(Font *, const font::FormatSpec &, const Rect & bbox, float scale);
@@ -79,26 +76,26 @@ public:
 	void drawCharsQuads(const Vector<Rc<cocos2d::Texture2D>> &, Vector<Rc<DynamicQuadArray>> &&, const Rect & bbox);
 
 protected:
-	void drawCharsEffects(Font *, const font::FormatSpec &, const Rect & bbox);
+	void initWithThread(StencilDepthFormat fmt);
+
 	void drawCharsQuads(cocos2d::Texture2D *, DynamicQuadArray *, const Rect & bbox);
 
 	void drawResizeBuffer(size_t count);
 
-	Mat4 _projection;
+	void flushVectorBuffer();
 
-	GLuint _fbo = 0;
-	uint32_t _width = 0;
-	uint32_t _height = 0;
-
-	GLuint _drawBufferVBO[2] = { 0, 0 };
-	size_t _drawBufferSize = 0;
+	size_t _vertexBufferSize = 0;
+	size_t _indexBufferSize = 0;
 
 	Color4B _color = Color4B(0, 0, 0, 0);
 	float _lineWidth = 1.0f;
+	float _density = 1.0f;
 
 	Time _updated;
 	bool _cacheUpdated = false;
 	Map<String, Pair<Rc<cocos2d::Texture2D>, Time>> _cache;
+
+	layout::Canvas _vectorCanvas;
 };
 
 NS_RT_END

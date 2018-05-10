@@ -96,7 +96,7 @@ public:
 	virtual void setPositionCallback(const PositionCallback &);
 	virtual const PositionCallback &getPositionCallback() const;
 
-	virtual void onContentFile(const String &);
+	virtual void onContentFile(const StringView &);
 
 	virtual void setRenderingEnabled(bool);
 
@@ -114,16 +114,17 @@ protected:
 	virtual void onRenderer(rich_text::Result *, bool) override;
 
 	virtual void onLightLevelChanged() override;
-	virtual void onLink(const String &ref, const String &target, const Vec2 &) override;
-	virtual void onId(const String &ref, const String &target, const Vec2 &);
-	virtual void onImage(const String &id, const Vec2 &);
-	virtual void onGallery(const String &name, const String &image, const Vec2 &);
-	virtual void onFile(const String &, const Vec2 &);
+	virtual void onLink(const StringView &ref, const StringView &target, const Vec2 &) override;
+	virtual void onId(const StringView &ref, const StringView &target, const Vec2 &);
+	virtual void onImage(const StringView &id, const Vec2 &);
+	virtual void onGallery(const StringView &name, const StringView &image, const Vec2 &);
+	virtual void onFile(const StringView &, const Vec2 &);
 	virtual void onPositionRef(const StringView &, bool middle);
 
 	virtual void onFigure(const layout::Node *node);
-	virtual void onImageFigure(const String &src, const String &alt, const layout::Node *);
-	virtual void onVideoFigure(const String &src);
+	virtual void onImageFigure(const StringView &src, const StringView &alt, const layout::Node *);
+	virtual void onVideoFigure(const StringView &src);
+	virtual void onTable(const StringView &);
 
 	virtual void onSourceError(Source::Error);
 	virtual void onSourceUpdate();

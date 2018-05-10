@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /**
 Copyright (c) 2018 Roman Katuntsev <sbkarr@stappler.org>
 
@@ -23,11 +20,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 **/
 
-#include "Material.h"
-#include "RTArticleLayout.cc"
-#include "RTEpubContentsView.cc"
-#include "RTEpubNavigation.cc"
-#include "RTEpubView.cc"
-#include "RTGalleryLayout.cc"
-#include "RTImageView.cc"
-#include "RTTableView.cc"
+#ifndef EXTENSIONS_DOCUMENT_SRC_RICH_TEXT_GALLERY_RTTABLEVIEW_H_
+#define EXTENSIONS_DOCUMENT_SRC_RICH_TEXT_GALLERY_RTTABLEVIEW_H_
+
+#include "RTCommonSource.h"
+#include "MaterialLayout.h"
+#include "RTTooltip.h"
+
+NS_RT_BEGIN
+
+class TableView : public material::ToolbarLayout {
+public:
+	virtual ~TableView();
+	virtual bool init(CommonSource *, const MediaParameters &, const StringView &id);
+
+	virtual void onContentSizeDirty() override;
+	virtual void onEnter() override;
+
+	virtual void close();
+
+protected:
+	virtual void acquireImageAsset(const StringView &);
+
+	virtual void onImage(cocos2d::Texture2D *);
+	virtual void onAssetCaptured(const StringView &);
+
+	uint32_t _min = 0;
+	uint32_t _max = 0;
+	String _src;
+	material::ImageLayer *_sprite = nullptr;
+	Rc<CommonSource> _source;
+	MediaParameters _media;
+};
+
+NS_RT_END
+
+#endif /* EXTENSIONS_DOCUMENT_SRC_RICH_TEXT_GALLERY_RTTABLEVIEW_H_ */
