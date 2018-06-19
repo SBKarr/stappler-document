@@ -102,18 +102,23 @@ void ListenerView::Selection::selectLabel(const rich_text::Object *obj, const Ve
 		_index = obj->index;
 		_object = obj;
 
-		const float d = screen::density();
-		Vec2 locInLabel((loc - obj->bbox.origin));
+		if (_mode != SelectMode::Full) {
+			_selectionBounds.first = SelectionPosition{_object->index, 0};
+			_selectionBounds.second = SelectionPosition{_object->index, uint32_t(label->format.chars.size() - 1)};
+		} else {
+			const float d = screen::density();
+			Vec2 locInLabel((loc - obj->bbox.origin));
 
-		uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
-		if (charNumber == maxOf<uint32_t>()) {
-			clearSelection();
-			return;
+			uint32_t charNumber = label->format.selectChar(int32_t(roundf(locInLabel.x * d)), int32_t(roundf(locInLabel.y * d)));
+			if (charNumber == maxOf<uint32_t>()) {
+				clearSelection();
+				return;
+			}
+
+			auto b = label->format.selectWord(charNumber);
+			_selectionBounds = pair(SelectionPosition{obj->index, b.first}, SelectionPosition{obj->index, b.second});
+
 		}
-
-		auto b = label->format.selectWord(charNumber);
-		_selectionBounds = pair(SelectionPosition{obj->index, b.first}, SelectionPosition{obj->index, b.second});
-
 		updateRects();
 		setEnabled(true);
 	}
@@ -150,13 +155,15 @@ void ListenerView::Selection::emplaceRect(const Rect &rect, size_t idx, size_t c
 	auto id = _quads->emplace();
 	_quads->setGeometry(id, origin, rect.size, 0.0f);
 
-	if (idx == 0) {
-		_markerStart->setPosition(origin);
-		_markerStart->setVisible(true);
-	}
-	if (idx + 1 == count) {
-		_markerEnd->setPosition(origin + Vec2(rect.size.width, 0));
-		_markerEnd->setVisible(true);
+	if (_mode == SelectMode::Full) {
+		if (idx == 0) {
+			_markerStart->setPosition(origin);
+			_markerStart->setVisible(true);
+		}
+		if (idx + 1 == count) {
+			_markerEnd->setPosition(origin + Vec2(rect.size.width, 0));
+			_markerEnd->setVisible(true);
+		}
 	}
 }
 
@@ -202,7 +209,7 @@ void ListenerView::Selection::updateRects() {
 	}
 }
 
-bool ListenerView::Selection::onTap(int, const Vec2 &) {
+bool ListenerView::Selection::onTap(int, const Vec2 &vec) {
 	return true;
 }
 
@@ -220,7 +227,7 @@ bool ListenerView::Selection::onLongPress(const Vec2 &vec, const TimeInterval &,
 				clearSelection();
 			}
 		}
-		if (count > 2) {
+		if (count > 2 && _mode == SelectMode::Full) {
 			selectWholeLabel();
 			return false;
 		}
@@ -234,6 +241,13 @@ bool ListenerView::Selection::onPressEnd(const Vec2 &vec, const TimeInterval &ti
 		const float d = screen::density();
 		if (!obj) {
 			clearSelection();
+			return true;
+		}
+
+		if (_mode != SelectMode::Full) {
+			if (obj->index != _selectionBounds.first.object) {
+				clearSelection();
+			}
 			return true;
 		}
 
@@ -377,6 +391,13 @@ bool ListenerView::Selection::isEnabled() const {
 	return _enabled;
 }
 
+void ListenerView::Selection::setMode(SelectMode m) {
+	_mode = m;
+}
+ListenerView::SelectMode ListenerView::Selection::getMode() const {
+	return _mode;
+}
+
 bool ListenerView::Selection::hasSelection() const {
 	return _selectionBounds.first.object != maxOf<size_t>() && _selectionBounds.first.object != maxOf<size_t>();
 }
@@ -441,13 +462,40 @@ Pair<ListenerView::SelectionPosition, ListenerView::SelectionPosition> ListenerV
 	return _selectionBounds;
 }
 
+
+StringView ListenerView::Selection::getSelectedHash() const {
+	if (auto res = _view->getResult()) {
+		if (_mode != SelectMode::Full) {
+			auto obj = res->getObject(_selectionBounds.first.object);
+			if (obj->isLabel()) {
+				return obj->asLabel()->hash;
+			}
+		}
+	}
+	return StringView();
+}
+
+size_t ListenerView::Selection::getSelectedSourceIndex() const {
+	if (auto res = _view->getResult()) {
+		if (_mode != SelectMode::Full) {
+			auto obj = res->getObject(_selectionBounds.first.object);
+			if (obj->isLabel()) {
+				return obj->asLabel()->sourceIndex;
+			}
+		}
+	}
+	return 0;
+}
+
 const rich_text::Object *ListenerView::Selection::getSelectedObject(rich_text::Result *res, const Vec2 &loc) const {
 	auto &objs = res->getObjects();
 	for (auto &it : objs) {
 		if (it->isLabel()) {
-			if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
-					&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
-				return it;
+			if (_mode != SelectMode::Indexed || (!it->asLabel()->hash.empty() && it->asLabel()->sourceIndex != 0)) {
+				if (loc.x >= it->bbox.getMinX() - 8.0f && loc.x <= it->bbox.getMaxX() + 8.0f
+						&& loc.y >= it->bbox.getMinY() - 8.0f && loc.y <= it->bbox.getMaxY() + 8.0f) {
+					return it;
+				}
 			}
 		}
 	}
@@ -635,11 +683,25 @@ bool ListenerView::isSelectionEnabled() const {
 	return _selection->isEnabled();
 }
 
+void ListenerView::setSelectMode(SelectMode m) {
+	_selection->setMode(m);
+}
+ListenerView::SelectMode ListenerView::getSelectMode() const {
+	return _selection->getMode();
+}
+
 String ListenerView::getSelectedString(size_t maxWords) const {
 	return _selection->getSelectedString(maxWords);
 }
 Pair<ListenerView::SelectionPosition, ListenerView::SelectionPosition> ListenerView::getSelectionPosition() const {
 	return _selection->getSelectionPosition();
+}
+
+StringView ListenerView::getSelectedHash() const {
+	return _selection->getSelectedHash();
+}
+size_t ListenerView::getSelectedSourceIndex() const {
+	return _selection->getSelectedSourceIndex();
 }
 
 void ListenerView::onPosition() {

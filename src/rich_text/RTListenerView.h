@@ -35,6 +35,12 @@ public:
 	static EventHeader onSelection;
 	static EventHeader onExternalLink;
 
+	enum class SelectMode {
+		Full,
+		Para,
+		Indexed
+	};
+
 	struct SelectionPosition {
 		size_t object;
 		uint32_t position;
@@ -62,10 +68,16 @@ public:
 		virtual void setEnabled(bool);
 		virtual bool isEnabled() const;
 
+		virtual void setMode(SelectMode);
+		virtual SelectMode getMode() const;
+
 		virtual bool hasSelection() const;
 
 		virtual String getSelectedString(size_t maxWords) const;
 		virtual Pair<SelectionPosition, SelectionPosition> getSelectionPosition() const;
+
+		virtual StringView getSelectedHash() const;
+		virtual size_t getSelectedSourceIndex() const;
 
 	protected:
 		virtual const Object *getSelectedObject(Result *, const Vec2 &) const;
@@ -83,6 +95,7 @@ public:
 		draw::PathNode *_markerEnd = nullptr;
 		draw::PathNode *_markerTarget = nullptr;
 		bool _enabled = false;
+		SelectMode _mode = SelectMode::Full;
 	};
 
 	virtual ~ListenerView();
@@ -96,8 +109,14 @@ public:
 	virtual void disableSelection();
 	virtual bool isSelectionEnabled() const;
 
+	virtual void setSelectMode(SelectMode);
+	virtual SelectMode getSelectMode() const;
+
 	virtual String getSelectedString(size_t maxWords = maxOf<size_t>()) const;
 	virtual Pair<SelectionPosition, SelectionPosition> getSelectionPosition() const;
+
+	virtual StringView getSelectedHash() const;
+	virtual size_t getSelectedSourceIndex() const;
 
 protected:
 	virtual void onTap(int count, const Vec2 &loc) override;

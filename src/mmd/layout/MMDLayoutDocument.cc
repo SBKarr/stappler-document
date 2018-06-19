@@ -293,10 +293,23 @@ void LayoutDocument::onTag(layout::Style &style, const StringView &tag, const St
 		style.set(Parameter::create<ParameterName::XListStyleOffset>(Metric(0.7f, Metric::Units::Rem)), true);
 
 	} else if (tag == "img") {
+		if (parent == "figure") {
+			style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
+		} else {
+			style.set(Parameter::create<ParameterName::Display>(Display::InlineBlock), true);
+		}
+
 		style.set(Parameter::create<ParameterName::BackgroundSizeWidth>(Metric(1.0, Metric::Units::Contain)), true);
 		style.set(Parameter::create<ParameterName::BackgroundSizeHeight>(Metric(1.0, Metric::Units::Contain)), true);
 		style.set(Parameter::create<ParameterName::PageBreakInside>(PageBreak::Avoid), true);
-		style.set(Parameter::create<ParameterName::Display>(Display::InlineBlock), true);
+
+		style.set(Parameter::create<ParameterName::MarginRight>(Metric(0.0f, Metric::Units::Auto)), true);
+		style.set(Parameter::create<ParameterName::MarginLeft>(Metric(0.0f, Metric::Units::Auto)), true);
+
+		style.set(Parameter::create<ParameterName::MaxWidth>(Metric(70.0f, Metric::Units::Vw)), true);
+		style.set(Parameter::create<ParameterName::MaxHeight>(Metric(70.0f, Metric::Units::Vh)), true);
+		style.set(Parameter::create<ParameterName::MinWidth>(Metric(100.8f, Metric::Units::Px)), true);
+		style.set(Parameter::create<ParameterName::MinHeight>(Metric(88.8f, Metric::Units::Px)), true);
 
 	} else if (tag == "table") {
 		style.data.reserve(16);
@@ -407,7 +420,6 @@ void LayoutDocument::onTag(layout::Style &style, const StringView &tag, const St
 			style.set(Parameter::create<ParameterName::MarginBottom>(Metric(0.5f, Metric::Units::Em)), true);
 			style.set(Parameter::create<ParameterName::TextAlign>(TextAlign::Center), true);
 		}
-
 	}
 }
 
@@ -433,11 +445,6 @@ static void LayoutDocument_onClass(layout::Style &style, const StringView &name,
 	} else if (name == "img") {
 		if (classStr == "middle") {
 			style.set(Parameter::create<ParameterName::Display>(Display::Block), true);
-			style.set(Parameter::create<ParameterName::MaxWidth>(Metric(70.0f, Metric::Units::Vw)), true);
-			style.set(Parameter::create<ParameterName::MaxHeight>(Metric(70.0f, Metric::Units::Vh)), true);
-			style.set(Parameter::create<ParameterName::MinWidth>(Metric(100.8f, Metric::Units::Px)), true);
-			style.set(Parameter::create<ParameterName::MinHeight>(Metric(88.8f, Metric::Units::Px)), true);
-
 			style.set(Parameter::create<ParameterName::MarginRight>(Metric(0.0f, Metric::Units::Auto)), true);
 			style.set(Parameter::create<ParameterName::MarginLeft>(Metric(0.0f, Metric::Units::Auto)), true);
 		}

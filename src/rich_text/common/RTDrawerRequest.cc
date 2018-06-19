@@ -31,9 +31,9 @@ constexpr uint16_t ImageFillerWidth = 312;
 constexpr uint16_t ImageFillerHeight = 272;
 
 constexpr auto ImageFillerData = R"ImageFillerSvg(<svg xmlns="http://www.w3.org/2000/svg" height="272" width="312" version="1.1">
-	<rect x="0" y="0" width="312" height="272" opacity="0.5"/>
+	<rect x="0" y="0" width="312" height="272" opacity="0.25"/>
 	<g transform="translate(0 -780.4)">
-		<path d="m104 948.4h104l-32-56-24 32-16-12zm-32-96v128h168v-128h-168zm16 16h136v96h-136v-96zm38 20a10 10 0 0 1 -10 10 10 10 0 0 1 -10 -10 10 10 0 0 1 10 -10 10 10 0 0 1 10 10z" fill-rule="evenodd" fill="#000000"/>
+		<path d="m104 948.4h104l-32-56-24 32-16-12zm-32-96v128h168v-128h-168zm16 16h136v96h-136v-96zm38 20a10 10 0 0 1 -10 10 10 10 0 0 1 -10 -10 10 10 0 0 1 10 -10 10 10 0 0 1 10 10z" fill-rule="evenodd" fill="#ccc"/>
 	</g>
 </svg>)ImageFillerSvg";
 
@@ -170,6 +170,7 @@ static Size Request_getBitmapSize(const Rect &bbox, const Background &bg, uint32
 }
 
 void Request::prepareBackgroundImage(const Rect &bbox, const Background &bg) {
+	bool success = false;
 	auto &src = bg.backgroundImage;
 	if (_source->isFileExists(src)) {
 		auto size = _source->getImageSize(src);
@@ -179,12 +180,15 @@ void Request::prepareBackgroundImage(const Rect &bbox, const Background &bg) {
 			if (!bmp) {
 				Bytes bmpSource = _source->getImageData(src);
 				if (!bmpSource.empty()) {
+					success = true;
 					auto tex = TextureCache::uploadTexture(bmpSource, bmpSize, _density);
 					_drawer->addBitmap(src, tex, bmpSize);
 				}
 			}
 		}
-	} else {
+	}
+
+	if (!success) {
 		Size bmpSize = Request_getBitmapSize(bbox, bg, ImageFillerWidth, ImageFillerHeight);
 		auto bmp = _drawer->getBitmap("system://filler.svg", bmpSize);
 		if (!bmp && !bmpSize.equals(Size::ZERO)) {
@@ -201,21 +205,17 @@ void Request::draw(cocos2d::Texture2D *data) {
 	for (auto &obj : objs) {
 		if (obj->bbox.intersectsRect(_rect)) {
 			drawObjects.push_back(obj);
-			//if (!_isThumbnail) {
-				if (obj->type == Object::Type::Label) {
-					auto l = obj->asLabel();
-					//if (!l->preview) {
-						for (auto &it : l->format.ranges) {
-							_font->addTextureChars(it.layout->getName(), l->format.chars, it.start, it.count);
-						}
-					//}
-				} else if (obj->type == Object::Type::Background && !_isThumbnail) {
-					auto bg = obj->asBackground();
-					if (!bg->background.backgroundImage.empty()) {
-						prepareBackgroundImage(obj->bbox, bg->background);
-					}
+			if (obj->type == Object::Type::Label) {
+				auto l = obj->asLabel();
+				for (auto &it : l->format.ranges) {
+					_font->addTextureChars(it.layout->getName(), l->format.chars, it.start, it.count);
 				}
-			//}
+			} else if (obj->type == Object::Type::Background && !_isThumbnail) {
+				auto bg = obj->asBackground();
+				if (!bg->background.backgroundImage.empty()) {
+					prepareBackgroundImage(obj->bbox, bg->background);
+				}
+			}
 		}
 	}
 
@@ -380,21 +380,22 @@ void Request::drawFillerImage(const Rect &bbox, const Background &bg) {
 
 void Request::drawBackgroundImage(const Rect &bbox, const Background &bg) {
 	auto &src = bg.backgroundImage;
-	if (!_source->isFileExists(src)) {
-		if (!src.empty() && bbox.size.width > 0.0f && bbox.size.height > 0.0f) {
-			_drawer->setColor(Color4B(168, 168, 168, 255));
-			drawFillerImage(bbox, bg);
+	bool success = false;
+	if (_source->isFileExists(src)) {
+		auto size = _source->getImageSize(src);
+		Size box = Request_getBitmapSize(bbox, bg, size.first, size.second);
+
+		auto bmp = _drawer->getBitmap(src, box);
+		if (bmp) {
+			_drawer->setColor(Color4B(layout::Color(_result->getBackgroundColor()).text(), 255));
+			drawBitmap(bbox, bmp, bg, box);
+			success = true;
 		}
-		return;
 	}
 
-	auto size = _source->getImageSize(src);
-	Size box = Request_getBitmapSize(bbox, bg, size.first, size.second);
-
-	auto bmp = _drawer->getBitmap(src, box);
-	if (bmp) {
-		_drawer->setColor(Color4B(layout::Color(_result->getBackgroundColor()).text(), 255));
-		drawBitmap(bbox, bmp, bg, box);
+	if (!success && !src.empty() && bbox.size.width > 0.0f && bbox.size.height > 0.0f) {
+		_drawer->setColor(Color4B(168, 168, 168, 255));
+		drawFillerImage(bbox, bg);
 	}
 }
 

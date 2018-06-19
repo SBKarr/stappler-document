@@ -446,7 +446,7 @@ void CommonSource::onExternalAssetUpdated(AssetData *a, data::Subscription::Flag
 
 bool CommonSource::readExternalAsset(AssetData &data) {
 	data.meta.type = data.asset->getContentType();
-	if (StringView(data.meta.type).is("image/")) {
+	if (StringView(data.meta.type).starts_with("image/") || data.meta.type.empty()) {
 		auto tmpImg = data.meta.image;
 		size_t w = 0, h = 0;
 		if (Bitmap::getImageSize(data.asset->getFilePath(), w, h)) {
@@ -543,7 +543,7 @@ Vector<SyncRWLock *> CommonSource::getAssetsVec() const {
 
 bool CommonSource::isFileExists(const StringView &url) const {
 	auto it = _networkAssets.find(url);
-	if (it != _networkAssets.end() && it->second.asset) {
+	if (it != _networkAssets.end() && it->second.asset && it->second.asset->isReadAvailable()) {
 		return true;
 	}
 
@@ -556,7 +556,7 @@ bool CommonSource::isFileExists(const StringView &url) const {
 Pair<uint16_t, uint16_t> CommonSource::getImageSize(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end()) {
-		if (StringView(it->second.meta.type).is("image/") && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
+		if ((StringView(it->second.meta.type).starts_with("image/") || it->second.meta.type.empty()) && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
 			return pair(it->second.meta.image.width, it->second.meta.image.height);
 		}
 	}
@@ -570,7 +570,7 @@ Pair<uint16_t, uint16_t> CommonSource::getImageSize(const StringView &url) const
 Bytes CommonSource::getImageData(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end()) {
-		if (StringView(it->second.meta.type).is("image/") && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
+		if ((StringView(it->second.meta.type).starts_with("image/") || it->second.meta.type.empty()) && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
 			return filesystem::readFile(it->second.asset->getFilePath());
 		}
 	}
