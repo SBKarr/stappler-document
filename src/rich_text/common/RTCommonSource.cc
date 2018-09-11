@@ -445,7 +445,7 @@ void CommonSource::onExternalAssetUpdated(AssetData *a, data::Subscription::Flag
 }
 
 bool CommonSource::readExternalAsset(AssetData &data) {
-	data.meta.type = data.asset->getContentType();
+	data.meta.type = data.asset->getContentType().str();
 	if (StringView(data.meta.type).starts_with("image/") || data.meta.type.empty()) {
 		auto tmpImg = data.meta.image;
 		size_t w = 0, h = 0;
