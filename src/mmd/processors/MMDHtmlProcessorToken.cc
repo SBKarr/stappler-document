@@ -69,7 +69,6 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 		return;
 	}
 
-	StringView temp_char;
 	switch (t->type) {
 		case AMPERSAND:
 		case AMPERSAND_LONG:

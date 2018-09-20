@@ -337,7 +337,7 @@ void CommonSource::tryLoadDocument() {
 			}
 		}
 		return true;
-	}, [this, doc, assetLocked, filename, assets] (const Task &, bool success) {
+	}, [this, doc, assetLocked, assets] (const Task &, bool success) {
 		if (success && *doc) {
 			auto l = [this, doc, assetLocked] {
 				_documentLoading = false;
