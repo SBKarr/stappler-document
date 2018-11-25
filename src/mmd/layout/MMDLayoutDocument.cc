@@ -28,8 +28,8 @@ THE SOFTWARE.
 #include "MMDEngine.h"
 #include "MMDLayoutProcessor.h"
 
+#include "SPStringView.h"
 #include "SLRendererTypes.h"
-#include "SPCharReader.h"
 
 NS_MMD_BEGIN
 

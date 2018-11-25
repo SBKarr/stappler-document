@@ -43,7 +43,7 @@
 #define MMD_COMMON_MMDCOMMON_H_
 
 #include "SPCommon.h"
-#include "SPCharReader.h"
+#include "SPStringView.h"
 
 extern "C" {
 typedef struct _sp_mmd_token _sp_mmd_token;

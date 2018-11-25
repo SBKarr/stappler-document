@@ -43,8 +43,8 @@
 #define MMD_COMMON_MMDCHARS_H_
 
 #include "SPCommon.h"
-#include "SPCharReader.h"
 #include "MMDCommon.h"
+#include "SPStringView.h"
 
 NS_MMD_BEGIN
 
