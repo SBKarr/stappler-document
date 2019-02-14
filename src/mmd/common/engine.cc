@@ -1243,20 +1243,24 @@ token * sp_mmd_mmd_tokenize_string(mmd_engine * e, size_t start, size_t len, boo
 			case TEXT_LINEBREAK_SP:
 			case TEXT_LINEBREAK:
 			case TEXT_NL:
+				if (s.start <= s.cur) {
+					// We hit the end of a line
+					switch (type) {
+						case TEXT_NL_SP:
+							t = sp_mmd_token_new(TEXT_NL, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
+							break;
 
-				// We hit the end of a line
-				switch (type) {
-					case TEXT_NL_SP:
-						t = sp_mmd_token_new(TEXT_NL, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
-						break;
+						case TEXT_LINEBREAK_SP:
+							t = sp_mmd_token_new(TEXT_LINEBREAK, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
+							break;
 
-					case TEXT_LINEBREAK_SP:
-						t = sp_mmd_token_new(TEXT_LINEBREAK, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start) - 1);
-						break;
-
-					default:
-						t = sp_mmd_token_new(type, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start));
-						break;
+						default:
+							t = sp_mmd_token_new(type, (uint32_t)(s.start - e->str), (uint32_t)(s.cur - s.start));
+							break;
+					}
+				} else {
+					type = 0;
+					continue;
 				}
 
 				sp_mmd_token_append_child(line, t);
