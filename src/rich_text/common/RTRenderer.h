@@ -59,6 +59,7 @@ public: /* media type resolver */
 
 	void setDpi(int dpi);
 	void setDensity(float density);
+	void setDefaultBackground(const Color4B &);
 
 	void setMediaType(layout::style::MediaType value);
 	void setOrientationValue(layout::style::Orientation value);

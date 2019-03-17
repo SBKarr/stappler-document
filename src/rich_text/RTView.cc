@@ -563,9 +563,19 @@ void View::updateProgress() {
 		} else {
 			auto a = _source->getAsset();
 			if (a && a->isDownloadInProgress()) {
-				_progress->setVisible(true);
-				_progress->setAnimated(false);
-				_progress->setProgress(a->getProgress());
+				if (auto tmp = dynamic_cast<SourceNetworkAsset *>(a)) {
+					if (auto tmpa = tmp->getAsset()) {
+						_progress->setVisible(true);
+						_progress->setAnimated(false);
+						_progress->setProgress(tmpa->getProgress());
+					} else {
+						_progress->setVisible(true);
+						_progress->setAnimated(true);
+					}
+				} else {
+					_progress->setVisible(true);
+					_progress->setAnimated(true);
+				}
 			} else if (_source->isDocumentLoading() || _rendererUpdate) {
 				_progress->setVisible(true);
 				_progress->setAnimated(true);

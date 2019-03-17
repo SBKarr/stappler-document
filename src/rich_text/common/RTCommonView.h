@@ -92,7 +92,7 @@ protected:
 
 	virtual void onPageData(Result *, float offset);
 	virtual PageData getPageData(size_t) const;
-	virtual cocos2d::Node * onPageNode(size_t);
+	virtual Rc<cocos2d::Node> onPageNode(size_t);
 
 	virtual Rc<Page> onConstructPageNode(const PageData &, float);
 

@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "SPDefine.h"
 #include "RTCommonSource.cc"
 #include "RTCommonView.cc"
+#include "RTSourceAsset.cc"
 #include "RTDrawer.cc"
 #include "RTDrawerRequest.cc"
 #include "RTRenderer.cc"

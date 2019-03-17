@@ -106,11 +106,11 @@ void ArticleLayout::ArticleLoader::setCallback(const AssetCallback &cb) {
 Rc<Source> ArticleLayout::ArticleLoader::constructSource() const {
 	Rc<Source> source;
 	if (asset) {
-		source = Rc<Source>::create(asset, false);
+		source = Rc<Source>::create(Rc<SourceNetworkAsset>::create(asset), false);
 	} else if (callback) {
-		source = Rc<Source>::create([this] (const Function<void(Asset *)> &cb) {
+		source = Rc<Source>::create(Rc<SourceNetworkAsset>::create([this] (const Function<void(Asset *)> &cb) {
 			callback(this, cb);
-		}, false);
+		}), false);
 	}
 	return source;
 }
@@ -279,12 +279,12 @@ void ArticleLayout::onDocument(View *view) {
 	_documentOpened = true;
 }
 
-void ArticleLayout::updateAssetInfo(Asset *a, AssetFlags flags, float pos) {
+void ArticleLayout::updateAssetInfo(SourceAsset *a, AssetFlags flags, float pos) {
 	if (!a) {
 		return;
 	}
 
-	auto d = a->getData();
+	auto d = a->getExtraData();
 	if ((flags & AssetFlags::Read) != AssetFlags::None) {
 		d.setBool(true, "read");
 	}
@@ -294,8 +294,7 @@ void ArticleLayout::updateAssetInfo(Asset *a, AssetFlags flags, float pos) {
 	if ((flags & AssetFlags::Open) != AssetFlags::None) {
 		d.setBool(true, "open");
 	}
-	a->setData(std::move(d));
-	a->save();
+	a->setExtraData(std::move(d));
 }
 
 void ArticleLayout::updateActionsMenu() {
@@ -547,6 +546,10 @@ void ArticleLayout::onViewSelected(View *view, size_t) {
 }
 
 void ArticleLayout::endSwipeProgress(const Vec2 &delta, const Vec2 &velocity) {
+	if (!_richTextView) {
+		return;
+	}
+
 	float v = fabsf(velocity.x);
 	float a = 5000;
 	float t = v / a;

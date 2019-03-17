@@ -107,7 +107,7 @@ void Request::onAssetCaptured() {
 		if (_callback) {
 			_callback(nullptr);
 		}
-		_source->getAsset()->releaseReadLock(this);
+		_source->releaseReadLock(this);
 		return;
 	}
 

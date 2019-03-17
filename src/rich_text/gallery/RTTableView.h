@@ -24,7 +24,7 @@ THE SOFTWARE.
 #define EXTENSIONS_DOCUMENT_SRC_RICH_TEXT_GALLERY_RTTABLEVIEW_H_
 
 #include "RTCommonSource.h"
-#include "MaterialLayout.h"
+#include "MaterialToolbarLayout.h"
 #include "RTTooltip.h"
 
 NS_RT_BEGIN

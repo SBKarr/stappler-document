@@ -57,6 +57,10 @@ void LayoutProcessor::processHtml(const Content &c, const StringView &str, const
 
 	std::array<LayoutDocument::ContentRecord *, 8> level_list;
 
+	for (auto &it : level_list) {
+		it = nullptr;
+	}
+
 	auto &header_stack = content->getHeaders();
 	if (header_stack.empty()) {
 		return;

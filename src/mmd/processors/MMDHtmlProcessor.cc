@@ -344,7 +344,12 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	}
 
 	if (spExt && !align.empty()) {
-		pushInlineNode(nullptr, "img", { pair("class", align) }, move(attr));
+		if (!is_figure && !idStr.empty()) {
+			auto idStr = toString("figure_", figureId);
+			pushInlineNode(nullptr, "img", { pair("class", align), pair("id", idStr) }, move(attr));
+		} else {
+			pushInlineNode(nullptr, "img", { pair("class", align) }, move(attr));
+		}
 	} else {
 		pushInlineNode(nullptr, "img", { }, move(attr));
 	}

@@ -94,7 +94,7 @@ public:
 protected:
 	virtual void onDocument(View *);
 
-	virtual void updateAssetInfo(Asset *, AssetFlags flags, float pos);
+	virtual void updateAssetInfo(SourceAsset *, AssetFlags flags, float pos);
 	virtual void updateActionsMenu();
 
 	virtual void onSidebar(material::SidebarLayout *);

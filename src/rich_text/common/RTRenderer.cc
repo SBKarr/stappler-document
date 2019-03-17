@@ -177,6 +177,13 @@ void Renderer::setDensity(float density) {
 	}
 }
 
+void Renderer::setDefaultBackground(const Color4B &c) {
+	if (_media.defaultBackground != c) {
+		_media.defaultBackground = c;
+		_renderingDirty = true;
+	}
+}
+
 void Renderer::setMediaType(layout::style::MediaType value) {
 	if (_media.mediaType != value) {
 		_media.mediaType = value;

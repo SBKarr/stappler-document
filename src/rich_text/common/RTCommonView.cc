@@ -357,7 +357,7 @@ PageData CommonView::getPageData(size_t idx) const {
 	return _renderer->getResult()->getPageData(idx, _objectsOffset);
 }
 
-cocos2d::Node * CommonView::onPageNode(size_t idx) {
+Rc<cocos2d::Node> CommonView::onPageNode(size_t idx) {
 	auto source = _renderer->getSource();
 	auto result = _renderer->getResult();
 	auto drawer = _renderer->getDrawer();

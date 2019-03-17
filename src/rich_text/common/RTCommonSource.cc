@@ -73,87 +73,14 @@ bool CommonSource::init() {
 	return true;
 }
 
-bool CommonSource::init(const StringDocument &str) {
-	if (!init()) {
-		return false;
-	}
-
-	_data = Bytes((const uint8_t *)str.get().data(), (const uint8_t *)(str.get().data() + str.get().size()));
-	updateDocument();
-	return true;
-}
-
-bool CommonSource::init(const DataReader<ByteOrder::Network> &data) {
-	if (!init()) {
-		return false;
-	}
-
-	_data = Bytes(data.data(), data.data() + data.size());
-	updateDocument();
-	return true;
-}
-
-bool CommonSource::init(const FilePath &file) {
-	if (!init()) {
-		return false;
-	}
-
-	_file = file.get().str();
-	updateDocument();
-	return true;
-}
-
-bool CommonSource::init(const String &url, const String &path,
-		TimeInterval ttl, const String &cacheDir, const Asset::DownloadCallback &cb) {
-	if (!init()) {
-		return false;
-	}
-
-	retain();
-	AssetLibrary::getInstance()->getAsset([this] (Asset *a) {
-		onDocumentAsset(a);
-		release();
-	}, url, path, ttl, cacheDir, cb);
-
-	return true;
-}
-bool CommonSource::init(Asset *a, bool enabled) {
+bool CommonSource::init(SourceAsset *asset, bool enabled) {
 	if (!init()) {
 		return false;
 	}
 
 	_enabled = enabled;
-	onDocumentAsset(a);
+	onDocumentAsset(asset);
 	return true;
-}
-
-bool CommonSource::init(const AssetCallback &cb, bool enabled) {
-	if (!init()) {
-		return false;
-	}
-
-	_enabled = enabled;
-
-	retain();
-	cb([this] (Asset *a) {
-		onDocumentAsset(a);
-		release();
-	});
-	return true;
-}
-
-void CommonSource::setAsset(Asset *a) {
-	onDocumentAsset(a);
-}
-
-void CommonSource::setAsset(const AssetCallback &cb) {
-	_enabled = false;
-
-	retain();
-	cb([this] (Asset *a) {
-		onDocumentAsset(a);
-		release();
-	});
 }
 
 void CommonSource::setHyphens(layout::HyphenMap *map) {
@@ -167,7 +94,7 @@ layout::HyphenMap *CommonSource::getHyphens() const {
 Document *CommonSource::getDocument() const {
 	return static_cast<Document *>(_document.get());
 }
-Asset *CommonSource::getAsset() const {
+SourceAsset *CommonSource::getAsset() const {
 	return _documentAsset;
 }
 
@@ -218,27 +145,72 @@ void CommonSource::refresh() {
 }
 
 bool CommonSource::tryReadLock(Ref *ref) {
+	auto it = _readLocks.find(ref);
+	if (it != _readLocks.end()) {
+		if (it->second.acquired) {
+			++ it->second.count;
+			return true;
+		}
+		return false;
+	}
+
 	auto vec = getAssetsVec();
 	if (vec.empty()) {
+		_readLocks.emplace(ref, LockStruct{vec, this, 1, true});
 		return true;
 	}
 
-	return SyncRWLock::tryReadLock(ref, vec);
+	if (SyncRWLock::tryReadLock(ref, vec)) {
+		_readLocks.emplace(ref, LockStruct{vec, this, 1, true});
+		return true;
+	}
+	return false;
 }
 
 void CommonSource::retainReadLock(Ref *ref, const Function<void()> &cb) {
+	auto it = _readLocks.find(ref);
+	if (it != _readLocks.end()) {
+		++ it->second.count;
+		if (it->second.acquired) {
+			cb();
+		} else {
+			it->second.waiters.emplace_back(cb);
+		}
+		return;
+	}
+
 	auto vec = getAssetsVec();
 	if (vec.empty()) {
+		_readLocks.emplace(ref, LockStruct{vec, this, 1, true});
 		cb();
 	} else {
-		SyncRWLock::retainReadLock(ref, vec, cb);
+		_readLocks.emplace(ref, LockStruct{vec, this, 1, false, Vector<Function<void()>>{cb}});
+		SyncRWLock::retainReadLock(ref, vec, [this, ref, vec] {
+			auto it = _readLocks.find(ref);
+			if (it == _readLocks.end()) {
+				SyncRWLock::releaseReadLock(ref, vec);
+			} else {
+				it->second.acquired = true;
+				for (auto &cb : it->second.waiters) {
+					cb();
+				}
+				it->second.waiters.clear();
+			}
+		});
 	}
 }
 
 void CommonSource::releaseReadLock(Ref *ref) {
-	auto vec = getAssetsVec();
-	if (!vec.empty()) {
-		SyncRWLock::releaseReadLock(ref, vec);
+	auto it = _readLocks.find(ref);
+	if (it != _readLocks.end()) {
+		if (it->second.acquired) {
+			if (it->second.count == 1) {
+				SyncRWLock::releaseReadLock(ref, it->second.vec);
+				_readLocks.erase(it);
+			} else {
+				-- it->second.count;
+			}
+		}
 	}
 }
 
@@ -254,11 +226,13 @@ bool CommonSource::isEnabled() const {
 	return _enabled;
 }
 
-void CommonSource::onDocumentAsset(Asset *a) {
+void CommonSource::onDocumentAsset(SourceAsset *a) {
 	_documentAsset = a;
 	if (_documentAsset) {
 		_loadedAssetMTime = 0;
-		_documentAsset->download();
+		if (_enabled) {
+			_documentAsset->download();
+		}
 		onDocumentAssetUpdated(data::Subscription::Flag((uint8_t)Asset::FileUpdated));
 	}
 }
@@ -292,42 +266,26 @@ void CommonSource::onDocumentAssetUpdated(data::Subscription::Flags f) {
 	}
 }
 
-static bool Source_tryLockAsset(Asset *a, uint64_t mtime, CommonSource *source) {
-	if (a && a->isReadAvailable() &&
-			((a->getMTime() > mtime && !a->isDownloadInProgress())
-			|| mtime == 0)) {
-		return a->tryReadLock(source);
-	} else {
-		return false;
-	}
-}
-
 void CommonSource::tryLoadDocument() {
 	if (!_enabled) {
 		return;
 	}
-	bool assetLocked = false;
-	if (Source_tryLockAsset(_documentAsset, _loadedAssetMTime, this)) {
-		_loadedAssetMTime = _documentAsset->getMTime();
-		assetLocked = true;
-	}
 
-	if (_data.empty() && _file.empty() && !assetLocked) {
+	if (!_documentAsset->tryLockDocument(_loadedAssetMTime)) {
 		return;
 	}
 
 	auto &thread = TextureCache::thread();
 	Rc<Document> *doc = new Rc<Document>(nullptr);
+	Rc<SourceAsset> *asset = new Rc<SourceAsset>(_documentAsset.get());
 	Set<String> *assets = new Set<String>();
 
-	auto filename = (assetLocked)?_documentAsset->getFilePath():_file;
-	auto ct = (assetLocked)?_documentAsset->getContentType():String();
-
+	_loadedAssetMTime = _documentAsset->getMTime();
 	_documentLoading = true;
 	onUpdate(this);
 
-	thread.perform([this, doc, filename, ct, assets] (const Task &) -> bool {
-		*doc = openDocument(filename, ct);
+	thread.perform([this, doc, asset, assets] (const Task &) -> bool {
+		*doc = asset->get()->openDocument();
 		if (*doc) {
 			auto &pages = (*doc)->getContentPages();
 			for (auto &p_it : pages) {
@@ -337,17 +295,16 @@ void CommonSource::tryLoadDocument() {
 			}
 		}
 		return true;
-	}, [this, doc, assetLocked, assets] (const Task &, bool success) {
+	}, [this, doc, asset, assets] (const Task &, bool success) {
 		if (success && *doc) {
-			auto l = [this, doc, assetLocked] {
+			auto l = [this, doc, asset] {
 				_documentLoading = false;
-				if (assetLocked) {
-					_documentAsset->releaseReadLock(this);
-				}
-				onDocumentLoaded(*doc);
+				asset->get()->releaseDocument();
+				onDocumentLoaded(doc->get());
 				delete doc;
+				delete asset;
 			};
-			if (onExternalAssets(*doc, *assets)) {
+			if (onExternalAssets(doc->get(), *assets)) {
 				l();
 			} else {
 				waitForAssets(move(l));
@@ -369,14 +326,14 @@ void CommonSource::onDocumentLoaded(Document *doc) {
 	}
 }
 
-void CommonSource::acquireAsset(const String &url, const Function<void(Asset *)> &fn) {
+void CommonSource::acquireAsset(const String &url, const Function<void(SourceAsset *)> &fn) {
 	StringView urlView(url);
 	if (urlView.is("http://") || urlView.is("https://")) {
 		auto path = getPathForUrl(url);
 		auto lib = AssetLibrary::getInstance();
 		retain();
 		lib->getAsset([this, fn] (Asset *a) {
-			fn(a);
+			fn(Rc<SourceNetworkAsset>::create(a));
 			release();
 		}, url, path, config::getDocumentAssetTtl());
 	} else {
@@ -404,13 +361,13 @@ bool CommonSource::onExternalAssets(Document *doc, const Set<String> &assets) {
 				AssetData * data = &a_it->second;
 				data->asset.setCallback(std::bind(&CommonSource::onExternalAssetUpdated, this, data, std::placeholders::_1));
 				addAssetRequest(data);
-				acquireAsset(it, [this, data] (Asset *a) {
+				acquireAsset(it, [this, data] (SourceAsset *a) {
 					if (a) {
 						data->asset = a;
 						if (data->asset->isReadAvailable()) {
-							if (data->asset->tryReadLock(this)) {
+							if (data->asset->tryReadLock()) {
 								readExternalAsset(*data);
-								data->asset->releaseReadLock(this);
+								data->asset->releaseReadLock();
 							}
 						}
 						if (data->asset->isDownloadAvailable()) {
@@ -419,7 +376,7 @@ bool CommonSource::onExternalAssets(Document *doc, const Set<String> &assets) {
 					}
 					removeAssetRequest(data);
 				});
-				log::text("Asset", it);
+				log::text("External asset", it);
 			}
 		}
 	}
@@ -429,11 +386,11 @@ bool CommonSource::onExternalAssets(Document *doc, const Set<String> &assets) {
 void CommonSource::onExternalAssetUpdated(AssetData *a, data::Subscription::Flags f) {
 	if (f.hasFlag((uint8_t)Asset::Update::FileUpdated)) {
 		bool updated = false;
-		if (a->asset->tryReadLock(this)) {
+		if (a->asset->tryReadLock()) {
 			if (readExternalAsset(*a)) {
 				updated = true;
 			}
-			a->asset->releaseReadLock(this);
+			a->asset->releaseReadLock();
 		}
 		if (updated) {
 			if (_document) {
@@ -449,7 +406,7 @@ bool CommonSource::readExternalAsset(AssetData &data) {
 	if (StringView(data.meta.type).starts_with("image/") || data.meta.type.empty()) {
 		auto tmpImg = data.meta.image;
 		size_t w = 0, h = 0;
-		if (Bitmap::getImageSize(data.asset->getFilePath(), w, h)) {
+		if (data.asset->getImageSize(w, h)) {
 			data.meta.image.width = w;
 			data.meta.image.height = h;
 		}
@@ -458,10 +415,9 @@ bool CommonSource::readExternalAsset(AssetData &data) {
 			return true;
 		}
 	} else if (StringView(data.meta.type).is("text/css")) {
-		auto d = filesystem::readTextFile(data.asset->getFilePath());
-		data.meta.css = Rc<layout::CssDocument>::create(StringView(d));
+		auto d = data.asset->getData();
+		data.meta.css = Rc<layout::CssDocument>::create(StringView((const char *)d.data(), d.size()));
 		return true;
-		log::format("readAsset", "%s css", data.originalUrl.c_str());
 	}
 	return false;
 }
@@ -484,23 +440,6 @@ Rc<font::FontSource> CommonSource::makeSource(AssetMap && map, bool schedule) {
 		return Rc<font::FontSource>::create(std::move(faceMap), _callback, _scale, SearchDirs(_searchDir), std::move(map), false);
 	}
 	return Rc<font::FontSource>::create(FontFaceMap(_fontFaces), _callback, _scale, SearchDirs(_searchDir), std::move(map), false);
-}
-
-Rc<Document> CommonSource::openDocument(const StringView &path, const StringView &ct) {
-	Rc<Document> ret;
-	if (!_data.empty()) {
-		ret = Document::openDocument(_data, ct);
-	} else {
-		ret = Document::openDocument(path, ct);
-	}
-
-	if (ret) {
-		if (ret->prepare()) {
-			return ret;
-		}
-	}
-
-	return Rc<Document>();
 }
 
 bool CommonSource::hasAssetRequests() const {
@@ -531,11 +470,15 @@ void CommonSource::waitForAssets(Function<void()> &&fn) {
 Vector<SyncRWLock *> CommonSource::getAssetsVec() const {
 	Vector<SyncRWLock *> ret; ret.reserve(1 + _networkAssets.size());
 	if (_documentAsset) {
-		ret.emplace_back(_documentAsset);
+		if (auto lock = _documentAsset->getRWLock()) {
+			ret.emplace_back(lock);
+		}
 	}
 	for (auto &it : _networkAssets) {
 		if (it.second.asset) {
-			ret.emplace_back(it.second.asset);
+			if (auto lock = it.second.asset->getRWLock()) {
+				ret.emplace_back(lock);
+			}
 		}
 	}
 	return ret;
@@ -571,7 +514,7 @@ Bytes CommonSource::getImageData(const StringView &url) const {
 	auto it = _networkAssets.find(url);
 	if (it != _networkAssets.end()) {
 		if ((StringView(it->second.meta.type).starts_with("image/") || it->second.meta.type.empty()) && it->second.meta.image.width > 0 && it->second.meta.image.height > 0) {
-			return filesystem::readFile(it->second.asset->getFilePath());
+			return it->second.asset->getData();
 		}
 	}
 
