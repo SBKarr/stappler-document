@@ -674,12 +674,12 @@ void View::setViewPosition(const ViewPosition &pos, bool offseted) {
 					_scrollCallback(0.0f, true);
 				}
 			}
+			_savedPosition = ViewPosition{maxOf<size_t>(), 0.0f};
+			return;
 		}
-		_savedPosition = ViewPosition{maxOf<size_t>(), 0.0f};
-	} else {
-		_savedPosition = pos;
-		_layoutChanged = true;
 	}
+	_savedPosition = pos;
+	_layoutChanged = true;
 }
 
 void View::setPositionCallback(const PositionCallback &cb) {
