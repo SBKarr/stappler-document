@@ -147,6 +147,14 @@ void Drawer::drawResizeBuffer(size_t count) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Drawer::resetSurface() {
+	GLRenderSurface::resetSurface();
+
+	_vertexBufferSize = 0;
+	_indexBufferSize = 0;
+	_cache.clear();
+}
+
 void Drawer::setLineWidth(float value) {
 	if (value != _lineWidth) {
 		_lineWidth = value;

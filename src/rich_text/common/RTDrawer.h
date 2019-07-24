@@ -84,6 +84,8 @@ protected:
 
 	void flushVectorBuffer();
 
+	virtual void resetSurface() override;
+
 	size_t _vertexBufferSize = 0;
 	size_t _indexBufferSize = 0;
 

@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 NS_RT_BEGIN
 
-class Source : public CommonSource, EventHandler {
+class Source : public CommonSource {
 public:
 	virtual ~Source();
 	Source();

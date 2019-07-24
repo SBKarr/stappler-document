@@ -24,10 +24,11 @@ THE SOFTWARE.
 #define RICH_TEXT_COMMON_RTCOMMONSOURCE_H_
 
 #include "RTSourceAsset.h"
+#include "SPEventHandler.h"
 
 NS_RT_BEGIN
 
-class CommonSource : public font::FontController {
+class CommonSource : public font::FontController, protected EventHandler {
 public:
 	using Document = layout::Document;
 	using StringDocument = Document::StringDocument;
@@ -99,6 +100,8 @@ protected:
 
 	virtual void tryLoadDocument();
 	virtual void updateDocument();
+
+	virtual void onSourceUpdated(FontSource *) override;
 
 	virtual Rc<font::FontSource> makeSource(AssetMap &&, bool schedule = false) override;
 

@@ -430,6 +430,10 @@ void CommonSource::updateDocument() {
 	tryLoadDocument();
 }
 
+void CommonSource::onSourceUpdated(FontSource *source) {
+	FontController::onSourceUpdated(source);
+}
+
 Rc<font::FontSource> CommonSource::makeSource(AssetMap && map, bool schedule) {
 	if (_document) {
 		FontFaceMap faceMap(_fontFaces);

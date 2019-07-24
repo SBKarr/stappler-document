@@ -28,9 +28,11 @@ THE SOFTWARE.
 
 #include "SPScrollController.h"
 #include "SPDynamicSprite.h"
+#include "SPEventListener.h"
 
 #include "SPLayer.h"
 #include "SPScreen.h"
+#include "SPDevice.h"
 #include "SPActions.h"
 
 #include "2d/CCActionInterval.h"
@@ -106,20 +108,27 @@ bool CommonView::init(Layout l, CommonSource *source, const Vector<String> &ids)
 	auto renderer = Rc<Renderer>::create(ids);
 	renderer->setRenderingCallback(std::bind(&CommonView::onRenderer, this,
 			std::placeholders::_1, std::placeholders::_2));
-	addComponent(renderer);
-	_renderer = renderer;
+	_renderer = addComponentItem(renderer);
 
 	auto background = Rc<Layer>::create(Color4B(238, 238, 238, 255));
 	background->setAnchorPoint(Vec2(0, 0));
 	background->setPosition(Vec2(0, 0));
-	addChild(background, -1);
-	_background = background;
+	_background = addChildNode(background, -1);
 
 	_pageMargin = Margin(8.0f, 8.0f);
 
 	if (source) {
 		setSource(source);
 	}
+
+	auto el = Rc<EventListener>::create();
+	el->onEvent(Device::onRegenerateTextures, [this] (const Event &) {
+		if (auto res = _renderer->getResult()) {
+			onRenderer(res, false);
+			_controller->onScrollPosition(true);
+		}
+	});
+	addComponentItem(el);
 
 	return true;
 }
