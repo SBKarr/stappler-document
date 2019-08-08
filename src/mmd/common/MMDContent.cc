@@ -48,6 +48,9 @@
 
 NS_MMD_BEGIN
 
+Extensions DefaultExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart;
+Extensions StapplerExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart | Extensions::StapplerLayout;
+
 static auto clean_inside_pair(const StringView & source, token * t, bool lowercase) -> Content::String {
 	auto pairText = text_inside_pair(source, t);
 	return Content::cleanString(pairText, lowercase);
@@ -463,7 +466,7 @@ auto Content::cleanString(const StringView &str, bool lowercase) -> String {
 	return ret;
 }
 
-auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket, token * paren) -> Link * {
+auto Content::explicitLink(const StringView &s, const Extensions &ext, token * bracket, token * paren) -> Link * {
 	const char *source = s.data();
 	const char *end = &source[paren->start + paren->len];
 	if (*end == ')') { -- end; }
@@ -528,7 +531,7 @@ auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket,
 
 	Link *l = nullptr;
 	if (!attributes.empty()) {
-		if ((ext & Extensions::Compatibility) == Extensions::None) {
+		if (!ext.hasFlag(Extensions::Compatibility)) {
 			l = new Link(source, Token(), move(url), title, attributes, false);
 		}
 	} else {
@@ -538,14 +541,18 @@ auto Content::explicitLink(const StringView &s, Extensions ext, token * bracket,
 	return l;
 }
 
-Content::Content(Extensions ext) : extensions(ext) {
+Content::Content(const Extensions &ext) : extensions(ext) {
 	headers.reserve(64);
 	definitions.reserve(64);
 	tables.reserve(64);
 }
 
-Extensions Content::getExtensions() const {
+const Extensions & Content::getExtensions() const {
 	return extensions;
+}
+
+void Content::addExtension(Extensions::Value val) const {
+	const_cast<Extensions &>(extensions).flags |= val;
 }
 
 void Content::setQuotesLanguage(QuotesLanguage l) {
@@ -810,7 +817,7 @@ bool Content::extractDefinition(const StringView &str, token ** remainder) {
 		case PAIR_BRACKET_CITATION:
 		case PAIR_BRACKET_FOOTNOTE:
 		case PAIR_BRACKET_GLOSSARY:
-			if ((extensions & Extensions::Notes) != Extensions::None) {
+			if (extensions.hasFlag(Extensions::Notes)) {
 				if (!sp_mmd_token_chain_accept(remainder, COLON)) {
 					return false;
 				}
@@ -872,7 +879,7 @@ bool Content::extractDefinition(const StringView &str, token ** remainder) {
 
 			// Get attributes
 			if ((*remainder) && (((*remainder)->type != TEXT_NL) && ((*remainder)->type != TEXT_LINEBREAK))) {
-				if ((extensions & Extensions::Compatibility) == Extensions::None) {
+				if (!extensions.hasFlag(Extensions::Compatibility)) {
 					attr_len = scan_attributes(&source[(*remainder)->start]);
 
 					if (attr_len) {
@@ -923,7 +930,7 @@ bool Content::extractDefinition(const StringView &str, token ** remainder) {
 
 void Content::processHeaders(const StringView &str) {
 	// NTD in compatibility mode or if disabled
-	if ((extensions & Extensions::NoLabels) != Extensions::None) {
+	if (extensions.hasFlag(Extensions::NoLabels)) {
 		return;
 	}
 

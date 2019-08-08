@@ -84,7 +84,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case APOSTROPHE:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << printToken(source, t);
 			} else {
 				printLocalizedChar(out, APOSTROPHE);
@@ -281,7 +281,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case DASH_M:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << printToken(source, t);
 			} else {
 				printLocalizedChar(out, DASH_M);
@@ -289,7 +289,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case DASH_N:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << printToken(source, t);
 			} else {
 				printLocalizedChar(out, DASH_N);
@@ -301,7 +301,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case ELLIPSIS:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << printToken(source, t);
 			} else {
 				printLocalizedChar(out, ELLIPSIS);
@@ -321,7 +321,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case ESCAPED_CHARACTER:
-			if ((extensions & Extensions::Compatibility) == Extensions::None && (source[t->start + 1] == ' ')) {
+			if (!content->getExtensions().hasFlag(Extensions::Compatibility) && (source[t->start + 1] == ' ')) {
 				out << "&nbsp;";
 			} else {
 				printHtml(out, StringView(&source[t->start + 1], 1));
@@ -343,7 +343,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case HTML_COMMENT_START:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << "&lt;!--";
 			} else {
 				out << "&lt;!";
@@ -353,7 +353,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case HTML_COMMENT_STOP:
-			if ((extensions & Extensions::Smart) == Extensions::None) {
+			if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << "--&gt;";
 			} else {
 				printLocalizedChar(out, DASH_N);
@@ -477,7 +477,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case PAIR_BRACKET:
-			if ((extensions & Extensions::Notes) != Extensions::None &&
+			if (content->getExtensions().hasFlag(Extensions::Notes) &&
 			        (t->next && t->next->type == PAIR_BRACKET_CITATION)) {
 				exportPairBracketCitation(out, t);
 			} else {
@@ -578,7 +578,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case QUOTE_SINGLE:
-			if ((t->mate == NULL) || ((extensions & Extensions::Smart) == Extensions::None)) {
+			if ((t->mate == NULL) || !content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << "'";
 			} else {
 				(t->start < t->mate->start) ? ( printLocalizedChar(out, QUOTE_LEFT_SINGLE) ) : ( printLocalizedChar(out, QUOTE_RIGHT_SINGLE) );
@@ -587,7 +587,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case QUOTE_DOUBLE:
-			if ((t->mate == NULL) || ((extensions & Extensions::Smart) == Extensions::None)) {
+			if ((t->mate == NULL) || !content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << "&quot;";
 			} else {
 				(t->start < t->mate->start) ? ( printLocalizedChar(out, QUOTE_LEFT_DOUBLE) ) : ( printLocalizedChar(out, QUOTE_RIGHT_DOUBLE) );
@@ -596,7 +596,7 @@ void HtmlProcessor::exportToken(std::ostream &out, token * t) {
 			break;
 
 		case QUOTE_RIGHT_ALT:
-			if ((t->mate == NULL) || ((extensions & Extensions::Smart) == Extensions::None)) {
+			if ((t->mate == NULL) || !content->getExtensions().hasFlag(Extensions::Smart)) {
 				out << "''";
 			} else {
 				printLocalizedChar(out, QUOTE_RIGHT_DOUBLE);

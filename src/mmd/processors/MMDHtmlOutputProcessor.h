@@ -29,8 +29,8 @@ NS_MMD_BEGIN
 
 class HtmlOutputProcessor : public HtmlProcessor {
 public:
-	static void run(std::ostream *, const StringView &, Extensions = DefaultExtensions);
-	static void run(std::ostream *, memory::pool_t *, const StringView &, Extensions = DefaultExtensions);
+	static void run(std::ostream *, const StringView &, const Extensions & = DefaultExtensions);
+	static void run(std::ostream *, memory::pool_t *, const StringView &, const Extensions & = DefaultExtensions);
 
 protected:
 	virtual void pushNode(token *t, const StringView &name, InitList &&attr, VecList &&) override;

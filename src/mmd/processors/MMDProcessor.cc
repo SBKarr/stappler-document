@@ -48,22 +48,13 @@
 
 NS_MMD_BEGIN
 
-void Processor::setMetaCallback(const MetaCallback &cb) {
-	meta_callback = cb;
-}
-
-const Processor::MetaCallback &Processor::getMetaCallback() const {
-	return meta_callback;
-}
-
 void Processor::process(const Content &c, const StringView &, const Token &) {
 	content = &c;
-	extensions = c.getExtensions();
 	quotes_lang = c.getQuotesLanguage();
 	odf_para_type = BLOCK_PARA;
 	//p->language = e->language;
 
-	if ((extensions & Extensions::RandomFoot) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::RandomFoot)) {
 		random_seed_base = rand() % 32000;
 	}
 
@@ -72,7 +63,7 @@ void Processor::process(const Content &c, const StringView &, const Token &) {
 	used_footnotes.reserve(content->getFootnotes().size() + 2);
 	used_glossaries.reserve(content->getGlossary().size() + 2);
 
-	if ((extensions & Extensions::NoMetadata) == Extensions::None && (extensions & Extensions::Compatibility) == Extensions::None) {
+	if (!content->getExtensions().hasFlag(Extensions::NoMetadata) && !content->getExtensions().hasFlag(Extensions::Compatibility)) {
 		processMetaDict(c.getMetaDict());
 	}
 }
@@ -127,8 +118,8 @@ void Processor::processMeta(const StringView &key, const StringView &value) {
 		}
 	} else {
 		// Any other key triggers complete document
-		if ((extensions & Extensions::Snippet) == Extensions::None) {
-			extensions |= Extensions::Complete;
+		if (!content->getExtensions().hasFlag(Extensions::Snippet)) {
+			content->addExtension(Extensions::Complete);
 		}
 	}
 }
@@ -228,7 +219,7 @@ Content::Link * Processor::parseBrackets(token * bracket, int16_t * skip_token) 
 	if (next && next->type == PAIR_PAREN) {
 		// We have `[foo](bar)` or `![foo](bar)`
 
-		temp_link = Content::explicitLink(source, extensions, bracket, next);
+		temp_link = Content::explicitLink(source, content->getExtensions(), bracket, next);
 
 		if (temp_link) {
 			// Don't output brackets

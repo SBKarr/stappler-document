@@ -44,7 +44,7 @@ void HtmlProcessor::process(const Content &c, const StringView &str, const Token
 		base_header_level = html_header_level;
 	}
 
-	spExt = ((extensions | Extensions::StapplerLayout) != Extensions::None);
+	spExt = c.getExtensions().hasFlag(Extensions::StapplerLayout);
 
 	processHtml(c, str, t);
 }
@@ -61,7 +61,7 @@ void HtmlProcessor::processMeta(const StringView &key, const StringView &value) 
 
 void HtmlProcessor::processHtml(const Content &c, const StringView &str, const Token &t) {
 	source = str;
-	if ((extensions & Extensions::Complete) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Complete)) {
 		startCompleteHtml(c);
 	}
 
@@ -70,7 +70,7 @@ void HtmlProcessor::processHtml(const Content &c, const StringView &str, const T
 	exportGlossaryList(buffer);
 	exportCitationList(buffer);
 
-	if ((extensions & Extensions::Complete) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Complete)) {
 		endCompleteHtml();
 	}
 	flushBuffer();
@@ -286,7 +286,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	}
 
 	// Compatibility mode doesn't allow figures
-	if ((extensions & Extensions::Compatibility) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Compatibility)) {
 		is_figure = false;
 	}
 
@@ -312,7 +312,7 @@ void HtmlProcessor::exportImage(std::ostream &out, token * text, Content::Link *
 	}
 
 	String id;
-	if (link->label && (extensions & Extensions::Compatibility) == Extensions::None) {
+	if (link->label && !content->getExtensions().hasFlag(Extensions::Compatibility)) {
 		id = label_from_token(source, link->label);
 		attr.emplace_back("id", id);
 	}
@@ -378,67 +378,73 @@ void HtmlProcessor::pushHtmlEntity(std::ostream &out, token *t) {
 	StringView r(&source[t->start], t->len);
 
 	if (r.is('<')) {
-		while (!r.empty()) {
-			if (!r.is('<')) {
-				break;
-			}
-			++ r;
-			if (r.is('/')) {
-				r.skipUntil<StringView::Chars<'>'>>();
-				if (r.is('>')) {
-					++ r;
-					popNode();
-				}
-			} else {
-				auto name = html::Tag_readName(r, true);
-				if (name.empty()) { // found tag without readable name
-					printTokenRaw(out, t);
-					return;
-				}
-
-				Vector<Pair<StringView, StringView>> attrs;
-
-				StringView attrName;
-				StringView attrValue;
-				while (!r.empty() && !r.is('>') && !r.is('/')) {
-					attrName.clear();
-					attrValue.clear();
-
-					attrName = html::Tag_readAttrName(r, true);
-					if (attrName.empty()) {
-						continue;
-					}
-
-					attrValue = html::Tag_readAttrValue(r, true);
-					attrs.emplace_back(attrName, attrValue);
-				}
-
-				bool inlineTag = false;
-				if (r.is('/')) {
-					inlineTag = true;
-				}
-
-				r.skipUntil<StringView::Chars<'>'>>();
-				if (r.is('>')) {
-					++ r;
-				}
-
-				flushBuffer();
-				if (inlineTag) {
-					pushInlineNode(nullptr, name, { }, move(attrs));
-				} else {
-					pushNode(nullptr, name, { }, move(attrs));
-				}
-
-				out << r.readUntil<StringView::Chars<'<'>>();
-			}
-		}
-
-		if (!r.empty()) {
-			out << r;
-		}
+		pushHtmlEntityText(out, r, t);
 	} else {
 		printTokenRaw(out, t);
+	}
+}
+
+void HtmlProcessor::pushHtmlEntityText(std::ostream &out, StringView r, token *t) {
+	while (!r.empty()) {
+		if (!r.is('<')) {
+			break;
+		}
+		++ r;
+		if (r.is('/')) {
+			r.skipUntil<StringView::Chars<'>'>>();
+			if (r.is('>')) {
+				++ r;
+				popNode();
+			}
+		} else {
+			auto name = html::Tag_readName(r, true);
+			if (name.empty()) { // found tag without readable name
+				if (t) {
+					printTokenRaw(out, t);
+				}
+				return;
+			}
+
+			Vector<Pair<StringView, StringView>> attrs;
+
+			StringView attrName;
+			StringView attrValue;
+			while (!r.empty() && !r.is('>') && !r.is('/')) {
+				attrName.clear();
+				attrValue.clear();
+
+				attrName = html::Tag_readAttrName(r, true);
+				if (attrName.empty()) {
+					continue;
+				}
+
+				attrValue = html::Tag_readAttrValue(r, true);
+				attrs.emplace_back(attrName, attrValue);
+			}
+
+			bool inlineTag = false;
+			if (r.is('/')) {
+				inlineTag = true;
+			}
+
+			r.skipUntil<StringView::Chars<'>'>>();
+			if (r.is('>')) {
+				++ r;
+			}
+
+			flushBuffer();
+			if (inlineTag) {
+				pushInlineNode(nullptr, name, { }, move(attrs));
+			} else {
+				pushNode(nullptr, name, { }, move(attrs));
+			}
+
+			out << r.readUntil<StringView::Chars<'<'>>();
+		}
+	}
+
+	if (!r.empty()) {
+		out << r;
 	}
 }
 

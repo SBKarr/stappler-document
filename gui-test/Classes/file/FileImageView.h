@@ -31,7 +31,7 @@ NS_SP_EXT_BEGIN(app)
 
 class FileImageView : public material::Layout {
 public:
-	virtual bool init(const String &src);
+	virtual bool init(const StringView &src);
 
 	virtual void onContentSizeDirty() override;
 

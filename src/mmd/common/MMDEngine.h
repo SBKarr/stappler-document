@@ -53,8 +53,8 @@ public:
 
 	~Engine();
 
-	bool init(memory::pool_t *, const StringView &, Extensions = DefaultExtensions);
-	bool init(const StringView &, Extensions = DefaultExtensions);
+	bool init(memory::pool_t *, const StringView &, const Extensions & = DefaultExtensions);
+	bool init(const StringView &, const Extensions & = DefaultExtensions);
 
 	void clear();
 

@@ -78,9 +78,9 @@ struct TokenPair {
 SP_DEFINE_ENUM_AS_MASK(TokenPair::Options);
 
 struct TokenPairEngine {
-	static TokenPairEngine *engineForExtensions(Extensions);
+	static TokenPairEngine *engineForExtensions(Extensions::Value);
 
-	TokenPairEngine(Extensions);
+	TokenPairEngine(Extensions::Value);
 
 	TokenPair pairings1;
 	TokenPair pairings2;

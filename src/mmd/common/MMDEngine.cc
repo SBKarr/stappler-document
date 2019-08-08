@@ -73,7 +73,7 @@ struct Engine::Internal : memory::PoolInterface {
 	using mmd_engine = _sp_mmd_engine;
 	using token = _sp_mmd_token;
 
-	Internal(memory::pool_t *p, const StringView &v, Extensions ext);
+	Internal(memory::pool_t *p, const StringView &v, const Extensions &ext);
 	~Internal();
 
 	token * parse(const StringView &);
@@ -93,7 +93,7 @@ struct Engine::Internal : memory::PoolInterface {
 	StringStreamType debug;
 };
 
-Engine::Internal::Internal(memory::pool_t *p, const StringView &v, Extensions ext)
+Engine::Internal::Internal(memory::pool_t *p, const StringView &v, const Extensions & ext)
 : content(ext) {
 
 #ifdef DEBUG
@@ -103,7 +103,7 @@ Engine::Internal::Internal(memory::pool_t *p, const StringView &v, Extensions ex
 	source = v;
 	engine.str = v.data();
 	engine.len = v.size();
-	engine.extensions = toInt(ext);
+	engine.extensions = toInt(ext.flags);
 	engine.recurse_depth = 0;
 	engine.allow_meta = false;
 
@@ -116,7 +116,7 @@ Engine::Internal::Internal(memory::pool_t *p, const StringView &v, Extensions ex
 	pool = p;
 	engine.content = &content;
 
-	pairs = TokenPairEngine::engineForExtensions(ext);
+	pairs = TokenPairEngine::engineForExtensions(ext.flags);
 }
 
 Engine::Internal::~Internal() {
@@ -360,7 +360,7 @@ bool Engine::Internal::prepare() {
 		content.process(source);
 
 		// Process abbreviations, glossary, etc.
-		if ((content.getExtensions() & Extensions::Compatibility) == Extensions::None) {
+		if (!content.getExtensions().hasFlag(Extensions::Compatibility)) {
 			// Only search if we have a target
 			auto count = content.getAbbreviations().size() + content.getGlossary().size();
 			if (count > 0) {
@@ -420,7 +420,7 @@ Engine::~Engine() {
 	clear();
 }
 
-bool Engine::init(memory::pool_t *p, const StringView &source, Extensions ext) {
+bool Engine::init(memory::pool_t *p, const StringView &source, const Extensions & ext) {
 	clear();
 
 	auto pool = memory::pool::create(p);
@@ -430,7 +430,7 @@ bool Engine::init(memory::pool_t *p, const StringView &source, Extensions ext) {
 	return true;
 }
 
-bool Engine::init(const StringView &source, Extensions ext) {
+bool Engine::init(const StringView &source, const Extensions & ext) {
 	clear();
 
 	auto pool = memory::pool::create(tl_pool.getPool());

@@ -200,7 +200,7 @@ bool FileNavigator::init() {
 	_scroll = scroll;
 
 	retain();
-	storage::get("FileNavigator.Path", [this] (const std::string &, data::Value &&val) {
+	storage::get("FileNavigator.Path", [this] (const StringView &, data::Value &&val) {
 		std::string path;
 		if (val.isDictionary()) {
 			path = val.getString("path");
@@ -219,7 +219,7 @@ void FileNavigator::refreshData() {
 	updateData(_path);
 }
 
-void FileNavigator::updateData(const std::string &path) {
+void FileNavigator::updateData(const StringView &path) {
 	data::Value dirs;
 	data::Value files;
 	filesystem::ftw(path, [this, &dirs, &files, path] (const StringView &p, bool isFile) {
@@ -275,7 +275,7 @@ void FileNavigator::updateData(const std::string &path) {
 	val.setString(path, "path");
 	storage::set("FileNavigator.Path", std::move(val));
 	if (!_source || path != _path) {
-		_path = path;
+		_path = path.str();
 
 		_source = Rc<data::Source>::create(data::Source::ChildsCount(_data.size()),
 				[this] (const data::DataCallback &cb, data::Source::Id id) {
@@ -289,7 +289,7 @@ void FileNavigator::updateData(const std::string &path) {
 	}
 }
 
-void FileNavigator::onButton(const std::string &str) {
+void FileNavigator::onButton(const StringView &str) {
 	if (epub::Document::isEpub(str)) {
 
 		openFile(str);
@@ -318,7 +318,7 @@ void FileNavigator::onButton(const std::string &str) {
 	}
 }
 
-void FileNavigator::onDirButton(const std::string &str) {
+void FileNavigator::onDirButton(const StringView &str) {
 	if (str == _path) {
 		updateData(filepath::root(str));
 	} else {
@@ -326,7 +326,7 @@ void FileNavigator::onDirButton(const std::string &str) {
 	}
 }
 
-void FileNavigator::openFile(const std::string &file) {
+void FileNavigator::openFile(const StringView &file) {
 	if (filepath::lastExtension(file) == "json") {
 		return;
 	}
@@ -339,7 +339,7 @@ void FileNavigator::openFile(const std::string &file) {
 			auto data = filesystem::readTextFile(file);
 			//mmd::HtmlOutputProcessor::run(&std::cout, data);
 
-			auto source = Rc<rich_text::Source>::create(FilePath(file));
+			auto source = Rc<rich_text::Source>::create( Rc<rich_text::SourceFileAsset>::create(FilePath(file)));
 			source->setHyphens(_hyphens.get());
 
 			auto view = Rc<rich_text::EpubView>::create(source, filepath::name(file));

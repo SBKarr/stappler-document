@@ -122,6 +122,8 @@ protected:
 	virtual void flushBuffer() = 0;
 
 protected:
+	virtual void pushHtmlEntityText(std::ostream &out, StringView r, token *t = nullptr);
+
 	bool spExt = false;
 	uint8_t html_header_level = maxOf<uint8_t>();
 	std::ostream *output = nullptr;

@@ -33,12 +33,12 @@ THE SOFTWARE.
 
 NS_SP_EXT_BEGIN(app)
 
-bool FileImageView::init(const String &src) {
+bool FileImageView::init(const StringView &src) {
 	if (!Layout::init()) {
 		return false;
 	}
 
-	_filePath = src;
+	_filePath = src.str();
 
 	auto incr = material::metrics::horizontalIncrement();
 	auto toolbar = Rc<material::Toolbar>::create();

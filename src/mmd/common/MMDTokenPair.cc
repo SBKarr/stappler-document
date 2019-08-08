@@ -217,9 +217,9 @@ struct TokenPairEngineNode {
 };
 
 std::mutex s_engineMutex;
-std::map<Extensions, TokenPairEngine> s_engineMap;
+std::map<Extensions::Value, TokenPairEngine> s_engineMap;
 
-TokenPairEngine *TokenPairEngine::engineForExtensions(Extensions extensions) {
+TokenPairEngine *TokenPairEngine::engineForExtensions(Extensions::Value extensions) {
 	extensions &= (Extensions::Critic | Extensions::Notes | Extensions::Compatibility);
 
 	s_engineMutex.lock();
@@ -234,7 +234,7 @@ TokenPairEngine *TokenPairEngine::engineForExtensions(Extensions extensions) {
 	return ret;
 }
 
-TokenPairEngine::TokenPairEngine(Extensions extensions) {
+TokenPairEngine::TokenPairEngine(Extensions::Value extensions) {
 	// CriticMarkup
 	if ((extensions & Extensions::Critic) != Extensions::None) {
 		pairings1.add(CRITIC_ADD_OPEN, CRITIC_ADD_CLOSE, PAIR_CRITIC_ADD, TokenPair::Options::AllowEmpty | TokenPair::Options::PruneMatch);
@@ -300,7 +300,6 @@ TokenPairEngine::TokenPairEngine(Extensions extensions) {
 		pairings4.add(TEXT_BRACE_LEFT, TEXT_BRACE_RIGHT, PAIR_BRACE, TokenPair::Options::PruneMatch);
 		pairings4.add(RAW_FILTER_LEFT, TEXT_BRACE_RIGHT, PAIR_RAW_FILTER, TokenPair::Options::PruneMatch);
 	}
-
 }
 
 NS_MMD_END

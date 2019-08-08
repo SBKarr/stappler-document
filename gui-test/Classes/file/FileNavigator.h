@@ -34,14 +34,14 @@ public:
 	virtual bool init() override;
 
 	virtual void refreshData();
-	virtual void updateData(const std::string &path);
+	virtual void updateData(const StringView &path);
 
 	virtual void onForeground(material::ContentLayer *l, Layout *overlay) override;
 
 protected:
-	virtual void onButton(const std::string &);
-	virtual void onDirButton(const std::string &);
-	virtual void openFile(const std::string &);
+	virtual void onButton(const StringView &);
+	virtual void onDirButton(const StringView &);
+	virtual void openFile(const StringView &);
 	virtual void openDirectory();
 	virtual void switchHidden();
 

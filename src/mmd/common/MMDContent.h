@@ -101,13 +101,14 @@ public:
 	static String labelFromString(const StringView &);
 	static String cleanString(const StringView &, bool lowercase);
 
-	static Link *explicitLink(const StringView &, Extensions, token * bracket, token * paren);
+	static Link *explicitLink(const StringView &, const Extensions &, token * bracket, token * paren);
 
 	void reset();
 
-	Content(Extensions);
+	Content(const Extensions &);
 
-	Extensions getExtensions() const;
+	const Extensions &getExtensions() const;
+	void addExtension(Extensions::Value) const;
 
 	void setQuotesLanguage(QuotesLanguage);
 	QuotesLanguage getQuotesLanguage() const;

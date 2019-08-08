@@ -70,30 +70,63 @@ class LayoutProcessor;
 struct TokenPair;
 struct TokenPairEngine;
 
-enum class Extensions : uint32_t {
-	None			= 0,
-	Compatibility	= 1 << 0,    //!< Markdown compatibility mode
-	Complete		= 1 << 1,    //!< Create complete document
-	Snippet			= 1 << 2,    //!< Create snippet only
-	Smart			= 1 << 3,    //!< Enable Smart quotes
-	Notes			= 1 << 4,    //!< Enable Footnotes
-	NoLabels		= 1 << 5,    //!< Don't add anchors to headers, etc.
-	ProcessHtml		= 1 << 6,    //!< Process Markdown inside HTML
-	NoMetadata		= 1 << 7,    //!< Don't parse Metadata
-	Obfuscate		= 1 << 8,    //!< Mask email addresses
-	Critic			= 1 << 9,    //!< Critic Markup Support
-	CriticAccept	= 1 << 10,   //!< Accept all proposed changes
-	CriticReject	= 1 << 11,   //!< Reject all proposed changes
-	RandomFoot		= 1 << 12,   //!< Use random numbers for footnote links
-	Transclude		= 1 << 13,   //!< Perform transclusion(s)
-	StapplerLayout	= 1 << 14,   //!< Use stappler layout engine
-	Fake			= uint32_t(1 << 31),   //!< 31 is highest number allowed
+enum class MetaType {
+	PlainString,
+	HtmlString,
+	HtmlEntity,
 };
 
-SP_DEFINE_ENUM_AS_MASK(Extensions)
+struct Extensions {
+	using MetaCallback = memory::function<Pair<memory::string, MetaType>(const StringView &)>;
 
-constexpr Extensions DefaultExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart;
-constexpr Extensions StapplerExtensions = Extensions::Critic | Extensions::Notes | Extensions::Smart | Extensions::StapplerLayout;
+	enum Value : uint32_t {
+		None			= 0,
+		Compatibility	= 1 << 0,    //!< Markdown compatibility mode
+		Complete		= 1 << 1,    //!< Create complete document
+		Snippet			= 1 << 2,    //!< Create snippet only
+		Smart			= 1 << 3,    //!< Enable Smart quotes
+		Notes			= 1 << 4,    //!< Enable Footnotes
+		NoLabels		= 1 << 5,    //!< Don't add anchors to headers, etc.
+		ProcessHtml		= 1 << 6,    //!< Process Markdown inside HTML
+		NoMetadata		= 1 << 7,    //!< Don't parse Metadata
+		Obfuscate		= 1 << 8,    //!< Mask email addresses
+		Critic			= 1 << 9,    //!< Critic Markup Support
+		CriticAccept	= 1 << 10,   //!< Accept all proposed changes
+		CriticReject	= 1 << 11,   //!< Reject all proposed changes
+		RandomFoot		= 1 << 12,   //!< Use random numbers for footnote links
+		Transclude		= 1 << 13,   //!< Perform transclusion(s)
+		StapplerLayout	= 1 << 14,   //!< Use stappler layout engine
+		Fake			= uint32_t(1 << 31),   //!< 31 is highest number allowed
+	};
+
+	Value flags;
+	MetaCallback metaCallback = nullptr;
+
+	Extensions(Value f) : flags(f) { }
+
+	Extensions(const Extensions &v) : flags(v.flags), metaCallback(v.metaCallback) { }
+	Extensions(Extensions &&v) : flags(v.flags), metaCallback(move(v.metaCallback)) { }
+
+	Extensions& operator=(const Extensions &v) {
+		flags = v.flags;
+		metaCallback = v.metaCallback;
+		return *this;
+	}
+	Extensions& operator=(Extensions &&v) {
+		flags = v.flags;
+		metaCallback = move(v.metaCallback);
+		return *this;
+	}
+
+	bool hasFlag(Value v) const {
+		return (flags & v) != None;
+	}
+};
+
+SP_DEFINE_ENUM_AS_MASK(Extensions::Value)
+
+extern Extensions DefaultExtensions;
+extern Extensions StapplerExtensions;
 
 /// Define smart typography languages -- first in list is default
 enum class QuotesLanguage {

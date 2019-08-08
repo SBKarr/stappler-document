@@ -222,7 +222,7 @@ void HtmlProcessor::exportHeader(std::ostream &out, token *t) {
 
 	String head = Traits::toString("h", h_idx);
 
-	if ((extensions & Extensions::NoLabels) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::NoLabels)) {
 		pushNode(t, head);
 	} else {
 		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
@@ -432,7 +432,7 @@ void HtmlProcessor::exportDefinitionBlock(std::ostream &out, token *t) {
 			out << " ";
 			auto temp_short = footnote_being_printed;
 
-			if ((extensions & Extensions::RandomFoot) != Extensions::None) {
+			if (content->getExtensions().hasFlag(Extensions::RandomFoot)) {
 				srand(random_seed_base + temp_short);
 				temp_short = rand() % 32000 + 1;
 			}
@@ -481,7 +481,7 @@ void HtmlProcessor::exportHeaderText(std::ostream &out, token *t, uint8_t level)
 
 	String head = Traits::toString("h", (temp_short + base_header_level - 1));
 
-	if ((extensions & Extensions::NoLabels) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::NoLabels)) {
 		pushNode(t, head);
 	} else {
 		auto idClassPair = HtmlProcessor_decodeHeaderLabel(source, t);
@@ -711,7 +711,7 @@ void HtmlProcessor::exportBacktick(std::ostream &out, token *t) {
 	if (t->mate == NULL) {
 		out << printToken(source, t);
 	} else if (t->mate->type == QUOTE_RIGHT_ALT)
-		if ((extensions & Extensions::Smart) == Extensions::None) {
+		if (!content->getExtensions().hasFlag(Extensions::Smart)) {
 			out << printToken(source, t);
 		} else {
 			printLocalizedChar(out, QUOTE_LEFT_DOUBLE);
@@ -824,7 +824,7 @@ void HtmlProcessor::exportPairBracketImage(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportPairBracketAbbreviation(std::ostream &out, token *t) {
 	// Which might also be an "auto-tagged" abbreviation
-	if ((extensions & Extensions::Notes) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Notes)) {
 		// Note-based syntax enabled
 
 		// Classify this use
@@ -907,7 +907,7 @@ void HtmlProcessor::exportPairBracketCitation(std::ostream &out, token *t) {
 	auto temp_bool = true;		// Track whether this is regular vs 'not cited'
 	auto temp_token = t;			// Remember whether we need to skip ahead
 
-	if ((extensions & Extensions::Notes) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Notes)) {
 		// Note-based syntax enabled
 		StringView temp_char;
 		Content::String temp_char2;
@@ -989,7 +989,7 @@ void HtmlProcessor::exportPairBracketCitation(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
-	if ((extensions & Extensions::Notes) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Notes)) {
 		// Note-based syntax enabled
 
 		// Classify this use
@@ -1006,7 +1006,7 @@ void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
 			return;
 		}
 
-		if ((extensions & Extensions::RandomFoot) != Extensions::None) {
+		if (content->getExtensions().hasFlag(Extensions::RandomFoot)) {
 			srand(unsigned(random_seed_base + temp_short));
 			temp_short3 = rand() % 32000 + 1;
 		} else {
@@ -1032,7 +1032,7 @@ void HtmlProcessor::exportPairBracketFootnote(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportPairBracketGlossary(std::ostream &out, token *t) {
 	// Which might also be an "auto-tagged" glossary
-	if ((extensions & Extensions::Notes) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Notes)) {
 		// Note-based syntax enabled
 
 		// Classify this use
@@ -1077,10 +1077,22 @@ void HtmlProcessor::exportPairBracketVariable(std::ostream &out, token *t) {
 	if (!temp_char2.empty()) {
 		printHtml(out, temp_char2);
 	} else {
-		if (meta_callback) {
-			temp_char2 = meta_callback(temp_char);
-			if (!temp_char2.empty()) {
-				printHtml(out, temp_char2);
+		if (content->getExtensions().metaCallback) {
+			String tempStr;
+			MetaType type = MetaType::HtmlString;
+			std::tie(tempStr, type) = content->getExtensions().metaCallback(temp_char);
+			if (!tempStr.empty()) {
+				switch (type) {
+				case MetaType::PlainString:
+					out << tempStr;
+					break;
+				case MetaType::HtmlString:
+					printHtml(out, tempStr);
+					break;
+				case MetaType::HtmlEntity:
+					pushHtmlEntityText(out, tempStr);
+					break;
+				}
 				return;
 			}
 		}
@@ -1091,15 +1103,15 @@ void HtmlProcessor::exportPairBracketVariable(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportCriticAdd(std::ostream &out, token *t) {
 	// Ignore if we're rejecting
-	if ((extensions & Extensions::CriticReject) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::CriticReject)) {
 		return;
 	}
 
-	if ((extensions & Extensions::Critic) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Critic)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
-		if ((extensions & Extensions::CriticAccept) != Extensions::None) {
+		if (content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 			exportTokenTree(out, t->child);
 		} else {
 			pushNode(t, "ins");
@@ -1113,15 +1125,15 @@ void HtmlProcessor::exportCriticAdd(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportCriticDel(std::ostream &out, token *t) {
 	// Ignore if we're accepting
-	if ((extensions & Extensions::CriticAccept) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 		return;
 	}
 
-	if ((extensions & Extensions::Critic) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Critic)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
-		if ((extensions & Extensions::CriticReject) != Extensions::None) {
+		if (content->getExtensions().hasFlag(Extensions::CriticReject)) {
 			exportTokenTree(out, t->child);
 		} else {
 			pushNode(t, "del");
@@ -1135,12 +1147,12 @@ void HtmlProcessor::exportCriticDel(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportCriticCom(std::ostream &out, token *t) {
 	// Ignore if we're rejecting or accepting
-	if ((extensions & Extensions::CriticAccept) != Extensions::None ||
-			(extensions & Extensions::CriticReject) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::CriticReject) ||
+			content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 		return;
 	}
 
-	if ((extensions & Extensions::Critic) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Critic)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
@@ -1154,12 +1166,12 @@ void HtmlProcessor::exportCriticCom(std::ostream &out, token *t) {
 
 void HtmlProcessor::exportCriticHi(std::ostream &out, token *t) {
 	// Ignore if we're rejecting or accepting
-	if ((extensions & Extensions::CriticAccept) != Extensions::None ||
-			(extensions & Extensions::CriticReject) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::CriticReject) ||
+			content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 		return;
 	}
 
-	if ((extensions & Extensions::Critic) != Extensions::None) {
+	if (content->getExtensions().hasFlag(Extensions::Critic)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 		pushNode(t, "mark");
@@ -1171,14 +1183,14 @@ void HtmlProcessor::exportCriticHi(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportCriticPairSubDel(std::ostream &out, token *t) {
-	if ((extensions & Extensions::Critic) != Extensions::None &&
+	if (content->getExtensions().hasFlag(Extensions::Critic) &&
 	        (t->next) && (t->next->type == PAIR_CRITIC_SUB_ADD)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
-		if ((extensions & Extensions::CriticAccept) != Extensions::None) {
+		if (content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 
-		} else if ((extensions & Extensions::CriticReject) != Extensions::None) {
+		} else if (content->getExtensions().hasFlag(Extensions::CriticReject)) {
 			exportTokenTree(out, t->child);
 		} else {
 			pushNode(t, "del");
@@ -1191,14 +1203,14 @@ void HtmlProcessor::exportCriticPairSubDel(std::ostream &out, token *t) {
 }
 
 void HtmlProcessor::exportCriticPairSubAdd(std::ostream &out, token *t) {
-	if ((extensions & Extensions::Critic) != Extensions::None &&
+	if (content->getExtensions().hasFlag(Extensions::Critic) &&
 	        (t->prev) && (t->prev->type == PAIR_CRITIC_SUB_DEL)) {
 		t->child->type = TEXT_EMPTY;
 		t->child->mate->type = TEXT_EMPTY;
 
-		if ((extensions & Extensions::CriticReject) != Extensions::None) {
+		if (content->getExtensions().hasFlag(Extensions::CriticReject)) {
 
-		} else if ((extensions & Extensions::CriticAccept) != Extensions::None) {
+		} else if (content->getExtensions().hasFlag(Extensions::CriticAccept)) {
 			exportTokenTree(out, t->child);
 		} else {
 			pushNode(t, "ins");

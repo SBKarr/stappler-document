@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 NS_MMD_BEGIN
 
-void HtmlOutputProcessor::run(std::ostream *stream, const StringView &str, Extensions ext) {
+void HtmlOutputProcessor::run(std::ostream *stream, const StringView &str, const Extensions &ext) {
 	Engine e; e.init(str, ext);
 
 	e.process([&] (const Content &c, const StringView &s, const Token &t) {
@@ -35,7 +35,7 @@ void HtmlOutputProcessor::run(std::ostream *stream, const StringView &str, Exten
 	});
 }
 
-void HtmlOutputProcessor::run(std::ostream *stream, memory::pool_t *pool, const StringView &str, Extensions ext) {
+void HtmlOutputProcessor::run(std::ostream *stream, memory::pool_t *pool, const StringView &str, const Extensions &ext) {
 	Engine e; e.init(pool, str, ext);
 
 	e.process([&] (const Content &c, const StringView &s, const Token &t) {

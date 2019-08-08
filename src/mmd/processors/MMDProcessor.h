@@ -57,16 +57,11 @@ public:
 	template <typename T>
 	using Vector = Content::Vector<T>;
 
-	using MetaCallback = Function<StringView(const StringView &)>;
-
 	using String = Content::String;
 	using StringStream = Content::StringStream;
 
 	Processor() { }
 	virtual ~Processor() { }
-
-	void setMetaCallback(const MetaCallback &);
-	const MetaCallback &getMetaCallback() const;
 
 	virtual void process(const Content &, const StringView &, const Token &);
 
@@ -100,7 +95,6 @@ protected:
 
 	const Content *content = nullptr;
 	StringView source;
-	Extensions extensions = Extensions::None;
 	QuotesLanguage quotes_lang = QuotesLanguage::English;
 
 	int16_t padded = 2;
@@ -127,8 +121,6 @@ protected:
 	Vector<Content::Footnote *> used_footnotes;
 	Vector<Content::Footnote *> used_citations;
 	Vector<Content::Footnote *> used_glossaries;
-
-	MetaCallback meta_callback;
 };
 
 NS_MMD_END
